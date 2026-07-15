@@ -828,7 +828,7 @@ function renderTable(){
     const attemptOptions = getAttemptsFor(currentCourse, currentLevel).map(a=>`<option value="${a}">${a}</option>`).join('');
     const typeOptions = CLASS_TYPES.map(t=>`<option value="${t}">${t}</option>`).join('');
     const modeOptions = MODES.map(m=>`<div class="mode-option" data-value="${m}"><span class="mode-num"></span><span class="mode-text">${m}</span></div>`).join('');
-    const modeList = `<div class="mode-list disabled"><div class="mode-hint">Choose according to your preference; only the available mode(s) will be provided.</div>${modeOptions}</div>`;
+    const modeList = `<div class="mode-list disabled"><div class="mode-hint">Choose according to your preference; only the available mode will be provided.</div>${modeOptions}</div>`;
 
     row.innerHTML = `
       <td class="chk-cell"><input type="checkbox" class="row-enable"></td>
