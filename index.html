@@ -204,10 +204,20 @@ select{
 }
 select:disabled{background:#f1efe9;color:#aaa;cursor:not-allowed;}
 .mode-list{display:flex;flex-direction:column;gap:5px;}
-.mode-list label{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--charcoal);}
-.mode-list input{accent-color:var(--red);}
-.mode-list.disabled label{color:#b3aea3;}
-.mode-list.disabled input{pointer-events:none;}
+.mode-hint{font-size:11px;color:var(--gray);font-style:italic;font-family:var(--serif);line-height:1.4;margin-bottom:6px;}
+.mode-option{
+  display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--charcoal);
+  cursor:pointer;user-select:none;padding:3px 0;
+}
+.mode-num{
+  flex:0 0 auto;width:19px;height:19px;border:1.5px solid var(--line);border-radius:3px;
+  display:flex;align-items:center;justify-content:center;font-family:var(--head);font-size:11px;font-weight:600;
+  color:var(--white);background:var(--white);transition:.15s;
+}
+.mode-option.selected .mode-num{background:var(--red);border-color:var(--red);color:var(--white);}
+.mode-option:not(.selected) .mode-num{color:transparent;}
+.mode-list.disabled .mode-option{color:#b3aea3;cursor:not-allowed;pointer-events:none;}
+.mode-list.disabled .mode-num{border-color:#e2ddd2;}
 
 .order-bar{display:flex;justify-content:flex-end;margin-top:22px;}
 .btn-order{
@@ -419,7 +429,7 @@ footer .cols div a:hover{color:var(--red);}
               <th style="width:190px;">Faculty</th>
               <th style="width:140px;">For the Attempt</th>
               <th style="width:150px;">Type of Class</th>
-              <th style="width:190px;">Mode of Class<br><span style="font-weight:400;text-transform:none;letter-spacing:0;">(select all that apply)</span></th>
+              <th style="width:200px;">Mode of Class<br><span style="font-weight:400;text-transform:none;letter-spacing:0;">(rank your preference)</span></th>
             </tr>
           </thead>
           <tbody id="paperTableBody"></tbody>
@@ -464,7 +474,7 @@ footer .cols div a:hover{color:var(--red);}
       <h3>Abanindra Sahu</h3>
       <div class="qual">M.Com(Law) &amp; CS Executive · Founder &amp; Proprietor</div>
       <p>Abanindra Sahu founded Ambitious Professionals in October 2018 with a clear mission: deliver quality, concept-driven learning in commerce and professional education.</p>
-      <p>With over 8 years of dedicated teaching experience since founding the institute in 2018, he specialises in Corporate Law and Auditing, mentoring students across multiple academic and professional levels. His classrooms blend academic rigour with real-world insight — turning difficult topics into clear, workable concepts, and helping students build genuine professional confidence, not just exam recall.</p>
+      <p>With over <span id="founderYears">8</span> years of dedicated teaching experience since founding the institute in 2018, he specialises in Corporate Law and Auditing, mentoring students across multiple academic and professional levels. His classrooms blend academic rigour with real-world insight — turning difficult topics into clear, workable concepts, and helping students build genuine professional confidence, not just exam recall.</p>
       <div class="teach-grid">
         <div class="teach-box">
           <h4>CORPORATE LAW — for</h4>
@@ -645,15 +655,46 @@ footer .cols div a:hover{color:var(--red);}
 /* ============================================================
    DATA
    ============================================================ */
-const ATTEMPTS_DEFAULT = ["Sep 2026","Jan 2027","May 2027","Sep 2027"];
-const ATTEMPTS_CA_FINAL = ["Nov 2026","May 2027","Nov 2027","May 2028","Nov 2028","May 2029"];
-const ATTEMPTS_CMA = ["Dec 2026","Jun 2027","Dec 2027","Jun 2028","Dec 2028"];
+const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+/**
+ * Generates the next `count` upcoming attempts from a repeating set of exam
+ * months (0-indexed, e.g. 8 = Sep). The current month is always excluded,
+ * so the list automatically rolls forward as real dates pass — no manual
+ * updates needed, ever.
+ */
+function generateAttempts(cycleMonths, count){
+  const now = new Date();
+  const candidates = [];
+  for(let y = now.getFullYear(); y <= now.getFullYear() + 6; y++){
+    cycleMonths.forEach(m => candidates.push(new Date(y, m, 1)));
+  }
+  const upcoming = candidates
+    .filter(d => d.getFullYear() > now.getFullYear() || (d.getFullYear() === now.getFullYear() && d.getMonth() > now.getMonth()))
+    .sort((a,b) => a - b);
+  return upcoming.slice(0, count).map(d => MONTH_NAMES[d.getMonth()] + ' ' + d.getFullYear());
+}
 
 function getAttemptsFor(course, level){
-  if(course === 'CA' && level === 'Final') return ATTEMPTS_CA_FINAL;
-  if(course === 'CMA') return ATTEMPTS_CMA;
-  return ATTEMPTS_DEFAULT;
+  if(course === 'CA' && level === 'Final') return generateAttempts([10,4], 6);   // Nov, May
+  if(course === 'CMA' && level === 'Final') return generateAttempts([5,11], 5);  // Jun, Dec — 5 attempts
+  if(course === 'CMA') return generateAttempts([5,11], 3);                       // Jun, Dec — 3 attempts (Foundation/Inter)
+  return generateAttempts([0,4,8], 4);                                          // Jan, May, Sep
 }
+
+/**
+ * Founder's teaching experience — counts full years since October 2018.
+ * Ticks over automatically each 1st of October.
+ */
+function updateFounderYears(){
+  const now = new Date();
+  let years = now.getFullYear() - 2018;
+  const cutoff = new Date(now.getFullYear(), 9, 1); // October 1st this year
+  if(now < cutoff) years -= 1;
+  const el = document.getElementById('founderYears');
+  if(el) el.textContent = years;
+}
+updateFounderYears();
 const CLASS_TYPES = ["Regular","Fast-track","Exam Oriented","Revision Classes"];
 const MODES = ["Offline Face to Face","Online Live","Online Google Drive","Online Pen Drive"];
 
@@ -786,7 +827,8 @@ function renderTable(){
     const facultyOptions = paper.faculty.map(f=>`<option value="${f}">${f}</option>`).join('');
     const attemptOptions = getAttemptsFor(currentCourse, currentLevel).map(a=>`<option value="${a}">${a}</option>`).join('');
     const typeOptions = CLASS_TYPES.map(t=>`<option value="${t}">${t}</option>`).join('');
-    const modeChecks = MODES.map((m,i)=>`<label><input type="checkbox" class="mode-chk" value="${m}" disabled> ${m}</label>`).join('');
+    const modeOptions = MODES.map(m=>`<div class="mode-option" data-value="${m}"><span class="mode-num"></span><span class="mode-text">${m}</span></div>`).join('');
+    const modeList = `<div class="mode-list disabled"><div class="mode-hint">Choose according to your preference; only the available mode(s) will be provided.</div>${modeOptions}</div>`;
 
     row.innerHTML = `
       <td class="chk-cell"><input type="checkbox" class="row-enable"></td>
@@ -795,7 +837,7 @@ function renderTable(){
       <td><select class="f-faculty" disabled><option value="" selected disabled>Select faculty</option>${facultyOptions}</select></td>
       <td><select class="f-attempt" disabled><option value="" selected disabled>Select attempt</option>${attemptOptions}</select></td>
       <td><select class="f-type" disabled><option value="" selected disabled>Select type</option>${typeOptions}</select></td>
-      <td><div class="mode-list disabled">${modeChecks}</div></td>
+      <td>${modeList}</td>
     `;
     paperTableBody.appendChild(row);
   });
@@ -807,21 +849,61 @@ function attachRowLogic(){
   paperTableBody.querySelectorAll('.paper-row').forEach(row=>{
     const enableChk = row.querySelector('.row-enable');
     const selects = row.querySelectorAll('select');
-    const modeChks = row.querySelectorAll('.mode-chk');
+    const modeOptions = row.querySelectorAll('.mode-option');
     const modeList = row.querySelector('.mode-list');
 
     enableChk.addEventListener('change',()=>{
       const on = enableChk.checked;
       row.classList.toggle('disabled', !on);
       selects.forEach(s=>{ s.disabled = !on; if(!on) s.value=''; });
-      modeChks.forEach(m=>{ m.disabled = !on; if(!on) m.checked=false; });
+      if(!on) resetModeOptions(modeOptions);
+      modeOptions.forEach(m=>{ m.dataset.enabled = on ? 'true' : 'false'; });
       modeList.classList.toggle('disabled', !on);
       checkOrderReady();
     });
 
     selects.forEach(s=>s.addEventListener('change',checkOrderReady));
-    modeChks.forEach(m=>m.addEventListener('change',checkOrderReady));
+    modeOptions.forEach(opt=>{
+      opt.addEventListener('click',()=>{
+        if(modeList.classList.contains('disabled')) return;
+        toggleModeOption(opt, modeOptions);
+        checkOrderReady();
+      });
+    });
   });
+}
+
+function resetModeOptions(modeOptions){
+  modeOptions.forEach(m=>{
+    m.classList.remove('selected');
+    m.dataset.order = '';
+    m.querySelector('.mode-num').textContent = '';
+  });
+}
+
+function toggleModeOption(opt, allOptions){
+  if(opt.classList.contains('selected')){
+    // deselect, then re-sequence remaining selections so numbers stay 1,2,3...
+    const removedOrder = parseInt(opt.dataset.order, 10);
+    opt.classList.remove('selected');
+    opt.dataset.order = '';
+    opt.querySelector('.mode-num').textContent = '';
+    allOptions.forEach(m=>{
+      if(m.classList.contains('selected')){
+        const o = parseInt(m.dataset.order, 10);
+        if(o > removedOrder){
+          m.dataset.order = o - 1;
+          m.querySelector('.mode-num').textContent = o - 1;
+        }
+      }
+    });
+  } else {
+    const selectedCount = [...allOptions].filter(m=>m.classList.contains('selected')).length;
+    const nextOrder = selectedCount + 1;
+    opt.classList.add('selected');
+    opt.dataset.order = nextOrder;
+    opt.querySelector('.mode-num').textContent = nextOrder;
+  }
 }
 
 function checkOrderReady(){
@@ -832,7 +914,7 @@ function checkOrderReady(){
     const faculty = row.querySelector('.f-faculty').value;
     const attempt = row.querySelector('.f-attempt').value;
     const type = row.querySelector('.f-type').value;
-    const anyMode = [...row.querySelectorAll('.mode-chk')].some(m=>m.checked);
+    const anyMode = row.querySelectorAll('.mode-option.selected').length > 0;
     if(!faculty || !attempt || !type || !anyMode) ready = false;
   });
   placeOrderBtn.disabled = !ready;
@@ -915,7 +997,10 @@ function collectSelectedPapers(){
     const faculty = row.querySelector('.f-faculty').value;
     const attempt = row.querySelector('.f-attempt').value;
     const typeOfClass = row.querySelector('.f-type').value;
-    const modeOfClass = [...row.querySelectorAll('.mode-chk')].filter(m=>m.checked).map(m=>m.value).join(', ');
+    const modeOfClass = [...row.querySelectorAll('.mode-option.selected')]
+      .sort((a,b) => parseInt(a.dataset.order,10) - parseInt(b.dataset.order,10))
+      .map(m => m.dataset.order + ') ' + m.dataset.value)
+      .join(', ');
     selected.push({paperNo, paperName, faculty, attempt, typeOfClass, modeOfClass});
   });
   return selected;
