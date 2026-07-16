@@ -797,6 +797,9 @@ footer .cols div a:hover{color:var(--red);}
       <div id="completeProfileError" style="color:var(--red);font-size:12.5px;margin-bottom:10px;display:none;"></div>
       <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">Save and Continue</button>
     </form>
+    <div style="text-align:center;margin-top:16px;font-size:13px;">
+      Signed in as <strong id="cpSignedInAs"></strong> — not you? <a href="#" id="cpSignOutLink" style="color:var(--red);text-decoration:underline;">Sign out</a>
+    </div>
   </div>
 </div>
 
@@ -1670,6 +1673,11 @@ document.getElementById('signOutLink').addEventListener('click', (e)=>{
   e.preventDefault();
   auth.signOut();
 });
+document.getElementById('cpSignOutLink').addEventListener('click', (e)=>{
+  e.preventDefault();
+  auth.signOut();
+  closeOverlay('completeProfileOverlay');
+});
 
 document.getElementById('myOrdersLink').addEventListener('click', (e)=>{
   e.preventDefault();
@@ -1715,6 +1723,7 @@ auth.onAuthStateChanged((user)=>{
     if(!doc.exists || !doc.data().studentId){
       // New account — must complete mandatory profile first
       document.getElementById('cpEmail').value = user.email || '';
+      document.getElementById('cpSignedInAs').textContent = user.email || user.phoneNumber || 'this account';
       openOverlay('completeProfileOverlay');
     } else {
       refreshProfileUI(user);
