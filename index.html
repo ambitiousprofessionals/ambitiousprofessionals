@@ -10,7 +10,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-storage-compat.js"></script>
 <style>
 :root{
   --red:#AE1029;
@@ -391,7 +390,6 @@ footer .cols div a:hover{color:var(--red);}
       <button class="btn-auth btn-auth-primary" id="signUpBtn">Sign Up</button>
       <div class="profile-menu-wrap hidden" id="profileMenuWrap">
         <button class="profile-avatar-btn" id="profileAvatarBtn">
-          <img id="profileAvatarImg" src="" alt="Profile" class="hidden">
           <span id="profileAvatarInitial">A</span>
         </button>
         <div class="profile-dropdown hidden" id="profileDropdown">
@@ -785,10 +783,6 @@ footer .cols div a:hover{color:var(--red);}
     <h3>Complete Your Profile</h3>
     <div class="sub">Just a few details before you continue — this only takes a minute.</div>
     <form id="completeProfileForm">
-      <div class="field">
-        <label>Profile Picture (optional)</label>
-        <input type="file" id="cpPhoto" accept="image/*">
-      </div>
       <div class="field"><label>Full Name</label><input type="text" id="cpName" required></div>
       <div class="field"><label>Father's Name</label><input type="text" id="cpFathersName" required></div>
       <div class="field"><label>Residential Address (for book delivery)</label><input type="text" id="cpAddress" required></div>
@@ -810,10 +804,6 @@ footer .cols div a:hover{color:var(--red);}
     <h3>My Profile</h3>
     <div class="sub">Student ID: <strong id="mpStudentId">—</strong></div>
     <form id="myProfileForm">
-      <div class="field">
-        <label>Profile Picture</label>
-        <input type="file" id="mpPhoto" accept="image/*">
-      </div>
       <div class="field"><label>Full Name</label><input type="text" id="mpName" required></div>
       <div class="field"><label>Father's Name</label><input type="text" id="mpFathersName" required></div>
       <div class="field"><label>Residential Address</label><input type="text" id="mpAddress" required></div>
@@ -1369,8 +1359,6 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
-let storage = null;
-try { storage = firebase.storage(); } catch(e) { console.warn('Storage not available yet:', e); }
 const googleProvider = new firebase.auth.GoogleAuthProvider();
 
 /* ============================================================
@@ -1528,20 +1516,6 @@ document.getElementById('forgotPasswordForm').addEventListener('submit', (e)=>{
 });
 
 /* ============================================================
-   PROFILE PICTURE UPLOAD (Firebase Storage — optional, fails gracefully)
-   ============================================================ */
-function uploadProfilePhoto(uid, file){
-  if(!storage || !file) return Promise.resolve(null);
-  const ref = storage.ref('profile-photos/' + uid);
-  const uploadPromise = ref.put(file).then(()=> ref.getDownloadURL());
-  const timeoutPromise = new Promise((resolve)=> setTimeout(()=> resolve(null), 6000));
-  return Promise.race([uploadPromise, timeoutPromise]).catch((err)=>{
-    console.warn('Photo upload skipped (Storage not ready):', err);
-    return null;
-  });
-}
-
-/* ============================================================
    COMPLETE PROFILE (mandatory after signup, before using the site)
    ============================================================ */
 document.getElementById('completeProfileForm').addEventListener('submit', (e)=>{
@@ -1554,7 +1528,6 @@ document.getElementById('completeProfileForm').addEventListener('submit', (e)=>{
   const fathersName = document.getElementById('cpFathersName').value.trim();
   const address = document.getElementById('cpAddress').value.trim();
   const phone = document.getElementById('cpPhone').value.trim();
-  const photoFile = document.getElementById('cpPhoto').files[0];
 
   // Check phone uniqueness before creating the profile
   db.collection('users').where('phone', '==', phone).limit(1).get().then((snap)=>{
@@ -1563,20 +1536,17 @@ document.getElementById('completeProfileForm').addEventListener('submit', (e)=>{
       return;
     }
     return generateStudentId().then((studentId)=>{
-      return uploadProfilePhoto(user.uid, photoFile).then((photoURL)=>{
-        return db.collection('users').doc(user.uid).set({
-          studentId: studentId,
-          name: name,
-          fathersName: fathersName,
-          address: address,
-          phone: phone,
-          email: user.email,
-          photoURL: photoURL || '',
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        }).then(()=>{
-          closeOverlay('completeProfileOverlay');
-          refreshProfileUI(user);
-        });
+      return db.collection('users').doc(user.uid).set({
+        studentId: studentId,
+        name: name,
+        fathersName: fathersName,
+        address: address,
+        phone: phone,
+        email: user.email,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      }).then(()=>{
+        closeOverlay('completeProfileOverlay');
+        refreshProfileUI(user);
       });
     });
   }).catch((err)=>{
@@ -1612,13 +1582,8 @@ document.getElementById('myProfileForm').addEventListener('submit', (e)=>{
   const fathersName = document.getElementById('mpFathersName').value.trim();
   const address = document.getElementById('mpAddress').value.trim();
   const phone = document.getElementById('mpPhone').value.trim();
-  const photoFile = document.getElementById('mpPhoto').files[0];
 
-  uploadProfilePhoto(user.uid, photoFile).then((photoURL)=>{
-    const updateData = { name, fathersName, address, phone };
-    if(photoURL) updateData.photoURL = photoURL;
-    return db.collection('users').doc(user.uid).update(updateData);
-  }).then(()=>{
+  db.collection('users').doc(user.uid).update({ name, fathersName, address, phone }).then(()=>{
     document.getElementById('myProfileSaved').style.display = 'block';
     refreshProfileUI(user);
     setTimeout(()=> document.getElementById('myProfileSaved').style.display = 'none', 2500);
@@ -1699,16 +1664,8 @@ function refreshProfileUI(user){
     document.getElementById('profileMenuWrap').classList.remove('hidden');
     document.getElementById('profileDropdownName').textContent = d.name || user.email;
     document.getElementById('profileDropdownId').textContent = d.studentId ? ('Student ID: ' + d.studentId) : '';
-    if(d.photoURL){
-      document.getElementById('profileAvatarImg').src = d.photoURL;
-      document.getElementById('profileAvatarImg').classList.remove('hidden');
-      document.getElementById('profileAvatarInitial').classList.add('hidden');
-    } else {
-      const initial = (d.name || user.email || 'A').charAt(0).toUpperCase();
-      document.getElementById('profileAvatarInitial').textContent = initial;
-      document.getElementById('profileAvatarInitial').classList.remove('hidden');
-      document.getElementById('profileAvatarImg').classList.add('hidden');
-    }
+    const initial = (d.name || user.email || 'A').charAt(0).toUpperCase();
+    document.getElementById('profileAvatarInitial').textContent = initial;
   });
 }
 
