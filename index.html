@@ -1545,6 +1545,15 @@ document.getElementById('completeProfileForm').addEventListener('submit', (e)=>{
         email: user.email,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       }).then(()=>{
+        sendToSheet({
+          formType: 'studentSignup',
+          studentId: studentId,
+          name: name,
+          fathersName: fathersName,
+          address: address,
+          phone: phone,
+          email: user.email
+        });
         closeOverlay('completeProfileOverlay');
         refreshProfileUI(user);
       });
@@ -1584,6 +1593,15 @@ document.getElementById('myProfileForm').addEventListener('submit', (e)=>{
   const phone = document.getElementById('mpPhone').value.trim();
 
   db.collection('users').doc(user.uid).update({ name, fathersName, address, phone }).then(()=>{
+    sendToSheet({
+      formType: 'studentUpdate',
+      studentId: document.getElementById('mpStudentId').textContent,
+      name: name,
+      fathersName: fathersName,
+      address: address,
+      phone: phone,
+      email: document.getElementById('mpEmail').value
+    });
     document.getElementById('myProfileSaved').style.display = 'block';
     refreshProfileUI(user);
     setTimeout(()=> document.getElementById('myProfileSaved').style.display = 'none', 2500);
