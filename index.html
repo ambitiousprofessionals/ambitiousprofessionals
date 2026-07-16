@@ -7,6 +7,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-storage-compat.js"></script>
 <style>
 :root{
   --red:#AE1029;
@@ -79,6 +83,33 @@ nav a{
 }
 nav a:hover{color:var(--red);border-color:var(--red);}
 .hamburger{display:none;background:none;color:var(--black);font-size:26px;}
+
+/* ===== AUTH AREA ===== */
+.auth-area{display:flex;align-items:center;gap:10px;margin-left:16px;}
+.btn-auth{
+  font-family:var(--head);font-size:12px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;
+  padding:9px 18px;border-radius:var(--radius);border:1.5px solid var(--line);background:var(--white);color:var(--black);
+  cursor:pointer;transition:.2s;
+}
+.btn-auth:hover{border-color:var(--red);color:var(--red);}
+.btn-auth-primary{background:var(--red);border-color:var(--red);color:var(--white);}
+.btn-auth-primary:hover{background:var(--red-bright);color:var(--white);}
+.profile-menu-wrap{position:relative;}
+.profile-avatar-btn{
+  width:38px;height:38px;border-radius:50%;background:var(--red);color:var(--white);border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-family:var(--head);font-weight:600;font-size:15px;overflow:hidden;
+}
+.profile-avatar-btn img{width:100%;height:100%;object-fit:cover;}
+.profile-dropdown{
+  position:absolute;top:48px;right:0;background:var(--white);border:1px solid var(--line);border-radius:var(--radius);
+  min-width:190px;box-shadow:0 8px 24px rgba(43,40,35,.12);z-index:300;padding:10px 0;
+}
+.profile-dropdown-name{padding:8px 16px 2px;font-family:var(--head);font-size:13px;color:var(--black);font-weight:600;}
+.profile-dropdown-id{padding:0 16px 10px;font-size:11.5px;color:var(--gray);border-bottom:1px solid var(--line);margin-bottom:6px;}
+.profile-dropdown a{
+  display:block;padding:9px 16px;font-size:13.5px;color:var(--charcoal);transition:.15s;
+}
+.profile-dropdown a:hover{background:var(--panel);color:var(--red);}
 
 /* ===== HERO ===== */
 .hero{
@@ -313,6 +344,8 @@ footer .cols div a:hover{color:var(--red);}
 .success-modal .btn-primary{margin-top:24px;display:inline-flex;}
 
 @media(max-width:860px){
+  .auth-area{margin-left:auto;margin-right:8px;}
+  .btn-auth{padding:8px 12px;font-size:11px;}
   nav{
     display:none;
     position:absolute;
@@ -353,6 +386,24 @@ footer .cols div a:hover{color:var(--red);}
         <li><a href="#footer">Contact</a></li>
       </ul>
     </nav>
+    <div class="auth-area" id="authArea">
+      <button class="btn-auth" id="signInBtn">Sign In</button>
+      <button class="btn-auth btn-auth-primary" id="signUpBtn">Sign Up</button>
+      <div class="profile-menu-wrap hidden" id="profileMenuWrap">
+        <button class="profile-avatar-btn" id="profileAvatarBtn">
+          <img id="profileAvatarImg" src="" alt="Profile" class="hidden">
+          <span id="profileAvatarInitial">A</span>
+        </button>
+        <div class="profile-dropdown hidden" id="profileDropdown">
+          <div class="profile-dropdown-name" id="profileDropdownName">—</div>
+          <div class="profile-dropdown-id" id="profileDropdownId">—</div>
+          <a href="#" id="myOrdersLink">My Orders</a>
+          <a href="#" id="myCartLink">Cart</a>
+          <a href="#" id="myProfileLink">My Profile</a>
+          <a href="#" id="signOutLink">Sign Out</a>
+        </div>
+      </div>
+    </div>
     <button class="hamburger" id="hamburgerBtn" aria-label="menu">&#9776;</button>
   </div>
 </header>
@@ -665,7 +716,133 @@ footer .cols div a:hover{color:var(--red);}
   </div>
 </div>
 
+<!-- ===================== SIGN UP MODAL ===================== -->
+<div class="overlay hidden-overlay" id="signUpOverlay">
+  <div class="modal">
+    <button class="modal-close" data-close="signUpOverlay">&times;</button>
+    <h3>Create Your Student Account</h3>
+    <div class="sub">Choose how you'd like to sign up.</div>
+    <button type="button" class="btn btn-outline" id="googleSignUpBtn" style="width:100%;justify-content:center;border:1.5px solid var(--line);color:var(--black);margin-bottom:14px;">
+      Continue with Google
+    </button>
+    <div style="text-align:center;font-size:12px;color:var(--gray);margin:8px 0 16px;">— or sign up with email —</div>
+    <form id="emailSignUpForm">
+      <div class="field"><label>Email</label><input type="email" id="suEmail" required></div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="suPassword" required placeholder="Min 8 chars: upper, lower, number, symbol">
+      </div>
+      <div class="field"><label>Confirm Password</label><input type="password" id="suPasswordConfirm" required></div>
+      <div id="signUpError" style="color:var(--red);font-size:12.5px;margin-bottom:10px;display:none;"></div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">Create Account</button>
+    </form>
+    <div style="text-align:center;margin-top:16px;font-size:13px;">
+      Already have an account? <a href="#" id="switchToSignIn" style="color:var(--red);text-decoration:underline;">Sign in</a>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SIGN IN MODAL ===================== -->
+<div class="overlay hidden-overlay" id="signInOverlay">
+  <div class="modal">
+    <button class="modal-close" data-close="signInOverlay">&times;</button>
+    <h3>Sign In</h3>
+    <div class="sub">Welcome back.</div>
+    <button type="button" class="btn btn-outline" id="googleSignInBtn" style="width:100%;justify-content:center;border:1.5px solid var(--line);color:var(--black);margin-bottom:14px;">
+      Continue with Google
+    </button>
+    <div style="text-align:center;font-size:12px;color:var(--gray);margin:8px 0 16px;">— or sign in with email/mobile —</div>
+    <form id="emailSignInForm">
+      <div class="field"><label>Email or Mobile Number</label><input type="text" id="siIdentifier" required></div>
+      <div class="field"><label>Password</label><input type="password" id="siPassword" required></div>
+      <div id="signInError" style="color:var(--red);font-size:12.5px;margin-bottom:10px;display:none;"></div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">Sign In</button>
+    </form>
+    <div style="text-align:center;margin-top:14px;font-size:13px;display:flex;justify-content:space-between;">
+      <a href="#" id="switchToSignUp" style="color:var(--red);text-decoration:underline;">Create account</a>
+      <a href="#" id="forgotPasswordLink" style="color:var(--gray);text-decoration:underline;">Forgot password?</a>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== FORGOT PASSWORD MODAL ===================== -->
+<div class="overlay hidden-overlay" id="forgotPasswordOverlay">
+  <div class="modal" style="max-width:420px;">
+    <button class="modal-close" data-close="forgotPasswordOverlay">&times;</button>
+    <h3>Reset Your Password</h3>
+    <div class="sub">Enter your registered email — we'll send a reset link.</div>
+    <form id="forgotPasswordForm">
+      <div class="field"><label>Email</label><input type="email" id="fpEmail" required></div>
+      <div id="forgotPasswordMsg" style="font-size:12.5px;margin-bottom:10px;display:none;"></div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">Send Reset Link</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===================== COMPLETE PROFILE MODAL (mandatory after signup) ===================== -->
+<div class="overlay hidden-overlay" id="completeProfileOverlay">
+  <div class="modal">
+    <h3>Complete Your Profile</h3>
+    <div class="sub">Just a few details before you continue — this only takes a minute.</div>
+    <form id="completeProfileForm">
+      <div class="field">
+        <label>Profile Picture (optional)</label>
+        <input type="file" id="cpPhoto" accept="image/*">
+      </div>
+      <div class="field"><label>Full Name</label><input type="text" id="cpName" required></div>
+      <div class="field"><label>Father's Name</label><input type="text" id="cpFathersName" required></div>
+      <div class="field"><label>Residential Address (for book delivery)</label><input type="text" id="cpAddress" required></div>
+      <div class="field"><label>Mobile Number</label><input type="text" id="cpPhone" pattern="[0-9]{6,12}" required></div>
+      <div class="field"><label>Email</label><input type="email" id="cpEmail" readonly style="background:#f1efe9;"></div>
+      <div id="completeProfileError" style="color:var(--red);font-size:12.5px;margin-bottom:10px;display:none;"></div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">Save and Continue</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===================== MY PROFILE (EDIT) MODAL ===================== -->
+<div class="overlay hidden-overlay" id="myProfileOverlay">
+  <div class="modal">
+    <button class="modal-close" data-close="myProfileOverlay">&times;</button>
+    <h3>My Profile</h3>
+    <div class="sub">Student ID: <strong id="mpStudentId">—</strong></div>
+    <form id="myProfileForm">
+      <div class="field">
+        <label>Profile Picture</label>
+        <input type="file" id="mpPhoto" accept="image/*">
+      </div>
+      <div class="field"><label>Full Name</label><input type="text" id="mpName" required></div>
+      <div class="field"><label>Father's Name</label><input type="text" id="mpFathersName" required></div>
+      <div class="field"><label>Residential Address</label><input type="text" id="mpAddress" required></div>
+      <div class="field"><label>Mobile Number</label><input type="text" id="mpPhone" pattern="[0-9]{6,12}" required></div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="mpEmail" readonly style="background:#f1efe9;">
+        <div style="margin-top:6px;"><a href="#" id="changeEmailLink" style="font-size:12px;color:var(--red);text-decoration:underline;">Change email</a></div>
+      </div>
+      <div id="myProfileSaved" style="color:var(--red);font-size:12.5px;margin-bottom:10px;display:none;">Saved.</div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">Save Changes</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===================== CHANGE EMAIL MODAL ===================== -->
+<div class="overlay hidden-overlay" id="changeEmailOverlay">
+  <div class="modal" style="max-width:420px;">
+    <button class="modal-close" data-close="changeEmailOverlay">&times;</button>
+    <h3>Change Registered Email</h3>
+    <div class="sub">For security, re-enter your password, then your new email.</div>
+    <form id="changeEmailForm">
+      <div class="field"><label>Current Password</label><input type="password" id="ceCurrentPassword" required></div>
+      <div class="field"><label>New Email</label><input type="email" id="ceNewEmail" required></div>
+      <div id="changeEmailMsg" style="font-size:12.5px;margin-bottom:10px;display:none;"></div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">Send Verification Link</button>
+    </form>
+  </div>
+</div>
+
 <script>
+
 /* ============================================================
    DATA
    ============================================================ */
@@ -1022,6 +1199,7 @@ document.querySelectorAll('[data-close]').forEach(el=>{
   el.addEventListener('click',()=>closeOverlay(el.dataset.close));
 });
 document.querySelectorAll('.overlay').forEach(ov=>{
+  if(ov.id === 'completeProfileOverlay') return; // mandatory — no dismiss until saved
   ov.addEventListener('click',(e)=>{ if(e.target===ov) ov.classList.add('hidden-overlay'); });
 });
 
@@ -1172,6 +1350,374 @@ document.getElementById('generalForm').addEventListener('submit',(e)=>{
   closeOverlay('generalOverlay');
   e.target.reset();
   openOverlay('bookedSuccessOverlay');
+});
+
+/* ============================================================
+   FIREBASE INIT
+   ============================================================ */
+const firebaseConfig = {
+  apiKey: "AIzaSyCOLJmk4RY8cpR8CSyhMAKsQ6XSeIJyey4",
+  authDomain: "ambitious-professionals.firebaseapp.com",
+  projectId: "ambitious-professionals",
+  storageBucket: "ambitious-professionals.firebasestorage.app",
+  messagingSenderId: "566165560303",
+  appId: "1:566165560303:web:40c683e07a030c779f741a"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+let storage = null;
+try { storage = firebase.storage(); } catch(e) { console.warn('Storage not available yet:', e); }
+const googleProvider = new firebase.auth.GoogleAuthProvider();
+
+/* ============================================================
+   PASSWORD VALIDATION
+   ============================================================ */
+function isStrongPassword(pw){
+  const lengthOk = pw.length >= 8;
+  const hasUpper = /[A-Z]/.test(pw);
+  const hasLower = /[a-z]/.test(pw);
+  const hasNumber = /[0-9]/.test(pw);
+  const hasSymbol = /[^A-Za-z0-9]/.test(pw);
+  return lengthOk && hasUpper && hasLower && hasNumber && hasSymbol;
+}
+
+function showError(elId, msg){
+  const el = document.getElementById(elId);
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+function hideError(elId){
+  document.getElementById(elId).style.display = 'none';
+}
+
+/* ============================================================
+   STUDENT ID GENERATION (transactional, gap-free, never reused)
+   ============================================================ */
+function generateStudentId(){
+  const yearCode = String(new Date().getFullYear()).slice(-2);
+  const counterRef = db.collection('counters').doc('AP' + yearCode);
+  return db.runTransaction((tx)=>{
+    return tx.get(counterRef).then((doc)=>{
+      let next = 1;
+      if(doc.exists){
+        next = (doc.data().lastNumber || 0) + 1;
+      }
+      tx.set(counterRef, { lastNumber: next }, { merge: true });
+      return 'AP' + yearCode + String(next).padStart(4, '0');
+    });
+  });
+}
+
+/* ============================================================
+   AUTH MODAL SWITCHING
+   ============================================================ */
+document.getElementById('signUpBtn').addEventListener('click', ()=> openOverlay('signUpOverlay'));
+document.getElementById('signInBtn').addEventListener('click', ()=> openOverlay('signInOverlay'));
+document.getElementById('switchToSignIn').addEventListener('click', (e)=>{
+  e.preventDefault(); closeOverlay('signUpOverlay'); openOverlay('signInOverlay');
+});
+document.getElementById('switchToSignUp').addEventListener('click', (e)=>{
+  e.preventDefault(); closeOverlay('signInOverlay'); openOverlay('signUpOverlay');
+});
+document.getElementById('forgotPasswordLink').addEventListener('click', (e)=>{
+  e.preventDefault(); closeOverlay('signInOverlay'); openOverlay('forgotPasswordOverlay');
+});
+
+/* ============================================================
+   GOOGLE SIGN-IN / SIGN-UP (same flow — Firebase handles both)
+   ============================================================ */
+function handleGoogleAuth(){
+  auth.signInWithPopup(googleProvider).then((result)=>{
+    closeOverlay('signUpOverlay');
+    closeOverlay('signInOverlay');
+    // onAuthStateChanged will handle profile-completion check
+  }).catch((err)=>{
+    alert('Google sign-in failed: ' + err.message);
+  });
+}
+document.getElementById('googleSignUpBtn').addEventListener('click', handleGoogleAuth);
+document.getElementById('googleSignInBtn').addEventListener('click', handleGoogleAuth);
+
+/* ============================================================
+   EMAIL/PASSWORD SIGN UP
+   ============================================================ */
+document.getElementById('emailSignUpForm').addEventListener('submit', (e)=>{
+  e.preventDefault();
+  hideError('signUpError');
+  const email = document.getElementById('suEmail').value.trim();
+  const password = document.getElementById('suPassword').value;
+  const confirm = document.getElementById('suPasswordConfirm').value;
+
+  if(!isStrongPassword(password)){
+    showError('signUpError', 'Password must be at least 8 characters and include upper case, lower case, a number, and a symbol.');
+    return;
+  }
+  if(password !== confirm){
+    showError('signUpError', 'Passwords do not match.');
+    return;
+  }
+
+  auth.createUserWithEmailAndPassword(email, password).then((cred)=>{
+    cred.user.sendEmailVerification();
+    closeOverlay('signUpOverlay');
+    // onAuthStateChanged will trigger profile completion
+  }).catch((err)=>{
+    if(err.code === 'auth/email-already-in-use'){
+      showError('signUpError', 'An account with this email is already registered.');
+    } else {
+      showError('signUpError', err.message);
+    }
+  });
+});
+
+/* ============================================================
+   EMAIL OR MOBILE SIGN IN
+   ============================================================ */
+document.getElementById('emailSignInForm').addEventListener('submit', (e)=>{
+  e.preventDefault();
+  hideError('signInError');
+  const identifier = document.getElementById('siIdentifier').value.trim();
+  const password = document.getElementById('siPassword').value;
+
+  function doSignIn(email){
+    auth.signInWithEmailAndPassword(email, password).then(()=>{
+      closeOverlay('signInOverlay');
+    }).catch((err)=>{
+      showError('signInError', 'Incorrect email/mobile number or password.');
+    });
+  }
+
+  if(identifier.includes('@')){
+    doSignIn(identifier);
+  } else {
+    // Look up the email tied to this phone number
+    db.collection('users').where('phone', '==', identifier).limit(1).get().then((snap)=>{
+      if(snap.empty){
+        showError('signInError', 'No account found with this mobile number.');
+        return;
+      }
+      const userDoc = snap.docs[0].data();
+      doSignIn(userDoc.email);
+    }).catch((err)=>{
+      showError('signInError', 'Something went wrong. Please try again.');
+    });
+  }
+});
+
+/* ============================================================
+   FORGOT PASSWORD
+   ============================================================ */
+document.getElementById('forgotPasswordForm').addEventListener('submit', (e)=>{
+  e.preventDefault();
+  const email = document.getElementById('fpEmail').value.trim();
+  auth.sendPasswordResetEmail(email).then(()=>{
+    const msg = document.getElementById('forgotPasswordMsg');
+    msg.style.color = 'var(--red)';
+    msg.textContent = 'Reset link sent — check your inbox (and spam folder).';
+    msg.style.display = 'block';
+  }).catch((err)=>{
+    const msg = document.getElementById('forgotPasswordMsg');
+    msg.style.color = 'var(--gray)';
+    msg.textContent = err.message;
+    msg.style.display = 'block';
+  });
+});
+
+/* ============================================================
+   PROFILE PICTURE UPLOAD (Firebase Storage — optional, fails gracefully)
+   ============================================================ */
+function uploadProfilePhoto(uid, file){
+  if(!storage || !file) return Promise.resolve(null);
+  const ref = storage.ref('profile-photos/' + uid);
+  return ref.put(file).then(()=> ref.getDownloadURL()).catch((err)=>{
+    console.warn('Photo upload skipped (Storage not ready):', err);
+    return null;
+  });
+}
+
+/* ============================================================
+   COMPLETE PROFILE (mandatory after signup, before using the site)
+   ============================================================ */
+document.getElementById('completeProfileForm').addEventListener('submit', (e)=>{
+  e.preventDefault();
+  hideError('completeProfileError');
+  const user = auth.currentUser;
+  if(!user) return;
+
+  const name = document.getElementById('cpName').value.trim();
+  const fathersName = document.getElementById('cpFathersName').value.trim();
+  const address = document.getElementById('cpAddress').value.trim();
+  const phone = document.getElementById('cpPhone').value.trim();
+  const photoFile = document.getElementById('cpPhoto').files[0];
+
+  // Check phone uniqueness before creating the profile
+  db.collection('users').where('phone', '==', phone).limit(1).get().then((snap)=>{
+    if(!snap.empty){
+      showError('completeProfileError', 'This mobile number is already registered to another account.');
+      return;
+    }
+    return generateStudentId().then((studentId)=>{
+      return uploadProfilePhoto(user.uid, photoFile).then((photoURL)=>{
+        return db.collection('users').doc(user.uid).set({
+          studentId: studentId,
+          name: name,
+          fathersName: fathersName,
+          address: address,
+          phone: phone,
+          email: user.email,
+          photoURL: photoURL || '',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(()=>{
+          closeOverlay('completeProfileOverlay');
+          refreshProfileUI(user);
+        });
+      });
+    });
+  }).catch((err)=>{
+    showError('completeProfileError', err.message);
+  });
+});
+
+/* ============================================================
+   MY PROFILE (view/edit anytime — auto-saves on submit)
+   ============================================================ */
+document.getElementById('myProfileLink').addEventListener('click', (e)=>{
+  e.preventDefault();
+  const user = auth.currentUser;
+  if(!user) return;
+  db.collection('users').doc(user.uid).get().then((doc)=>{
+    const d = doc.data() || {};
+    document.getElementById('mpStudentId').textContent = d.studentId || '—';
+    document.getElementById('mpName').value = d.name || '';
+    document.getElementById('mpFathersName').value = d.fathersName || '';
+    document.getElementById('mpAddress').value = d.address || '';
+    document.getElementById('mpPhone').value = d.phone || '';
+    document.getElementById('mpEmail').value = d.email || '';
+    openOverlay('myProfileOverlay');
+    document.getElementById('profileDropdown').classList.add('hidden');
+  });
+});
+
+document.getElementById('myProfileForm').addEventListener('submit', (e)=>{
+  e.preventDefault();
+  const user = auth.currentUser;
+  if(!user) return;
+  const name = document.getElementById('mpName').value.trim();
+  const fathersName = document.getElementById('mpFathersName').value.trim();
+  const address = document.getElementById('mpAddress').value.trim();
+  const phone = document.getElementById('mpPhone').value.trim();
+  const photoFile = document.getElementById('mpPhoto').files[0];
+
+  uploadProfilePhoto(user.uid, photoFile).then((photoURL)=>{
+    const updateData = { name, fathersName, address, phone };
+    if(photoURL) updateData.photoURL = photoURL;
+    return db.collection('users').doc(user.uid).update(updateData);
+  }).then(()=>{
+    document.getElementById('myProfileSaved').style.display = 'block';
+    refreshProfileUI(user);
+    setTimeout(()=> document.getElementById('myProfileSaved').style.display = 'none', 2500);
+  });
+});
+
+/* ============================================================
+   CHANGE REGISTERED EMAIL
+   ============================================================ */
+document.getElementById('changeEmailLink').addEventListener('click', (e)=>{
+  e.preventDefault();
+  closeOverlay('myProfileOverlay');
+  openOverlay('changeEmailOverlay');
+});
+
+document.getElementById('changeEmailForm').addEventListener('submit', (e)=>{
+  e.preventDefault();
+  const user = auth.currentUser;
+  if(!user) return;
+  const currentPassword = document.getElementById('ceCurrentPassword').value;
+  const newEmail = document.getElementById('ceNewEmail').value.trim();
+  const msg = document.getElementById('changeEmailMsg');
+
+  const credential = firebase.auth.EmailAuthProvider.credential(user.email, currentPassword);
+  user.reauthenticateWithCredential(credential).then(()=>{
+    return user.verifyBeforeUpdateEmail(newEmail);
+  }).then(()=>{
+    msg.style.color = 'var(--red)';
+    msg.textContent = 'Verification link sent to your new email. Your email will update once you confirm it there.';
+    msg.style.display = 'block';
+  }).catch((err)=>{
+    msg.style.color = 'var(--gray)';
+    msg.textContent = err.message;
+    msg.style.display = 'block';
+  });
+});
+
+/* ============================================================
+   PROFILE DROPDOWN TOGGLE
+   ============================================================ */
+document.getElementById('profileAvatarBtn').addEventListener('click', ()=>{
+  document.getElementById('profileDropdown').classList.toggle('hidden');
+});
+document.addEventListener('click', (e)=>{
+  const wrap = document.getElementById('profileMenuWrap');
+  if(!wrap.contains(e.target)){
+    document.getElementById('profileDropdown').classList.add('hidden');
+  }
+});
+
+document.getElementById('signOutLink').addEventListener('click', (e)=>{
+  e.preventDefault();
+  auth.signOut();
+});
+
+document.getElementById('myOrdersLink').addEventListener('click', (e)=>{
+  e.preventDefault();
+  alert('My Orders is coming in the next update, once the cart system is built.');
+});
+document.getElementById('myCartLink').addEventListener('click', (e)=>{
+  e.preventDefault();
+  alert('Cart is coming in the next update.');
+});
+
+/* ============================================================
+   AUTH STATE OBSERVER — drives the whole header UI
+   ============================================================ */
+function refreshProfileUI(user){
+  db.collection('users').doc(user.uid).get().then((doc)=>{
+    const d = doc.data() || {};
+    document.getElementById('signInBtn').classList.add('hidden');
+    document.getElementById('signUpBtn').classList.add('hidden');
+    document.getElementById('profileMenuWrap').classList.remove('hidden');
+    document.getElementById('profileDropdownName').textContent = d.name || user.email;
+    document.getElementById('profileDropdownId').textContent = d.studentId ? ('Student ID: ' + d.studentId) : '';
+    if(d.photoURL){
+      document.getElementById('profileAvatarImg').src = d.photoURL;
+      document.getElementById('profileAvatarImg').classList.remove('hidden');
+      document.getElementById('profileAvatarInitial').classList.add('hidden');
+    } else {
+      const initial = (d.name || user.email || 'A').charAt(0).toUpperCase();
+      document.getElementById('profileAvatarInitial').textContent = initial;
+      document.getElementById('profileAvatarInitial').classList.remove('hidden');
+      document.getElementById('profileAvatarImg').classList.add('hidden');
+    }
+  });
+}
+
+auth.onAuthStateChanged((user)=>{
+  if(!user){
+    document.getElementById('signInBtn').classList.remove('hidden');
+    document.getElementById('signUpBtn').classList.remove('hidden');
+    document.getElementById('profileMenuWrap').classList.add('hidden');
+    return;
+  }
+  db.collection('users').doc(user.uid).get().then((doc)=>{
+    if(!doc.exists || !doc.data().studentId){
+      // New account — must complete mandatory profile first
+      document.getElementById('cpEmail').value = user.email || '';
+      openOverlay('completeProfileOverlay');
+    } else {
+      refreshProfileUI(user);
+    }
+  });
 });
 </script>
 </body>
