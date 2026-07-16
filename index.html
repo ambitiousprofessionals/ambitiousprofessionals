@@ -1530,7 +1530,9 @@ document.getElementById('forgotPasswordForm').addEventListener('submit', (e)=>{
 function uploadProfilePhoto(uid, file){
   if(!storage || !file) return Promise.resolve(null);
   const ref = storage.ref('profile-photos/' + uid);
-  return ref.put(file).then(()=> ref.getDownloadURL()).catch((err)=>{
+  const uploadPromise = ref.put(file).then(()=> ref.getDownloadURL());
+  const timeoutPromise = new Promise((resolve)=> setTimeout(()=> resolve(null), 6000));
+  return Promise.race([uploadPromise, timeoutPromise]).catch((err)=>{
     console.warn('Photo upload skipped (Storage not ready):', err);
     return null;
   });
