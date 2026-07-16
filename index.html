@@ -203,6 +203,7 @@ select{
   font-family:var(--body);font-size:13px;background:var(--white);color:var(--black);
 }
 select:disabled{background:#f1efe9;color:#aaa;cursor:not-allowed;}
+.f-faculty-other{margin-top:6px;}
 .mode-list{display:flex;flex-direction:column;gap:5px;}
 .mode-hint{font-size:11px;color:var(--gray);font-style:italic;font-family:var(--serif);line-height:1.4;margin-bottom:6px;}
 .mode-option{
@@ -520,6 +521,19 @@ footer .cols div a:hover{color:var(--red);}
 </footer>
 
 <!-- ===================== ORDER MODAL ===================== -->
+<!-- ===================== CUSTOM FACULTY NAME DIALOG ===================== -->
+<div class="overlay hidden-overlay" id="facultyOtherOverlay">
+  <div class="modal" style="max-width:420px;">
+    <button class="modal-close" id="facultyOtherCancel">&times;</button>
+    <h3>Type Faculty Name</h3>
+    <div class="sub">Enter the faculty you're looking for, then press Enter.</div>
+    <div class="field">
+      <input type="text" id="facultyOtherInput" placeholder="e.g. CA Ramesh Verma">
+    </div>
+    <button type="button" class="btn btn-primary" id="facultyOtherConfirm" style="width:100%;justify-content:center;">Confirm</button>
+  </div>
+</div>
+
 <div class="overlay hidden-overlay" id="orderOverlay">
   <div class="modal">
     <button class="modal-close" data-close="orderOverlay">&times;</button>
@@ -698,6 +712,55 @@ updateFounderYears();
 const CLASS_TYPES = ["Regular","Fast-track","Exam Oriented","Revision Classes"];
 const MODES = ["Offline Face to Face","Online Live","Online Google Drive","Online Pen Drive"];
 
+/* ============================================================
+   CUSTOM FACULTY NAME DIALOG
+   ============================================================ */
+const OTHER_LABEL = 'Other (please specify)';
+let facultyOtherActiveSelect = null;
+let facultyOtherActiveHidden = null;
+let facultyOtherActiveOptionEl = null;
+
+function openFacultyOtherDialog(selectEl, hiddenInputEl, optionEl){
+  facultyOtherActiveSelect = selectEl;
+  facultyOtherActiveHidden = hiddenInputEl;
+  facultyOtherActiveOptionEl = optionEl;
+  const input = document.getElementById('facultyOtherInput');
+  input.value = hiddenInputEl.value || '';
+  openOverlay('facultyOtherOverlay');
+  setTimeout(()=> input.focus(), 50);
+}
+
+function confirmFacultyOtherDialog(){
+  const input = document.getElementById('facultyOtherInput');
+  const typed = input.value.trim();
+  if(facultyOtherActiveHidden){
+    facultyOtherActiveHidden.value = typed;
+  }
+  if(facultyOtherActiveOptionEl){
+    facultyOtherActiveOptionEl.textContent = typed ? typed : OTHER_LABEL;
+  }
+  closeOverlay('facultyOtherOverlay');
+  checkOrderReady();
+}
+
+function cancelFacultyOtherDialog(){
+  // If nothing was ever typed, fall back to blank text on the select so it's clear it's unfinished.
+  if(facultyOtherActiveOptionEl && !facultyOtherActiveHidden.value){
+    facultyOtherActiveOptionEl.textContent = OTHER_LABEL;
+  }
+  closeOverlay('facultyOtherOverlay');
+  checkOrderReady();
+}
+
+document.getElementById('facultyOtherConfirm').addEventListener('click', confirmFacultyOtherDialog);
+document.getElementById('facultyOtherCancel').addEventListener('click', cancelFacultyOtherDialog);
+document.getElementById('facultyOtherInput').addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter'){
+    e.preventDefault();
+    confirmFacultyOtherDialog();
+  }
+});
+
 const COURSES = {
 CA: {
   Foundation: [
@@ -824,7 +887,7 @@ function renderTable(){
     row.className='paper-row disabled';
     row.dataset.idx = idx;
 
-    const facultyOptions = paper.faculty.map(f=>`<option value="${f}">${f}</option>`).join('');
+    const facultyOptions = paper.faculty.map(f=>`<option value="${f}">${f}</option>`).join('') + `<option value="__other__">Other (please specify)</option>`;
     const attemptOptions = getAttemptsFor(currentCourse, currentLevel).map(a=>`<option value="${a}">${a}</option>`).join('');
     const typeOptions = CLASS_TYPES.map(t=>`<option value="${t}">${t}</option>`).join('');
     const modeOptions = MODES.map(m=>`<div class="mode-option" data-value="${m}"><span class="mode-num"></span><span class="mode-text">${m}</span></div>`).join('');
@@ -834,7 +897,10 @@ function renderTable(){
       <td class="chk-cell"><input type="checkbox" class="row-enable"></td>
       <td>${paper.no}</td>
       <td class="paper-name"><b>${paper.name}</b></td>
-      <td><select class="f-faculty" disabled><option value="" selected disabled>Select faculty</option>${facultyOptions}</select></td>
+      <td>
+        <select class="f-faculty" disabled><option value="" selected disabled>Select faculty</option>${facultyOptions}</select>
+        <input type="text" class="f-faculty-other hidden" disabled placeholder="Type faculty name">
+      </td>
       <td><select class="f-attempt" disabled><option value="" selected disabled>Select attempt</option>${attemptOptions}</select></td>
       <td><select class="f-type" disabled><option value="" selected disabled>Select type</option>${typeOptions}</select></td>
       <td>${modeList}</td>
@@ -849,17 +915,33 @@ function attachRowLogic(){
   paperTableBody.querySelectorAll('.paper-row').forEach(row=>{
     const enableChk = row.querySelector('.row-enable');
     const selects = row.querySelectorAll('select');
+    const facultySelect = row.querySelector('.f-faculty');
+    const facultyOther = row.querySelector('.f-faculty-other'); // hidden data store, not shown to user
     const modeOptions = row.querySelectorAll('.mode-option');
     const modeList = row.querySelector('.mode-list');
+
+    const otherOptionEl = facultySelect.querySelector('option[value="__other__"]');
 
     enableChk.addEventListener('change',()=>{
       const on = enableChk.checked;
       row.classList.toggle('disabled', !on);
       selects.forEach(s=>{ s.disabled = !on; if(!on) s.value=''; });
+      facultyOther.value = '';
+      otherOptionEl.textContent = OTHER_LABEL;
       if(!on) resetModeOptions(modeOptions);
       modeOptions.forEach(m=>{ m.dataset.enabled = on ? 'true' : 'false'; });
       modeList.classList.toggle('disabled', !on);
       checkOrderReady();
+    });
+
+    facultySelect.addEventListener('change',()=>{
+      if(facultySelect.value === '__other__'){
+        openFacultyOtherDialog(facultySelect, facultyOther, otherOptionEl);
+      } else {
+        facultyOther.value = '';
+        otherOptionEl.textContent = OTHER_LABEL;
+        checkOrderReady();
+      }
     });
 
     selects.forEach(s=>s.addEventListener('change',checkOrderReady));
@@ -912,10 +994,12 @@ function checkOrderReady(){
   let ready = enabledRows.length > 0;
   enabledRows.forEach(row=>{
     const faculty = row.querySelector('.f-faculty').value;
+    const facultyOtherVal = row.querySelector('.f-faculty-other').value.trim();
     const attempt = row.querySelector('.f-attempt').value;
     const type = row.querySelector('.f-type').value;
     const anyMode = row.querySelectorAll('.mode-option.selected').length > 0;
-    if(!faculty || !attempt || !type || !anyMode) ready = false;
+    const facultyValid = faculty && (faculty !== '__other__' || facultyOtherVal.length > 0);
+    if(!facultyValid || !attempt || !type || !anyMode) ready = false;
   });
   placeOrderBtn.disabled = !ready;
 }
@@ -994,7 +1078,11 @@ function collectSelectedPapers(){
     if(!row.querySelector('.row-enable').checked) return;
     const paperNo = row.children[1].textContent.trim();
     const paperName = row.querySelector('.paper-name b').textContent.trim();
-    const faculty = row.querySelector('.f-faculty').value;
+    let faculty = row.querySelector('.f-faculty').value;
+    if(faculty === '__other__'){
+      const customName = row.querySelector('.f-faculty-other').value.trim();
+      faculty = customName ? customName : 'Other';
+    }
     const attempt = row.querySelector('.f-attempt').value;
     const typeOfClass = row.querySelector('.f-type').value;
     const modeOfClass = [...row.querySelectorAll('.mode-option.selected')]
