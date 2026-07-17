@@ -93,7 +93,15 @@ nav a:hover{color:var(--red);border-color:var(--red);}
 .btn-auth:hover{border-color:var(--red);color:var(--red);}
 .btn-auth-primary{background:var(--red);border-color:var(--red);color:var(--white);}
 .btn-auth-primary:hover{background:var(--red-bright);color:var(--white);}
-.profile-menu-wrap{position:relative;}
+.profile-menu-wrap{position:relative;display:flex;align-items:center;gap:12px;}
+.cart-icon-btn{
+  position:relative;background:none;border:none;font-size:19px;cursor:pointer;line-height:1;padding:6px;
+}
+.cart-badge{
+  position:absolute;top:-2px;right:-2px;background:var(--red);color:var(--white);
+  font-family:var(--head);font-size:10px;font-weight:700;border-radius:50%;
+  width:16px;height:16px;display:flex;align-items:center;justify-content:center;
+}
 .profile-avatar-btn{
   width:38px;height:38px;border-radius:50%;background:var(--red);color:var(--white);border:none;cursor:pointer;
   display:flex;align-items:center;justify-content:center;font-family:var(--head);font-weight:600;font-size:15px;overflow:hidden;
@@ -389,6 +397,9 @@ footer .cols div a:hover{color:var(--red);}
       <button class="btn-auth" id="signInBtn">Sign In</button>
       <button class="btn-auth btn-auth-primary" id="signUpBtn">Sign Up</button>
       <div class="profile-menu-wrap hidden" id="profileMenuWrap">
+        <button class="cart-icon-btn" id="cartIconBtn">
+          🛒<span class="cart-badge hidden" id="cartBadge">0</span>
+        </button>
         <button class="profile-avatar-btn" id="profileAvatarBtn">
           <span id="profileAvatarInitial">A</span>
         </button>
@@ -486,7 +497,7 @@ footer .cols div a:hover{color:var(--red);}
         </table>
       </div>
       <div class="order-bar">
-        <button class="btn-order" id="placeOrderBtn" disabled>Place Your Order</button>
+        <button class="btn-order" id="placeOrderBtn" disabled>Add to Cart</button>
       </div>
     </div>
 
@@ -496,7 +507,7 @@ footer .cols div a:hover{color:var(--red);}
         <span class="eyebrow">MBA aspirants</span>
         <h3 style="margin:12px 0 16px;">Not sure which path is right for you?</h3>
         <p>Whether you're weighing entrance exams, shortlisting universities, or simply want an honest read on your options — sit down for a one-on-one, no-obligation session with Prof. Abanindra Sahu. We'll map out exams, timelines and the universities worth targeting, based on where you actually stand today.</p>
-        <button class="btn btn-primary" id="mbaBookBtn">Book a Free Counselling</button>
+        <button class="btn btn-primary" id="mbaBookBtn">Add to Cart</button>
       </div>
     </div>
   </div>
@@ -508,7 +519,7 @@ footer .cols div a:hover{color:var(--red);}
     <span class="eyebrow">Still deciding?</span>
     <h2 style="margin-top:10px;">Book a Free Counselling Session</h2>
     <p>Talk through your goals, the right exam attempt, and the right mode of class — before you commit to anything.</p>
-    <button class="btn btn-primary" id="generalCounselBtn">Book Free Counselling</button>
+    <button class="btn btn-primary" id="generalCounselBtn">Add to Cart</button>
   </div>
 </section>
 
@@ -583,115 +594,45 @@ footer .cols div a:hover{color:var(--red);}
   </div>
 </div>
 
-<div class="overlay hidden-overlay" id="orderOverlay">
+<!-- ===================== CART MODAL ===================== -->
+<div class="overlay hidden-overlay" id="cartOverlay">
+  <div class="modal" style="max-width:640px;">
+    <button class="modal-close" data-close="cartOverlay">&times;</button>
+    <h3>Your Cart</h3>
+    <div class="sub">Review everything below, then place your order.</div>
+    <div id="cartItemsList" style="margin-bottom:18px;"></div>
+    <div id="cartEmptyMsg" style="display:none;color:var(--gray);font-size:14px;text-align:center;padding:20px 0;">Your cart is empty.</div>
+    <div id="cartError" style="color:var(--red);font-size:12.5px;margin-bottom:10px;display:none;"></div>
+    <button type="button" class="btn btn-primary" id="placeCartOrderBtn" style="width:100%;justify-content:center;">Place Order</button>
+  </div>
+</div>
+
+<!-- ===================== COUNSELLING DETAILS MODAL (feeds into Cart) ===================== -->
+<div class="overlay hidden-overlay" id="counsellingDetailsOverlay">
   <div class="modal">
-    <button class="modal-close" data-close="orderOverlay">&times;</button>
-    <h3>Complete Your Order</h3>
-    <div class="sub">A few details so we can set up your classes.</div>
-    <form id="orderForm">
-      <div class="field"><label>Name</label><input type="text" id="orderName" required></div>
-      <div class="field"><label>Contact No.</label>
-        <div class="phone-row">
-          <select id="orderContactCode" required>
-            <option value="+91" selected>+91 (IN)</option>
-            <option value="+1">+1 (US/CA)</option>
-            <option value="+44">+44 (UK)</option>
-            <option value="+971">+971 (UAE)</option>
-            <option value="+61">+61 (AU)</option>
-            <option value="+65">+65 (SG)</option>
-          </select>
-          <input type="text" id="orderContactNum" pattern="[0-9]{6,12}" required>
-        </div>
-      </div>
-      <div class="field"><label>WhatsApp No.</label>
-        <div class="phone-row">
-          <select id="orderWhatsappCode" required>
-            <option value="+91" selected>+91 (IN)</option>
-            <option value="+1">+1 (US/CA)</option>
-            <option value="+44">+44 (UK)</option>
-            <option value="+971">+971 (UAE)</option>
-            <option value="+61">+61 (AU)</option>
-            <option value="+65">+65 (SG)</option>
-          </select>
-          <input type="text" id="orderWhatsappNum" pattern="[0-9]{6,12}" required>
-        </div>
-      </div>
-      <div class="field"><label>Gmail</label><input type="email" id="orderEmail" required placeholder="you@gmail.com"></div>
-      <div class="field"><label>Address</label><input type="text" id="orderAddress" required></div>
+    <button class="modal-close" data-close="counsellingDetailsOverlay">&times;</button>
+    <h3 id="counsellingDetailsTitle">Counselling Request</h3>
+    <div class="sub">Just a couple of details — your profile info will be used for the rest.</div>
+    <form id="counsellingDetailsForm">
+      <div class="field hidden" id="cdExamField"><label>The exam you want to appear</label><input type="text" id="cdExam" placeholder="e.g. CA Foundation, CMA Intermediate..."></div>
       <div class="field">
-        <label>Any Extra Info (within 500 words)</label>
-        <textarea id="orderExtra" maxlength="4000"></textarea>
-        <div class="char-count"><span id="orderWordCount">0</span> / 500 words</div>
+        <label>The real thing you want to know (in 200 words)</label>
+        <textarea id="cdExtra" maxlength="2000" required></textarea>
+        <div class="char-count"><span id="cdWordCount">0</span> / 200 words</div>
       </div>
-      <button type="submit" class="btn btn-primary">Submit</button>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">Add to Cart</button>
     </form>
   </div>
 </div>
 
-<!-- ===================== MBA MODAL ===================== -->
-<div class="overlay hidden-overlay" id="mbaOverlay">
-  <div class="modal">
-    <button class="modal-close" data-close="mbaOverlay">&times;</button>
-    <h3>Book Free MBA Counselling</h3>
-    <div class="sub">A short session with Prof. Abanindra Sahu.</div>
-    <form id="mbaForm">
-      <div class="field"><label>Name</label><input type="text" id="mbaName" required></div>
-      <div class="field"><label>Father's Name</label><input type="text" id="mbaFathersName" required></div>
-      <div class="field"><label>Contact No.</label>
-        <div class="phone-row">
-          <select id="mbaContactCode" required><option value="+91" selected>+91 (IN)</option><option value="+1">+1 (US/CA)</option><option value="+44">+44 (UK)</option><option value="+971">+971 (UAE)</option><option value="+61">+61 (AU)</option><option value="+65">+65 (SG)</option></select>
-          <input type="text" id="mbaContactNum" pattern="[0-9]{6,12}" required>
-        </div>
-      </div>
-      <div class="field"><label>WhatsApp No.</label>
-        <div class="phone-row">
-          <select id="mbaWhatsappCode" required><option value="+91" selected>+91 (IN)</option><option value="+1">+1 (US/CA)</option><option value="+44">+44 (UK)</option><option value="+971">+971 (UAE)</option><option value="+61">+61 (AU)</option><option value="+65">+65 (SG)</option></select>
-          <input type="text" id="mbaWhatsappNum" pattern="[0-9]{6,12}" required>
-        </div>
-      </div>
-      <div class="field"><label>Email ID</label><input type="email" id="mbaEmail" required></div>
-      <div class="field"><label>Address</label><input type="text" id="mbaAddress" required></div>
-      <div class="field">
-        <label>The real thing you want to know (in 200 words)</label>
-        <textarea id="mbaExtra" maxlength="2000"></textarea>
-        <div class="char-count"><span id="mbaWordCount">0</span> / 200 words</div>
-      </div>
-      <button type="submit" class="btn btn-primary">Submit</button>
-    </form>
-  </div>
-</div>
-
-<!-- ===================== GENERAL COUNSELLING MODAL ===================== -->
-<div class="overlay hidden-overlay" id="generalOverlay">
-  <div class="modal">
-    <button class="modal-close" data-close="generalOverlay">&times;</button>
-    <h3>Book a Free Counselling Session</h3>
-    <div class="sub">Tell us a little about you and what you'd like to know.</div>
-    <form id="generalForm">
-      <div class="field"><label>Name</label><input type="text" id="generalName" required></div>
-      <div class="field"><label>Father's Name</label><input type="text" id="generalFathersName" required></div>
-      <div class="field"><label>The exam you want to appear</label><input type="text" id="generalExam" placeholder="e.g. CA Foundation, CMA Intermediate..." required></div>
-      <div class="field"><label>Contact No.</label>
-        <div class="phone-row">
-          <select id="generalContactCode" required><option value="+91" selected>+91 (IN)</option><option value="+1">+1 (US/CA)</option><option value="+44">+44 (UK)</option><option value="+971">+971 (UAE)</option><option value="+61">+61 (AU)</option><option value="+65">+65 (SG)</option></select>
-          <input type="text" id="generalContactNum" pattern="[0-9]{6,12}" required>
-        </div>
-      </div>
-      <div class="field"><label>WhatsApp No.</label>
-        <div class="phone-row">
-          <select id="generalWhatsappCode" required><option value="+91" selected>+91 (IN)</option><option value="+1">+1 (US/CA)</option><option value="+44">+44 (UK)</option><option value="+971">+971 (UAE)</option><option value="+61">+61 (AU)</option><option value="+65">+65 (SG)</option></select>
-          <input type="text" id="generalWhatsappNum" pattern="[0-9]{6,12}" required>
-        </div>
-      </div>
-      <div class="field"><label>Email ID</label><input type="email" id="generalEmail" required></div>
-      <div class="field"><label>Address</label><input type="text" id="generalAddress" required></div>
-      <div class="field">
-        <label>The real thing you want to know (in 200 words)</label>
-        <textarea id="generalExtra" maxlength="2000"></textarea>
-        <div class="char-count"><span id="generalWordCount">0</span> / 200 words</div>
-      </div>
-      <button type="submit" class="btn btn-primary">Submit</button>
-    </form>
+<!-- ===================== MY ORDERS MODAL ===================== -->
+<div class="overlay hidden-overlay" id="myOrdersOverlay">
+  <div class="modal" style="max-width:640px;">
+    <button class="modal-close" data-close="myOrdersOverlay">&times;</button>
+    <h3>My Orders</h3>
+    <div class="sub">A history of everything you've placed with us.</div>
+    <div id="myOrdersList" style="max-height:420px;overflow-y:auto;"></div>
+    <div id="myOrdersEmptyMsg" style="display:none;color:var(--gray);font-size:14px;text-align:center;padding:20px 0;">No orders yet.</div>
   </div>
 </div>
 
@@ -699,8 +640,8 @@ footer .cols div a:hover{color:var(--red);}
 <div class="overlay hidden-overlay" id="orderSuccessOverlay">
   <div class="modal success-modal">
     <div class="tick">✓</div>
-    <h3>Your order has been submitted</h3>
-    <p>A confirmation has been sent to your email ID <strong id="orderSuccessEmail"></strong>. Class availability, payments and other details will follow shortly.</p>
+    <h3>Your order has been placed</h3>
+    <p>A confirmation has been sent to your registered email <strong id="orderSuccessEmail"></strong>. Class availability, payments and other details will follow shortly.</p>
     <button class="btn btn-primary" data-close="orderSuccessOverlay">Close</button>
   </div>
 </div>
@@ -709,7 +650,7 @@ footer .cols div a:hover{color:var(--red);}
   <div class="modal success-modal">
     <div class="tick">✓</div>
     <h3>Booked!</h3>
-    <p>A confirmation has been sent to your email ID <strong id="bookedSuccessEmail"></strong>. The date, time and other details for your counselling session will follow shortly.</p>
+    <p>A confirmation has been sent to your registered email <strong id="bookedSuccessEmail"></strong>. The date, time and other details for your counselling session will follow shortly.</p>
     <button class="btn btn-primary" data-close="bookedSuccessOverlay">Close</button>
   </div>
 </div>
@@ -1176,7 +1117,7 @@ function checkOrderReady(){
 
 placeOrderBtn.addEventListener('click',()=>{
   if(placeOrderBtn.disabled) return;
-  openOverlay('orderOverlay');
+  addTablePapersToCart();
 });
 
 /* ============================================================
@@ -1196,9 +1137,6 @@ document.querySelectorAll('.overlay').forEach(ov=>{
   ov.addEventListener('click',(e)=>{ if(e.target===ov) ov.classList.add('hidden-overlay'); });
 });
 
-document.getElementById('mbaBookBtn').addEventListener('click',()=>openOverlay('mbaOverlay'));
-document.getElementById('generalCounselBtn').addEventListener('click',()=>openOverlay('generalOverlay'));
-
 /* ============================================================
    MOBILE NAV (hamburger)
    ============================================================ */
@@ -1211,7 +1149,7 @@ mainNav.querySelectorAll('a').forEach(a=>{
   a.addEventListener('click',()=>mainNav.classList.remove('mobile-open'));
 });
 
-/* word counters */
+/* word counter (counselling details modal only) */
 function wireWordCount(textareaId, counterId, max){
   const ta = document.getElementById(textareaId);
   const counter = document.getElementById(counterId);
@@ -1223,9 +1161,7 @@ function wireWordCount(textareaId, counterId, max){
     counter.textContent = Math.min(words.length, max);
   });
 }
-wireWordCount('orderExtra','orderWordCount',500);
-wireWordCount('mbaExtra','mbaWordCount',200);
-wireWordCount('generalExtra','generalWordCount',200);
+wireWordCount('cdExtra','cdWordCount',200);
 
 /* ============================================================
    BACKEND SUBMISSION (Google Apps Script)
@@ -1260,90 +1196,209 @@ function collectSelectedPapers(){
       .sort((a,b) => parseInt(a.dataset.order,10) - parseInt(b.dataset.order,10))
       .map(m => m.dataset.order + ') ' + m.dataset.value)
       .join(', ');
-    selected.push({paperNo, paperName, faculty, attempt, typeOfClass, modeOfClass});
+    selected.push({kind:'classPaper', course: currentCourse, level: currentLevel, paperNo, paperName, faculty, attempt, typeOfClass, modeOfClass});
   });
   return selected;
 }
 
-/* form submits */
-document.getElementById('orderForm').addEventListener('submit',(e)=>{
-  e.preventDefault();
-  const whatsappCode = document.getElementById('orderWhatsappCode').value;
-  const whatsappNumber = document.getElementById('orderWhatsappNum').value;
-  const email = document.getElementById('orderEmail').value;
+/* ============================================================
+   CART SYSTEM
+   ============================================================ */
+let cartItems = [];
+let currentUserProfile = null; // { studentId, name, email } cached on sign-in
 
-  sendToSheet({
-    formType: 'order',
-    studentName: document.getElementById('orderName').value,
-    contactCode: document.getElementById('orderContactCode').value,
-    contactNumber: document.getElementById('orderContactNum').value,
-    whatsappCode: whatsappCode,
-    whatsappNumber: whatsappNumber,
-    email: email,
-    address: document.getElementById('orderAddress').value,
-    course: currentCourse,
-    level: currentLevel,
-    extraInfo: document.getElementById('orderExtra').value,
-    papers: collectSelectedPapers()
+function requireAuthOrPrompt(){
+  if(auth.currentUser && currentUserProfile){
+    return true;
+  }
+  alert('Please sign in or sign up first to add items to your cart.');
+  openOverlay(auth.currentUser ? 'signInOverlay' : 'signUpOverlay');
+  return false;
+}
+
+function saveCartToFirestore(){
+  if(!auth.currentUser) return Promise.resolve();
+  return db.collection('users').doc(auth.currentUser.uid).update({ cart: cartItems });
+}
+
+function updateCartBadge(){
+  const link = document.getElementById('myCartLink');
+  link.textContent = cartItems.length ? ('Cart (' + cartItems.length + ')') : 'Cart';
+  const badge = document.getElementById('cartBadge');
+  if(cartItems.length > 0){
+    badge.textContent = cartItems.length;
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
+  }
+}
+
+function addTablePapersToCart(){
+  if(!requireAuthOrPrompt()) return;
+  const newItems = collectSelectedPapers();
+  if(newItems.length === 0) return;
+  cartItems = cartItems.concat(newItems);
+  saveCartToFirestore().then(()=>{
+    updateCartBadge();
+    renderTable(); // reset the table's selections
+    openCart();
+  });
+}
+
+function addCounsellingToCart(examOrCourse, whatWantToKnow){
+  if(!requireAuthOrPrompt()) return;
+  cartItems.push({ kind:'counselling', examOrCourse: examOrCourse, whatWantToKnow: whatWantToKnow });
+  saveCartToFirestore().then(()=>{
+    updateCartBadge();
+    openCart();
+  });
+}
+
+function describeCartItem(item){
+  if(item.kind === 'classPaper'){
+    return item.course + ' ' + item.level + ' — ' + item.paperNo + ': ' + item.paperName +
+      '<br><span style="color:var(--gray);font-size:12px;">Faculty: ' + item.faculty + ' · Attempt: ' + item.attempt + ' · ' + item.typeOfClass + '</span>';
+  }
+  return (item.examOrCourse || 'Counselling') + ' — Free Counselling Request' +
+    '<br><span style="color:var(--gray);font-size:12px;">' + item.whatWantToKnow.slice(0,80) + (item.whatWantToKnow.length > 80 ? '…' : '') + '</span>';
+}
+
+function renderCart(){
+  const list = document.getElementById('cartItemsList');
+  const emptyMsg = document.getElementById('cartEmptyMsg');
+  const placeBtn = document.getElementById('placeCartOrderBtn');
+  list.innerHTML = '';
+  if(cartItems.length === 0){
+    emptyMsg.style.display = 'block';
+    placeBtn.disabled = true;
+    return;
+  }
+  emptyMsg.style.display = 'none';
+  placeBtn.disabled = false;
+  cartItems.forEach((item, idx)=>{
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);font-size:13.5px;';
+    row.innerHTML = `<div>${describeCartItem(item)}</div><a href="#" data-idx="${idx}" style="color:var(--red);font-size:12px;flex:0 0 auto;">Remove</a>`;
+    row.querySelector('a').addEventListener('click',(e)=>{
+      e.preventDefault();
+      cartItems.splice(idx,1);
+      saveCartToFirestore().then(()=>{ updateCartBadge(); renderCart(); });
+    });
+    list.appendChild(row);
+  });
+}
+
+function openCart(){
+  renderCart();
+  openOverlay('cartOverlay');
+}
+
+document.getElementById('placeCartOrderBtn').addEventListener('click', ()=>{
+  if(cartItems.length === 0 || !currentUserProfile) return;
+  const classPaperItems = cartItems.filter(i => i.kind === 'classPaper');
+  const counsellingItems = cartItems.filter(i => i.kind === 'counselling');
+
+  if(classPaperItems.length > 0){
+    sendToSheet({
+      formType: 'order',
+      studentId: currentUserProfile.studentId,
+      name: currentUserProfile.name,
+      email: currentUserProfile.email,
+      extraInfo: '',
+      papers: classPaperItems
+    });
+  }
+  counsellingItems.forEach(item=>{
+    sendToSheet({
+      formType: 'counselling',
+      studentId: currentUserProfile.studentId,
+      name: currentUserProfile.name,
+      email: currentUserProfile.email,
+      examOrCourse: item.examOrCourse,
+      whatWantToKnow: item.whatWantToKnow
+    });
   });
 
-  document.getElementById('orderSuccessEmail').textContent = email;
-  closeOverlay('orderOverlay');
-  e.target.reset();
-  openOverlay('orderSuccessOverlay');
-});
-
-document.getElementById('mbaForm').addEventListener('submit',(e)=>{
-  e.preventDefault();
-  const whatsappCode = document.getElementById('mbaWhatsappCode').value;
-  const whatsappNumber = document.getElementById('mbaWhatsappNum').value;
-  const email = document.getElementById('mbaEmail').value;
-
-  sendToSheet({
-    formType: 'counselling',
-    name: document.getElementById('mbaName').value,
-    fathersName: document.getElementById('mbaFathersName').value,
-    examOrCourse: 'MBA',
-    contactCode: document.getElementById('mbaContactCode').value,
-    contactNumber: document.getElementById('mbaContactNum').value,
-    whatsappCode: whatsappCode,
-    whatsappNumber: whatsappNumber,
-    email: email,
-    address: document.getElementById('mbaAddress').value,
-    whatWantToKnow: document.getElementById('mbaExtra').value
+  // Log a lightweight summary for "My Orders"
+  const uid = auth.currentUser.uid;
+  db.collection('users').doc(uid).update({
+    orderHistory: firebase.firestore.FieldValue.arrayUnion({
+      date: new Date().toISOString(),
+      itemCount: cartItems.length,
+      summary: cartItems.map(i => i.kind === 'classPaper' ? (i.course + ' ' + i.level + ' ' + i.paperNo) : (i.examOrCourse || 'Counselling')).join(', ')
+    })
   });
 
-  document.getElementById('bookedSuccessEmail').textContent = email;
-  closeOverlay('mbaOverlay');
-  e.target.reset();
-  openOverlay('bookedSuccessOverlay');
-});
-
-document.getElementById('generalForm').addEventListener('submit',(e)=>{
-  e.preventDefault();
-  const whatsappCode = document.getElementById('generalWhatsappCode').value;
-  const whatsappNumber = document.getElementById('generalWhatsappNum').value;
-  const email = document.getElementById('generalEmail').value;
-
-  sendToSheet({
-    formType: 'counselling',
-    name: document.getElementById('generalName').value,
-    fathersName: document.getElementById('generalFathersName').value,
-    examOrCourse: document.getElementById('generalExam').value,
-    contactCode: document.getElementById('generalContactCode').value,
-    contactNumber: document.getElementById('generalContactNum').value,
-    whatsappCode: whatsappCode,
-    whatsappNumber: whatsappNumber,
-    email: email,
-    address: document.getElementById('generalAddress').value,
-    whatWantToKnow: document.getElementById('generalExtra').value
+  cartItems = [];
+  saveCartToFirestore().then(()=>{
+    updateCartBadge();
+    closeOverlay('cartOverlay');
+    const emailSpanId = classPaperItems.length > 0 ? 'orderSuccessEmail' : 'bookedSuccessEmail';
+    document.getElementById(emailSpanId).textContent = currentUserProfile.email;
+    openOverlay(classPaperItems.length > 0 ? 'orderSuccessOverlay' : 'bookedSuccessOverlay');
   });
-
-  document.getElementById('bookedSuccessEmail').textContent = email;
-  closeOverlay('generalOverlay');
-  e.target.reset();
-  openOverlay('bookedSuccessOverlay');
 });
+
+/* ============================================================
+   COUNSELLING ENTRY POINTS (MBA panel + general strip)
+   ============================================================ */
+let pendingCounsellingType = null; // 'mba' | 'general'
+
+document.getElementById('mbaBookBtn').addEventListener('click', ()=>{
+  if(!requireAuthOrPrompt()) return;
+  pendingCounsellingType = 'mba';
+  document.getElementById('counsellingDetailsTitle').textContent = 'MBA Counselling Request';
+  document.getElementById('cdExamField').classList.add('hidden');
+  document.getElementById('cdExam').removeAttribute('required');
+  document.getElementById('counsellingDetailsForm').reset();
+  document.getElementById('cdWordCount').textContent = '0';
+  openOverlay('counsellingDetailsOverlay');
+});
+
+document.getElementById('generalCounselBtn').addEventListener('click', ()=>{
+  if(!requireAuthOrPrompt()) return;
+  pendingCounsellingType = 'general';
+  document.getElementById('counsellingDetailsTitle').textContent = 'Free Counselling Request';
+  document.getElementById('cdExamField').classList.remove('hidden');
+  document.getElementById('cdExam').setAttribute('required','required');
+  document.getElementById('counsellingDetailsForm').reset();
+  document.getElementById('cdWordCount').textContent = '0';
+  openOverlay('counsellingDetailsOverlay');
+});
+
+document.getElementById('counsellingDetailsForm').addEventListener('submit', (e)=>{
+  e.preventDefault();
+  const examOrCourse = pendingCounsellingType === 'mba' ? 'MBA' : document.getElementById('cdExam').value.trim();
+  const whatWantToKnow = document.getElementById('cdExtra').value.trim();
+  closeOverlay('counsellingDetailsOverlay');
+  addCounsellingToCart(examOrCourse, whatWantToKnow);
+});
+
+/* ============================================================
+   MY ORDERS
+   ============================================================ */
+function renderMyOrders(){
+  const list = document.getElementById('myOrdersList');
+  const emptyMsg = document.getElementById('myOrdersEmptyMsg');
+  list.innerHTML = '';
+  if(!auth.currentUser){ emptyMsg.style.display = 'block'; return; }
+  db.collection('users').doc(auth.currentUser.uid).get().then((doc)=>{
+    const history = (doc.data() || {}).orderHistory || [];
+    if(history.length === 0){
+      emptyMsg.style.display = 'block';
+      return;
+    }
+    emptyMsg.style.display = 'none';
+    history.slice().reverse().forEach(entry=>{
+      const row = document.createElement('div');
+      row.style.cssText = 'padding:12px 0;border-bottom:1px solid var(--line);font-size:13.5px;';
+      const dateStr = new Date(entry.date).toLocaleString();
+      row.innerHTML = `<div style="font-family:var(--head);font-size:12px;color:var(--gray);">${dateStr}</div><div>${entry.summary}</div>`;
+      list.appendChild(row);
+    });
+  });
+}
+
 
 /* ============================================================
    FIREBASE INIT
@@ -1664,11 +1719,17 @@ document.getElementById('cpSignOutLink').addEventListener('click', (e)=>{
 
 document.getElementById('myOrdersLink').addEventListener('click', (e)=>{
   e.preventDefault();
-  alert('My Orders is coming in the next update, once the cart system is built.');
+  document.getElementById('profileDropdown').classList.add('hidden');
+  renderMyOrders();
+  openOverlay('myOrdersOverlay');
 });
 document.getElementById('myCartLink').addEventListener('click', (e)=>{
   e.preventDefault();
-  alert('Cart is coming in the next update.');
+  document.getElementById('profileDropdown').classList.add('hidden');
+  openCart();
+});
+document.getElementById('cartIconBtn').addEventListener('click', ()=>{
+  openCart();
 });
 
 /* ============================================================
@@ -1684,6 +1745,9 @@ function refreshProfileUI(user){
     document.getElementById('profileDropdownId').textContent = d.studentId ? ('Student ID: ' + d.studentId) : '';
     const initial = (d.name || user.email || 'A').charAt(0).toUpperCase();
     document.getElementById('profileAvatarInitial').textContent = initial;
+    currentUserProfile = { studentId: d.studentId, name: d.name || user.email, email: user.email };
+    cartItems = d.cart || [];
+    updateCartBadge();
   });
 }
 
@@ -1692,6 +1756,9 @@ auth.onAuthStateChanged((user)=>{
     document.getElementById('signInBtn').classList.remove('hidden');
     document.getElementById('signUpBtn').classList.remove('hidden');
     document.getElementById('profileMenuWrap').classList.add('hidden');
+    currentUserProfile = null;
+    cartItems = [];
+    updateCartBadge();
     return;
   }
   db.collection('users').doc(user.uid).get().then((doc)=>{
