@@ -336,6 +336,11 @@ footer .cols div a:hover{color:var(--red);}
   width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:var(--radius);font-family:var(--body);font-size:14px;background:var(--off);
 }
 .field textarea{resize:vertical;min-height:80px;}
+.pw-checklist{list-style:none;margin-top:8px;display:flex;flex-direction:column;gap:4px;}
+.pw-checklist li{font-size:12px;color:var(--red);display:flex;align-items:center;gap:7px;transition:.15s;}
+.pw-checklist li.valid{color:#2E7D32;}
+.pw-icon{font-size:11px;width:14px;flex:0 0 auto;}
+input:disabled{background:#f1efe9;color:#aaa;cursor:not-allowed;}
 .phone-row{display:flex;gap:8px;}
 .phone-row select{flex:0 0 108px;}
 .phone-row input{flex:1;}
@@ -669,9 +674,16 @@ footer .cols div a:hover{color:var(--red);}
       <div class="field"><label>Email</label><input type="email" id="suEmail" required></div>
       <div class="field">
         <label>Password</label>
-        <input type="password" id="suPassword" required placeholder="Min 8 chars: upper, lower, number, symbol">
+        <input type="password" id="suPassword" required placeholder="Enter password" autocomplete="new-password">
+        <ul class="pw-checklist" id="pwChecklist">
+          <li id="pwRuleLength"><span class="pw-icon">✕</span> At least 8 characters</li>
+          <li id="pwRuleUpper"><span class="pw-icon">✕</span> An upper case letter</li>
+          <li id="pwRuleLower"><span class="pw-icon">✕</span> A lower case letter</li>
+          <li id="pwRuleNumber"><span class="pw-icon">✕</span> A numeric figure</li>
+          <li id="pwRuleSymbol"><span class="pw-icon">✕</span> A symbol</li>
+        </ul>
       </div>
-      <div class="field"><label>Confirm Password</label><input type="password" id="suPasswordConfirm" required></div>
+      <div class="field"><label>Confirm Password</label><input type="password" id="suPasswordConfirm" required disabled placeholder="Meet all criteria above first" autocomplete="new-password"></div>
       <div id="signUpError" style="color:var(--red);font-size:12.5px;margin-bottom:10px;display:none;"></div>
       <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">Create Account</button>
     </form>
@@ -954,6 +966,7 @@ courseButtons.forEach(btn=>{
     if(currentCourse === 'MBA'){
       levelWrap.classList.add('hidden');
       mbaWrap.classList.remove('hidden');
+      mbaWrap.scrollIntoView({behavior:'smooth', block:'start'});
       return;
     }
     levelWrap.classList.remove('hidden');
@@ -1428,6 +1441,32 @@ function isStrongPassword(pw){
   return lengthOk && hasUpper && hasLower && hasNumber && hasSymbol;
 }
 
+function setRuleState(elId, passed){
+  const el = document.getElementById(elId);
+  el.classList.toggle('valid', passed);
+  el.querySelector('.pw-icon').textContent = passed ? '✓' : '✕';
+}
+
+document.getElementById('suPassword').addEventListener('input', ()=>{
+  const pw = document.getElementById('suPassword').value;
+  const lengthOk = pw.length >= 8;
+  const hasUpper = /[A-Z]/.test(pw);
+  const hasLower = /[a-z]/.test(pw);
+  const hasNumber = /[0-9]/.test(pw);
+  const hasSymbol = /[^A-Za-z0-9]/.test(pw);
+
+  setRuleState('pwRuleLength', lengthOk);
+  setRuleState('pwRuleUpper', hasUpper);
+  setRuleState('pwRuleLower', hasLower);
+  setRuleState('pwRuleNumber', hasNumber);
+  setRuleState('pwRuleSymbol', hasSymbol);
+
+  const allValid = lengthOk && hasUpper && hasLower && hasNumber && hasSymbol;
+  const confirmField = document.getElementById('suPasswordConfirm');
+  confirmField.disabled = !allValid;
+  if(!allValid) confirmField.value = '';
+});
+
 function showError(elId, msg){
   const el = document.getElementById(elId);
   el.textContent = msg;
@@ -1458,13 +1497,17 @@ function generateStudentId(){
 /* ============================================================
    AUTH MODAL SWITCHING
    ============================================================ */
-document.getElementById('signUpBtn').addEventListener('click', ()=> openOverlay('signUpOverlay'));
+function resetPasswordChecklist(){
+  ['pwRuleLength','pwRuleUpper','pwRuleLower','pwRuleNumber','pwRuleSymbol'].forEach(id=> setRuleState(id, false));
+  document.getElementById('suPasswordConfirm').disabled = true;
+}
+document.getElementById('signUpBtn').addEventListener('click', ()=> { openOverlay('signUpOverlay'); resetPasswordChecklist(); });
 document.getElementById('signInBtn').addEventListener('click', ()=> openOverlay('signInOverlay'));
 document.getElementById('switchToSignIn').addEventListener('click', (e)=>{
   e.preventDefault(); closeOverlay('signUpOverlay'); openOverlay('signInOverlay');
 });
 document.getElementById('switchToSignUp').addEventListener('click', (e)=>{
-  e.preventDefault(); closeOverlay('signInOverlay'); openOverlay('signUpOverlay');
+  e.preventDefault(); closeOverlay('signInOverlay'); openOverlay('signUpOverlay'); resetPasswordChecklist();
 });
 document.getElementById('forgotPasswordLink').addEventListener('click', (e)=>{
   e.preventDefault(); closeOverlay('signInOverlay'); openOverlay('forgotPasswordOverlay');
@@ -1707,9 +1750,21 @@ document.addEventListener('click', (e)=>{
   }
 });
 
+function resetFinderToHome(){
+  currentCourse = null;
+  currentLevel = null;
+  courseButtons.forEach(b=>b.classList.remove('active'));
+  levelWrap.classList.add('hidden');
+  tableWrap.classList.add('hidden');
+  mbaWrap.classList.add('hidden');
+  levelButtons.innerHTML = '';
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
 document.getElementById('signOutLink').addEventListener('click', (e)=>{
   e.preventDefault();
   auth.signOut();
+  resetFinderToHome();
 });
 document.getElementById('cpSignOutLink').addEventListener('click', (e)=>{
   e.preventDefault();
@@ -1748,6 +1803,22 @@ function refreshProfileUI(user){
     currentUserProfile = { studentId: d.studentId, name: d.name || user.email, email: user.email };
     cartItems = d.cart || [];
     updateCartBadge();
+
+    // Self-healing: if the user verified a "Change Email" since their last visit,
+    // Firebase Auth's email is now new but Firestore/Sheet still have the old one — sync them.
+    if(d.email && d.email !== user.email && d.studentId){
+      db.collection('users').doc(user.uid).update({ email: user.email }).then(()=>{
+        sendToSheet({
+          formType: 'studentUpdate',
+          studentId: d.studentId,
+          name: d.name || '',
+          fathersName: d.fathersName || '',
+          address: d.address || '',
+          phone: d.phone || '',
+          email: user.email
+        });
+      });
+    }
   });
 }
 
