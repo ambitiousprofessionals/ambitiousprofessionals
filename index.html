@@ -343,10 +343,11 @@ footer .cols div a:hover{color:var(--red);}
 input:disabled{background:#f1efe9;color:#aaa;cursor:not-allowed;}
 .otp-boxes{display:flex;gap:10px;}
 .otp-box{
-  width:52px;height:56px;text-align:center;font-size:24px;font-family:var(--head);font-weight:600;
+  width:56px;height:64px;text-align:center;font-size:34px;font-family:var(--head);font-weight:700;
   border:1.5px solid var(--line);border-radius:var(--radius);background:var(--white);color:var(--black);
 }
 .otp-box:focus{border-color:var(--red);outline:none;}
+.pw-hint{font-family:var(--serif);font-style:italic;font-size:13px;color:var(--gray);margin-bottom:6px;}
 .phone-row{display:flex;gap:8px;}
 .phone-row select{flex:0 0 108px;}
 .phone-row input{flex:1;}
@@ -421,6 +422,7 @@ input:disabled{background:#f1efe9;color:#aaa;cursor:not-allowed;}
           <a href="#" id="myCartLink">Cart</a>
           <a href="#" id="myProfileLink">My Profile</a>
           <a href="#" id="signOutLink">Sign Out</a>
+          <a href="#" id="deleteAccountLink" style="color:var(--red);">Delete Account</a>
         </div>
       </div>
     </div>
@@ -703,6 +705,7 @@ input:disabled{background:#f1efe9;color:#aaa;cursor:not-allowed;}
       </div>
       <div class="field">
         <label>Password</label>
+        <div class="pw-hint">Give a strong password</div>
         <input type="password" id="suPassword" required disabled placeholder="Verify your email first" autocomplete="new-password">
         <ul class="pw-checklist" id="pwChecklist">
           <li id="pwRuleLength"><span class="pw-icon">✕</span> At least 8 characters</li>
@@ -776,6 +779,58 @@ input:disabled{background:#f1efe9;color:#aaa;cursor:not-allowed;}
       </div>
       <div id="forgotPasswordMsg" style="font-size:12.5px;margin-bottom:10px;display:none;"></div>
       <button type="submit" class="btn btn-primary" id="fpSubmitBtn" style="width:100%;justify-content:center;" disabled>Send Reset Link</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===================== DELETE ACCOUNT MODAL ===================== -->
+<div class="overlay hidden-overlay" id="deleteAccountOverlay">
+  <div class="modal">
+    <button class="modal-close" data-close="deleteAccountOverlay">&times;</button>
+    <div id="deleteAccountStep1">
+      <h3>Sad to see you go</h3>
+      <div class="sub">Before you go, please read this carefully.</div>
+      <p style="font-size:14px;color:var(--charcoal);line-height:1.7;margin-bottom:20px;">
+        Deleting your account will permanently remove all your data — your profile, your Student ID, your cart, and your order history. <strong>This action cannot be undone, and your account cannot be recovered in any way.</strong>
+      </p>
+      <button type="button" class="btn btn-primary" id="proceedToDeleteBtn" style="width:100%;justify-content:center;background:var(--red-dark);">Proceed to Account Deletion</button>
+    </div>
+    <div id="deleteAccountStep2" class="hidden">
+      <h3>Confirm Your Password</h3>
+      <div class="sub">For your security, re-enter your password to permanently delete your account.</div>
+      <form id="deleteAccountForm">
+        <div class="field"><label>Password</label><input type="password" id="daPassword" required autocomplete="current-password"></div>
+        <div id="deleteAccountError" style="color:var(--red);font-size:12.5px;margin-bottom:10px;display:none;"></div>
+        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;background:var(--red-dark);">Permanently Delete My Account</button>
+      </form>
+      <div style="text-align:center;margin-top:14px;font-size:13px;">
+        <a href="#" id="daForgotPasswordLink" style="color:var(--gray);text-decoration:underline;">Forgot password?</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SET PASSWORD MODAL (Google sign-up only) ===================== -->
+<div class="overlay hidden-overlay" id="googleSetPasswordOverlay">
+  <div class="modal">
+    <h3>Set a Password</h3>
+    <div class="sub">You're signing up with Google — set a password too, so you can also sign in with your email later.</div>
+    <form id="googleSetPasswordForm">
+      <div class="field">
+        <label>Password</label>
+        <div class="pw-hint">Give a strong password</div>
+        <input type="password" id="gpPassword" required autocomplete="new-password">
+        <ul class="pw-checklist" id="gpChecklist">
+          <li id="gpRuleLength"><span class="pw-icon">✕</span> At least 8 characters</li>
+          <li id="gpRuleUpper"><span class="pw-icon">✕</span> An upper case letter</li>
+          <li id="gpRuleLower"><span class="pw-icon">✕</span> A lower case letter</li>
+          <li id="gpRuleNumber"><span class="pw-icon">✕</span> A numeric figure</li>
+          <li id="gpRuleSymbol"><span class="pw-icon">✕</span> A symbol</li>
+        </ul>
+      </div>
+      <div class="field"><label>Confirm Password</label><input type="password" id="gpPasswordConfirm" required disabled autocomplete="new-password"></div>
+      <div id="googleSetPasswordError" style="color:var(--red);font-size:12.5px;margin-bottom:10px;display:none;"></div>
+      <button type="submit" class="btn btn-primary" id="gpContinueBtn" style="width:100%;justify-content:center;" disabled>Continue</button>
     </form>
   </div>
 </div>
@@ -1257,7 +1312,7 @@ document.querySelectorAll('[data-close]').forEach(el=>{
   el.addEventListener('click',()=>closeOverlay(el.dataset.close));
 });
 document.querySelectorAll('.overlay').forEach(ov=>{
-  if(ov.id === 'completeProfileOverlay') return; // mandatory — no dismiss until saved
+  if(ov.id === 'completeProfileOverlay' || ov.id === 'googleSetPasswordOverlay') return; // mandatory — no dismiss until saved
   ov.addEventListener('click',(e)=>{ if(e.target===ov) closeOverlay(ov.id); });
 });
 
@@ -1588,6 +1643,62 @@ function updateCreateAccountBtnState(){
 }
 
 /* ============================================================
+   GOOGLE SIGN-UP: SET PASSWORD STEP
+   ============================================================ */
+function resetGoogleSetPasswordForm(){
+  document.getElementById('googleSetPasswordForm').reset();
+  ['gpRuleLength','gpRuleUpper','gpRuleLower','gpRuleNumber','gpRuleSymbol'].forEach(id=> setRuleState(id, false));
+  document.getElementById('gpPasswordConfirm').disabled = true;
+  document.getElementById('gpContinueBtn').disabled = true;
+  hideError('googleSetPasswordError');
+}
+
+document.getElementById('gpPassword').addEventListener('input', ()=>{
+  const pw = document.getElementById('gpPassword').value;
+  const lengthOk = pw.length >= 8;
+  const hasUpper = /[A-Z]/.test(pw);
+  const hasLower = /[a-z]/.test(pw);
+  const hasNumber = /[0-9]/.test(pw);
+  const hasSymbol = /[^A-Za-z0-9]/.test(pw);
+
+  setRuleState('gpRuleLength', lengthOk);
+  setRuleState('gpRuleUpper', hasUpper);
+  setRuleState('gpRuleLower', hasLower);
+  setRuleState('gpRuleNumber', hasNumber);
+  setRuleState('gpRuleSymbol', hasSymbol);
+
+  const allValid = lengthOk && hasUpper && hasLower && hasNumber && hasSymbol;
+  const confirmField = document.getElementById('gpPasswordConfirm');
+  confirmField.disabled = !allValid;
+  if(!allValid) confirmField.value = '';
+  updateGpContinueBtnState();
+});
+document.getElementById('gpPasswordConfirm').addEventListener('input', updateGpContinueBtnState);
+
+function updateGpContinueBtnState(){
+  const pw = document.getElementById('gpPassword').value;
+  const confirm = document.getElementById('gpPasswordConfirm').value;
+  const ok = isStrongPassword(pw) && pw === confirm && confirm.length > 0;
+  document.getElementById('gpContinueBtn').disabled = !ok;
+}
+
+document.getElementById('googleSetPasswordForm').addEventListener('submit', (e)=>{
+  e.preventDefault();
+  const user = auth.currentUser;
+  if(!user) return;
+  const password = document.getElementById('gpPassword').value;
+  const credential = firebase.auth.EmailAuthProvider.credential(user.email, password);
+
+  user.linkWithCredential(credential).then(()=>{
+    closeOverlay('googleSetPasswordOverlay');
+    prefillCompleteProfile(user);
+    openOverlay('completeProfileOverlay');
+  }).catch((err)=>{
+    showError('googleSetPasswordError', err.message);
+  });
+});
+
+/* ============================================================
    EMAIL OTP VERIFICATION (sign-up + forgot password)
    Note: this deters casual typos/fake emails effectively, but — being
    fully transparent — without a paid backend, a technically determined
@@ -1704,7 +1815,25 @@ function resetSignUpOtpState(){
   updateCreateAccountBtnState();
 }
 
-document.getElementById('suSendOtpBtn').addEventListener('click', ()=> requestOtp('suEmail', 'suSendOtpBtn', 'suOtpSection', 'suOtpBoxes'));
+document.getElementById('suSendOtpBtn').addEventListener('click', ()=>{
+  const email = document.getElementById('suEmail').value.trim();
+  if(!email || !email.includes('@')){ alert('Enter a valid email first.'); return; }
+  const btn = document.getElementById('suSendOtpBtn');
+  btn.disabled = true;
+  btn.textContent = 'Checking...';
+  db.collection('emailIndex').doc(email.toLowerCase()).get().then((doc)=>{
+    if(doc.exists){
+      const errEl = document.getElementById('suEmailDupError');
+      errEl.textContent = 'This email is already registered. Please sign in instead, or use a different email.';
+      errEl.style.display = 'block';
+      btn.textContent = 'Blocked';
+      // stays disabled — only editing the email (via input listener) unfreezes this
+      return;
+    }
+    btn.textContent = 'Verify Email';
+    requestOtp('suEmail', 'suSendOtpBtn', 'suOtpSection', 'suOtpBoxes');
+  });
+});
 document.getElementById('suResendOtpLink').addEventListener('click', (e)=>{
   e.preventDefault();
   document.getElementById('suSendOtpBtn').disabled = false;
@@ -1838,8 +1967,8 @@ function handleGoogleAuth(intent){
       closeOverlay('signInOverlay');
       if(!hasProfile){
         db.collection('emailIndex').doc((user.email || '').toLowerCase()).set({ registered: true });
-        prefillCompleteProfile(user);
-        openOverlay('completeProfileOverlay');
+        resetGoogleSetPasswordForm();
+        openOverlay('googleSetPasswordOverlay');
       } else {
         refreshProfileUI(user);
       }
@@ -2124,6 +2253,69 @@ document.getElementById('signOutLink').addEventListener('click', (e)=>{
   auth.signOut();
   resetFinderToHome();
 });
+
+/* ============================================================
+   DELETE ACCOUNT
+   ============================================================ */
+document.getElementById('deleteAccountLink').addEventListener('click', (e)=>{
+  e.preventDefault();
+  document.getElementById('profileDropdown').classList.add('hidden');
+  document.getElementById('deleteAccountStep1').classList.remove('hidden');
+  document.getElementById('deleteAccountStep2').classList.add('hidden');
+  document.getElementById('daPassword').value = '';
+  hideError('deleteAccountError');
+  openOverlay('deleteAccountOverlay');
+});
+
+document.getElementById('proceedToDeleteBtn').addEventListener('click', ()=>{
+  document.getElementById('deleteAccountStep1').classList.add('hidden');
+  document.getElementById('deleteAccountStep2').classList.remove('hidden');
+});
+
+document.getElementById('daForgotPasswordLink').addEventListener('click', (e)=>{
+  e.preventDefault();
+  const user = auth.currentUser;
+  closeOverlay('deleteAccountOverlay');
+  resetForgotPasswordOtpState();
+  document.getElementById('fpEmail').value = user ? (user.email || '') : '';
+  openOverlay('forgotPasswordOverlay');
+});
+
+document.getElementById('deleteAccountForm').addEventListener('submit', (e)=>{
+  e.preventDefault();
+  hideError('deleteAccountError');
+  const user = auth.currentUser;
+  if(!user) return;
+  const password = document.getElementById('daPassword').value;
+  const credential = firebase.auth.EmailAuthProvider.credential(user.email, password);
+
+  user.reauthenticateWithCredential(credential).then(()=>{
+    return db.collection('users').doc(user.uid).get();
+  }).then((doc)=>{
+    const d = doc.data() || {};
+    const studentId = d.studentId;
+    const email = d.email || user.email;
+
+    if(studentId){
+      sendToSheet({ formType: 'deleteStudent', studentId: studentId });
+    }
+
+    return db.collection('users').doc(user.uid).delete()
+      .then(()=> db.collection('emailIndex').doc((email || '').toLowerCase()).delete())
+      .then(()=> user.delete());
+  }).then(()=>{
+    closeOverlay('deleteAccountOverlay');
+    resetFinderToHome();
+    alert('Your account has been permanently deleted. We\'re sorry to see you go.');
+  }).catch((err)=>{
+    if(err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential'){
+      showError('deleteAccountError', 'Incorrect password.');
+    } else {
+      showError('deleteAccountError', err.message);
+    }
+  });
+});
+
 document.getElementById('cpSignOutLink').addEventListener('click', (e)=>{
   e.preventDefault();
   auth.signOut();
