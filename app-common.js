@@ -81,6 +81,18 @@ document.addEventListener('click',(e)=>{
   }
 });
 
+/* ===== ACTIVE NAV HIGHLIGHT ===== */
+(function highlightActiveNav(){
+  const path = window.location.pathname.split('/').pop() || 'index.html';
+  const topLevelLinks = document.querySelectorAll('#mainNav > ul > li > a');
+  topLevelLinks.forEach(a=>{
+    const href = a.getAttribute('href');
+    if(href === path || (path === '' && href === 'index.html')){
+      a.classList.add('nav-active');
+    }
+  });
+})();
+
 /* word counter (counselling details modal only) */
 function wireWordCount(textareaId, counterId, max){
   const ta = document.getElementById(textareaId);
@@ -108,6 +120,31 @@ function sendToSheet(payload){
     body: JSON.stringify(payload)
   }).catch(err => console.error('Submission error:', err));
 }
+
+/* ============================================================
+   COUNSELLING → CART (shared by MBA panel on Courses page and
+   the general counselling strip on the Counselling page)
+   ============================================================ */
+function addCounsellingToCart(examOrCourse, whatWantToKnow){
+  if(!requireAuthOrPrompt()) return;
+  cartItems.push({ kind:'counselling', examOrCourse: examOrCourse, whatWantToKnow: whatWantToKnow });
+  saveCartToFirestore().then(()=>{
+    updateCartBadge();
+    openCart();
+  });
+}
+
+let pendingCounsellingType = null; // 'mba' | 'general'
+
+document.getElementById('counsellingDetailsForm').addEventListener('submit', (e)=>{
+  e.preventDefault();
+  const examOrCourse = pendingCounsellingType === 'mba' ? 'MBA' : document.getElementById('cdExam').value.trim();
+  const whatWantToKnow = document.getElementById('cdExtra').value.trim();
+  closeOverlay('counsellingDetailsOverlay');
+  addCounsellingToCart(examOrCourse, whatWantToKnow);
+});
+
+wireWordCount('cdExtra','cdWordCount',200);
 
 /* ============================================================
    CART SYSTEM
@@ -885,21 +922,6 @@ document.addEventListener('click', (e)=>{
 });
 
 function resetFinderToHome(){
-  // Only the Courses page has these elements — safely does nothing extra elsewhere.
-  const cb = document.querySelectorAll('#courseButtons .big-choice');
-  if(cb.length > 0){
-    if(typeof currentCourse !== 'undefined') currentCourse = null;
-    if(typeof currentLevel !== 'undefined') currentLevel = null;
-    cb.forEach(b=>b.classList.remove('active'));
-    const levelWrapEl = document.getElementById('levelWrap');
-    const tableWrapEl = document.getElementById('tableWrap');
-    const mbaWrapEl = document.getElementById('mbaWrap');
-    const levelButtonsEl = document.getElementById('levelButtons');
-    if(levelWrapEl) levelWrapEl.classList.add('hidden');
-    if(tableWrapEl) tableWrapEl.classList.add('hidden');
-    if(mbaWrapEl) mbaWrapEl.classList.add('hidden');
-    if(levelButtonsEl) levelButtonsEl.innerHTML = '';
-  }
   window.scrollTo({top: 0, behavior: 'smooth'});
 }
 
