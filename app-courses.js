@@ -116,7 +116,8 @@ CMA: {
   Intermediate: [
     {no:"Paper 5", name:"Business Laws and Ethics", group:"Group 1", faculty:["Prof. Abanindra Sahu","CS Arjun Chhabra","CA Shivangi Agrawal","CA CS Divya Agarwal","CA Sudhir Sachdeva","CA Amit Bachhawat","CA Shivam Palan","Prof. Hemangi Kothari","CA CS Mohit Agarwal","CA Abhishek Bansal"]},
     {no:"Paper 6", name:"Financial Accounting", group:"Group 1", faculty:["CA CMA Santosh Kumar","CA CS Avinash Sancheti","CA Bishnu Kedia","CA CMA Abhimanyu Agarwal","CA Ranjan Periwal","CA Raj K Agrawal","CA Avinash Lala","CA Ayush Tibrewal","CA Sudarshan Agrawal","CA Parveen Sharma"]},
-    {no:"Paper 7", name:"Direct and Indirect Taxation", group:"Group 1", faculty:["CA Bhanwar Borana","CA Vishal Bhattad","CA Vijay Sarda","CA Nikunj Goenka","CA Raj Kumar","CA Ramesh Soni","CA Jaspreet Singh Johar","CA Vivek Soni","CA Vikram Biyani","CA Aarish Khan"]},
+    {no:"Paper 7A", name:"Direct Taxation", group:"Group 1", faculty:["CA Bhanwar Borana","CA Vijay Sarda","CA Yash Khandelwal","CA Jaspreet Singh Johar","CA Aarish Khan","CA Vinod Gupta","CA Sahil Jain","CA Pranav Chandak","CA Vivek Gaba","Prof. Vivek Soni"]},
+    {no:"Paper 7B", name:"Indirect Taxation", group:"Group 1", faculty:["CA Vishal Bhattad","CA Raj Kumar","CA Ramesh Soni","CA Yashvant Mangal","CA Nikunj Goenka","CA Akshansh Garg","CA Riddhi Baghmar","CA Arpita Tulsyan","CA Amit Jain","CA Brindavan Giri"]},
     {no:"Paper 8", name:"Cost Accounting", group:"Group 1", faculty:["CA Satish Jalan","CA Ranjan Periwal","CA Purushottam Aggarwal","CMA Sumit Rastogi","CA Nitin Guru","CA Sankalp Kanstiya","CA Raj K Agrawal","CA Namit Arora","CA Sachin Gupta","CA Dani Khandelwal"]},
     {no:"Paper 9", name:"Operations Management and Strategic Management", group:"Group 2", faculty:["CA Mayank Saraf","CA CS Divya Agarwal","CA Amit Tated","CMA Akshay Sen","Prof. Sandeep Giri","CA Sanjay Khemka","CA Nitin Guru","Prof. J.S. Malhotra","Prof. Vinit Kumar","CA Harshad Jaju"]},
     {no:"Paper 10", name:"Corporate Accounting and Auditing", group:"Group 2", faculty:["Prof. Abanindra Sahu","CA CS Avinash Sancheti","CA Bishnu Kedia","CA CMA Abhimanyu Agarwal","CA Satish Sureka","CA Raghav Goel","CA Karthik Iyer","CA Sarthak Jain","Prof. Hemangi Kothari","CA Pankaj Garg"]},
@@ -158,6 +159,18 @@ function initCoursesFromURL(){
   const params = new URLSearchParams(window.location.search);
   const urlCourse = params.get('course');
   const urlLevel = params.get('level');
+  const mbaPanel = document.getElementById('mbaPanelSection');
+
+  if(urlCourse === 'MBA'){
+    coursesHeading.textContent = 'MBA Guidance';
+    coursesSub.textContent = "Talk to us about exams, universities, and timelines — free of charge.";
+    noSelectionMsg.classList.add('hidden');
+    tableWrap.classList.add('hidden');
+    if(mbaPanel) mbaPanel.classList.remove('hidden');
+    return;
+  }
+  if(mbaPanel) mbaPanel.classList.add('hidden');
+
   const validCourse = urlCourse === 'CA' || urlCourse === 'CMA';
   const validLevel = urlLevel === 'Foundation' || urlLevel === 'Intermediate' || urlLevel === 'Final';
 
@@ -175,6 +188,20 @@ function initCoursesFromURL(){
   }
 }
 initCoursesFromURL();
+
+const mbaBookBtnEl = document.getElementById('mbaBookBtn');
+if(mbaBookBtnEl){
+  mbaBookBtnEl.addEventListener('click', ()=>{
+    if(!requireAuthOrPrompt()) return;
+    pendingCounsellingType = 'mba';
+    document.getElementById('counsellingDetailsTitle').textContent = 'MBA Counselling Request';
+    document.getElementById('cdExamField').classList.add('hidden');
+    document.getElementById('cdExam').removeAttribute('required');
+    document.getElementById('counsellingDetailsForm').reset();
+    document.getElementById('cdWordCount').textContent = '0';
+    openOverlay('counsellingDetailsOverlay');
+  });
+}
 
 function renderTable(){
   const papers = COURSES[currentCourse][currentLevel];
