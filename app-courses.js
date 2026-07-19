@@ -25,6 +25,9 @@ function getAttemptsFor(course, level){
   if(course === 'CA' && level === 'Final') return generateAttempts([10,4], 6);   // Nov, May
   if(course === 'CMA' && level === 'Final') return generateAttempts([5,11], 5);  // Jun, Dec — 5 attempts
   if(course === 'CMA') return generateAttempts([5,11], 3);                       // Jun, Dec — 3 attempts (Foundation/Inter)
+  if(course === 'CS' && level === 'CSEET') return generateAttempts([1,5,9], 4);  // Feb, Jun, Oct — 4 attempts
+  if(course === 'CS' && level === 'Executive') return generateAttempts([5,11], 3); // Jun, Dec — 3 attempts
+  if(course === 'CS' && level === 'Professional') return generateAttempts([5,11], 5); // Jun, Dec — 5 attempts
   return generateAttempts([0,4,8], 4);                                          // Jan, May, Sep
 }
 
@@ -134,6 +137,30 @@ CMA: {
     {no:"Paper 19", name:"Indirect Tax Laws and Practice", group:"Group 2", faculty:["CA Vishal Bhattad","CA Raj Kumar","CA Ramesh Soni","CA Yashvant Mangal","CA Akshansh Garg","CA Riddhi Baghmar","CA Arpita Tulsyan","CA Brindavan Giri","CA Nikunj Goenka","CA Amit Jain"]},
     {no:"Paper 20A", name:"Strategic Performance Management and Business Valuation", group:"Group 2", faculty:["CFA Sanjay Saraf","CA Ranjan Periwal","CA Satish Jalan","CA Gourav Kabra","CA Sanjay Khemka","CA Aditya Jain","CA Nitin Guru","CA Sankalp Kanstiya","CA Namit Arora","CA Purushottam Aggarwal"]}
   ]
+},
+CS: {
+  CSEET: [
+    {no:"Paper 1", name:"Business Communication", faculty:["CA CS Mohit Agarwal","CS Shubham Modi","CA CS Divya Agarwal","CS Alok Jha","CS Muskan Gupta","Prof. Sameer Gupte","Prof. Ishan Gupta","CA Shivangi Agrawal","Prof. Yashika Vardhan","CS Jaspreet Singh Johar"]},
+    {no:"Paper 2", name:"Legal Aptitude and Logical Reasoning", faculty:["CS Arjun Chhabra","CS Shubham Modi","CA CS Mohit Agarwal","CA Sudhir Sachdeva","CS Alok Jha","Prof. Nitin Bharadwaj","CS Vaibhav Chitlangia","CA Shivam Palan","CS Vikas Vohra","CS Amit Vohra"]},
+    {no:"Paper 3", name:"Economic and Business Environment", faculty:["CA Harshad Jaju","CS Shubham Modi","CA CS Divya Agarwal","Prof. Sandeep Giri","CS Mayank Saraf","Prof. Vinit Kumar","CA Amit Tated","CS Muskan Gupta","Prof. Yashika Vardhan","CA Raj K Agrawal"]},
+    {no:"Paper 4", name:"Current Affairs and Quantitative Aptitude", faculty:["Prof. Mayank Agarwal","CS Shubham Modi","CA Pranav Chandak","Prof. Navneet Mundhra","Prof. Deepack Sir","CS Vaibhav Chitlangia","Prof. Sandeep Giri","CS Vikas Vohra","Prof. Vinit Kumar","CA Sanjay Khemka"]}
+  ],
+  Executive: [
+    {no:"Paper 1", name:"Jurisprudence, Interpretation and General Laws (JIGL)", group:"Group 1", faculty:["CS Arjun Chhabra","CA CS Mohit Agarwal","CS Amit Vohra","CA Sudhir Sachdeva","CS Shubham Modi","CS Alok Jha","CA CS Divya Agarwal","CS Anoop Jain","CS Tushar Pahade","CS Vikas Vohra"]},
+    {no:"Paper 2", name:"Company Law and Practice", group:"Group 1", faculty:["CS Arjun Chhabra","CA CS Mohit Agarwal","CS Amit Vohra","CA Sudhir Sachdeva","CS Shubham Modi","CS Alok Jha","CS Anoop Jain","CS Tushar Pahade","CS Vikas Vohra","CA Shivangi Agrawal"]},
+    {no:"Paper 3", name:"Setting Up of Business, Industrial and Labour Laws (SBILL)", group:"Group 1", faculty:["CS Arjun Chhabra","CA CS Mohit Agarwal","CS Amit Vohra","CA Sudhir Sachdeva","CS Shubham Modi","CS Alok Jha","CA CS Divya Agarwal","CS Anoop Jain","CS Tushar Pahade","CS Vikas Vohra"]},
+    {no:"Paper 4", name:"Corporate Accounting and Financial Management (CAFM)", group:"Group 1", faculty:["CA CS Avinash Sancheti","CA Ranjan Periwal","CA Satish Jalan","CA CMA Santosh Kumar","CA CMA Abhimanyu Agarwal","CA Sarthak Jain","CA Nitin Guru","Prof. Raj Awate","CA Ashish Kalra","CA Gourav Kabra"]},
+    {no:"Paper 5", name:"Capital Market and Securities Laws (CMSL)", group:"Group 2", faculty:["CS Arjun Chhabra","CA CS Mohit Agarwal","CS Amit Vohra","CS Shubham Modi","CS Alok Jha","CA Sanjay Khemka","CFA Sanjay Saraf","CS Anoop Jain","CS Tushar Pahade","CS Vikas Vohra"]},
+    {no:"Paper 6", name:"Economic, Commercial and Intellectual Property Laws (ECIPL)", group:"Group 2", faculty:["CS Arjun Chhabra","CA CS Mohit Agarwal","CS Amit Vohra","CS Shubham Modi","CA Sudhir Sachdeva","CS Alok Jha","CA CS Divya Agarwal","CS Anoop Jain","CS Tushar Pahade","CS Vikas Vohra"]},
+    {no:"Paper 7", name:"Tax Laws and Practice (TLP)", group:"Group 2", faculty:["CA Bhanwar Borana","CA Vishal Bhattad","CA Vijay Sarda","CA Nikunj Goenka","CA Jaspreet Singh Johar","CA Raj Kumar","CA Ramesh Soni","CA Yashvant Mangal","CA Vivek Gaba","CA Aarish Khan"]}
+  ],
+  Professional: [
+    {no:"Paper 1", name:"Environmental, Social and Governance (ESG) – Principles and Practice", group:"Group 1", faculty:["CS Arjun Chhabra","CA CS Mohit Agarwal","CS Amit Vohra","CS Shubham Modi","CS Alok Jha","CA CS Divya Agarwal","CS Anoop Jain","CS Tushar Pahade","CS Vikas Vohra","CA Shivangi Agrawal"]},
+    {no:"Paper 2", name:"Drafting, Pleadings and Appearances", group:"Group 1", faculty:["CS Arjun Chhabra","CA CS Mohit Agarwal","CS Amit Vohra","CA Sudhir Sachdeva","CS Shubham Modi","CS Alok Jha","CS Anoop Jain","CS Tushar Pahade","CS Vikas Vohra","CS Devendra Subhash"]},
+    {no:"Paper 3", name:"Compliance Management, Audit and Due Diligence", group:"Group 1", faculty:["CS Arjun Chhabra","CA CS Mohit Agarwal","CS Amit Vohra","CS Shubham Modi","CS Alok Jha","CA CS Divya Agarwal","CS Anoop Jain","CS Tushar Pahade","CS Vikas Vohra","CS Pankaj Garg"]},
+    {no:"Paper 5", name:"Strategic Management and Corporate Finance", group:"Group 2", faculty:["CFA Sanjay Saraf","CA Aditya Jain","CA Ranjan Periwal","CA Satish Jalan","CA Gourav Kabra","CA Mayank Kothari","CA Nitin Guru","CA Sankalp Kanstiya","CA Ashish Kalra","CS Amit Vohra"]},
+    {no:"Paper 6", name:"Corporate Restructuring, Valuation and Insolvency", group:"Group 2", faculty:["CS Arjun Chhabra","CA CS Mohit Agarwal","CS Amit Vohra","CFA Sanjay Saraf","CS Shubham Modi","CS Alok Jha","CA CS Divya Agarwal","CS Anoop Jain","CS Tushar Pahade","CS Vikas Vohra"]}
+  ]
 }
 };
 
@@ -171,13 +198,15 @@ function initCoursesFromURL(){
   }
   if(mbaPanel) mbaPanel.classList.add('hidden');
 
-  const validCourse = urlCourse === 'CA' || urlCourse === 'CMA';
-  const validLevel = urlLevel === 'Foundation' || urlLevel === 'Intermediate' || urlLevel === 'Final';
+  const validCourse = urlCourse === 'CA' || urlCourse === 'CMA' || urlCourse === 'CS';
+  const validCALevel = (urlCourse === 'CA' || urlCourse === 'CMA') && (urlLevel === 'Foundation' || urlLevel === 'Intermediate' || urlLevel === 'Final');
+  const validCSLevel = urlCourse === 'CS' && (urlLevel === 'CSEET' || urlLevel === 'Executive' || urlLevel === 'Professional');
+  const validLevel = validCALevel || validCSLevel;
 
   if(validCourse && validLevel){
     currentCourse = urlCourse;
     currentLevel = urlLevel;
-    coursesHeading.textContent = urlCourse + ' ' + urlLevel;
+    coursesHeading.textContent = getExamLabel(urlCourse, urlLevel);
     coursesSub.textContent = 'Select the papers you need, fill in every field, and add them to your cart.';
     noSelectionMsg.classList.add('hidden');
     renderTable();
