@@ -66,7 +66,7 @@ nav ul{list-style:none;display:flex;gap:30px;}
 
 /* ===== NAV DROPDOWN (Courses) ===== */
 .has-dropdown{position:relative;}
-.caret{font-size:9px;margin-left:5px;color:var(--gray);}
+.caret{font-size:13px;margin-left:6px;color:var(--red);font-weight:700;}
 .dropdown-menu{
   display:none;position:absolute;top:calc(100% + 14px);left:-14px;
   background:var(--white);border:1px solid var(--line);border-radius:var(--radius);
@@ -97,6 +97,7 @@ nav a{
   color:var(--charcoal);font-weight:500;padding:6px 2px;border-bottom:2px solid transparent;transition:.2s;
 }
 nav a:hover{color:var(--red);border-color:var(--red);}
+nav > ul > li > a.nav-active{color:var(--red);border-color:var(--red);}
 .hamburger{display:none;background:none;color:var(--black);font-size:26px;}
 
 /* ===== AUTH AREA ===== */
@@ -140,7 +141,7 @@ nav a:hover{color:var(--red);border-color:var(--red);}
   background:linear-gradient(180deg,#FFFFFF 0%,var(--off) 100%);
   color:var(--black);
   overflow:hidden;
-  padding:96px 24px 110px;
+  padding:56px 24px 110px;
   border-bottom:1px solid var(--line);
 }
 .hero::after{
@@ -189,7 +190,7 @@ nav a:hover{color:var(--red);border-color:var(--red);}
 .hero-stats .lbl{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--gray);}
 
 /* ===== ABOUT ===== */
-.about{padding:88px 0;background:var(--off);}
+.about{padding:56px 0 88px;background:var(--off);}
 .about-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start;}
 .about-list{list-style:none;display:flex;flex-direction:column;gap:18px;margin-top:8px;}
 .about-list li{
@@ -207,7 +208,7 @@ nav a:hover{color:var(--red);border-color:var(--red);}
 .about-panel .addr{margin-top:26px;font-family:var(--body);font-style:normal;font-size:13.5px;color:var(--gray);letter-spacing:.02em;}
 
 /* ===== CLASS FINDER ===== */
-.finder{padding:90px 0 100px;background:var(--white);border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
+.finder{padding:56px 0 100px;background:var(--white);border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
 .finder-head{text-align:center;max-width:640px;margin:0 auto 44px;}
 .step-label{font-family:var(--head);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--gray);margin-bottom:10px;}
 .course-buttons, .level-buttons{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin-bottom:8px;}
@@ -304,7 +305,7 @@ select:disabled{background:#f1efe9;color:#aaa;cursor:not-allowed;}
 .counsel-strip .btn-primary:hover{background:#F6D9DD;}
 
 /* ===== FOUNDER ===== */
-.founder{padding:100px 0;background:var(--white);}
+.founder{padding:56px 0 100px;background:var(--white);}
 .founder-grid{display:grid;grid-template-columns:380px 1fr;gap:60px;align-items:center;}
 .founder-photo{position:relative;}
 .founder-photo img{width:100%;border-radius:var(--radius);}
