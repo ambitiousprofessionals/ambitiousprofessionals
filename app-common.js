@@ -52,7 +52,33 @@ hamburgerBtn.addEventListener('click',()=>{
   mainNav.classList.toggle('mobile-open');
 });
 mainNav.querySelectorAll('a').forEach(a=>{
+  if(a.classList.contains('dropdown-toggle') || a.classList.contains('submenu-toggle')) return;
   a.addEventListener('click',()=>mainNav.classList.remove('mobile-open'));
+});
+
+/* ===== COURSES NAV DROPDOWN ===== */
+document.querySelectorAll('.dropdown-toggle').forEach(toggle=>{
+  toggle.addEventListener('click',(e)=>{
+    e.preventDefault();
+    const menu = toggle.nextElementSibling;
+    document.querySelectorAll('.dropdown-menu.open').forEach(m=>{ if(m!==menu) m.classList.remove('open'); });
+    document.querySelectorAll('.submenu.open').forEach(s=>s.classList.remove('open'));
+    menu.classList.toggle('open');
+  });
+});
+document.querySelectorAll('.submenu-toggle').forEach(toggle=>{
+  toggle.addEventListener('click',(e)=>{
+    e.preventDefault();
+    e.stopPropagation();
+    const sub = toggle.nextElementSibling;
+    document.querySelectorAll('.submenu.open').forEach(s=>{ if(s!==sub) s.classList.remove('open'); });
+    sub.classList.toggle('open');
+  });
+});
+document.addEventListener('click',(e)=>{
+  if(!e.target.closest('.has-dropdown')){
+    document.querySelectorAll('.dropdown-menu.open, .submenu.open').forEach(el=>el.classList.remove('open'));
+  }
 });
 
 /* word counter (counselling details modal only) */
@@ -166,7 +192,7 @@ document.getElementById('placeCartOrderBtn').addEventListener('click', ()=>{
       name: currentUserProfile.name,
       email: currentUserProfile.email,
       extraInfo: '',
-      papers: classPaperItems
+      papers: classPaperItems.map(p => Object.assign({}, p, { exam: p.course + ' ' + p.level }))
     });
   }
   counsellingItems.forEach(item=>{
@@ -353,7 +379,6 @@ document.getElementById('googleSetPasswordForm').addEventListener('submit', (e)=
    real, meaningful barrier, not a cryptographic guarantee.
    ============================================================ */
 let suEmailVerified = false;
-let fpEmailVerified = false;
 
 function generateOtpCode(){
   return String(Math.floor(1000 + Math.random() * 9000));
@@ -521,27 +546,9 @@ document.getElementById('suEmail').addEventListener('input', ()=>{
 });
 
 function resetForgotPasswordOtpState(){
-  fpEmailVerified = false;
-  document.getElementById('fpOtpSection').classList.add('hidden');
-  clearOtpBoxes('fpOtpBoxes');
-  document.getElementById('fpOtpMsg').style.display = 'none';
-  document.getElementById('fpEmail').readOnly = false;
-  document.getElementById('fpSendOtpBtn').textContent = 'Verify Email';
-  document.getElementById('fpSendOtpBtn').disabled = false;
-  document.getElementById('fpSubmitBtn').disabled = true;
+  document.getElementById('fpEmail').value = '';
+  document.getElementById('forgotPasswordMsg').style.display = 'none';
 }
-document.getElementById('fpSendOtpBtn').addEventListener('click', ()=> requestOtp('fpEmail', 'fpSendOtpBtn', 'fpOtpSection', 'fpOtpBoxes'));
-document.getElementById('fpResendOtpLink').addEventListener('click', (e)=>{
-  e.preventDefault();
-  document.getElementById('fpSendOtpBtn').disabled = false;
-  requestOtp('fpEmail', 'fpSendOtpBtn', 'fpOtpSection', 'fpOtpBoxes');
-});
-document.getElementById('fpVerifyOtpBtn').addEventListener('click', ()=>{
-  verifyOtp('fpEmail', 'fpOtpBoxes', 'fpOtpMsg', ()=>{
-    fpEmailVerified = true;
-    document.getElementById('fpSubmitBtn').disabled = false;
-  });
-});
 
 function showError(elId, msg){
   const el = document.getElementById(elId);
@@ -706,13 +713,6 @@ document.getElementById('emailSignInForm').addEventListener('submit', (e)=>{
    ============================================================ */
 document.getElementById('forgotPasswordForm').addEventListener('submit', (e)=>{
   e.preventDefault();
-  if(!fpEmailVerified){
-    const msg = document.getElementById('forgotPasswordMsg');
-    msg.style.color = 'var(--red)';
-    msg.textContent = 'Please verify your email with the code first.';
-    msg.style.display = 'block';
-    return;
-  }
   const email = document.getElementById('fpEmail').value.trim();
   auth.sendPasswordResetEmail(email).then(()=>{
     const msg = document.getElementById('forgotPasswordMsg');
