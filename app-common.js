@@ -125,6 +125,15 @@ function sendToSheet(payload){
    COUNSELLING → CART (shared by MBA panel on Courses page and
    the general counselling strip on the Counselling page)
    ============================================================ */
+/**
+ * Builds the display/sheet label for a course+level combo.
+ * Special-cased because CSEET isn't "CS CSEET" — it's just "CSEET".
+ */
+function getExamLabel(course, level){
+  if(course === 'CS' && level === 'CSEET') return 'CSEET';
+  return course + ' ' + level;
+}
+
 function addCounsellingToCart(examOrCourse, whatWantToKnow){
   if(!requireAuthOrPrompt()) return;
   cartItems.push({ kind:'counselling', examOrCourse: examOrCourse, whatWantToKnow: whatWantToKnow });
@@ -229,7 +238,7 @@ document.getElementById('placeCartOrderBtn').addEventListener('click', ()=>{
       name: currentUserProfile.name,
       email: currentUserProfile.email,
       extraInfo: '',
-      papers: classPaperItems.map(p => Object.assign({}, p, { exam: p.course + ' ' + p.level }))
+      papers: classPaperItems.map(p => Object.assign({}, p, { exam: getExamLabel(p.course, p.level) }))
     });
   }
   counsellingItems.forEach(item=>{
