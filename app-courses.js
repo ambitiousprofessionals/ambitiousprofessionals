@@ -142,45 +142,39 @@ CMA: {
 let currentCourse = null;
 let currentLevel = null;
 
-const courseButtons = document.querySelectorAll('#courseButtons .big-choice');
-const levelWrap = document.getElementById('levelWrap');
-const levelButtons = document.getElementById('levelButtons');
 const tableWrap = document.getElementById('tableWrap');
 const paperTableBody = document.getElementById('paperTableBody');
 const placeOrderBtn = document.getElementById('placeOrderBtn');
+const noSelectionMsg = document.getElementById('noSelectionMsg');
+const coursesHeading = document.getElementById('coursesHeading');
+const coursesSub = document.getElementById('coursesSub');
 
-courseButtons.forEach(btn=>{
-  btn.addEventListener('click',()=>{
-    courseButtons.forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    currentCourse = btn.dataset.course;
-    currentLevel = null;
+/**
+ * Course + level now come from the Courses nav dropdown, via URL query
+ * params (e.g. courses.html?course=CA&level=Foundation), instead of
+ * on-page buttons.
+ */
+function initCoursesFromURL(){
+  const params = new URLSearchParams(window.location.search);
+  const urlCourse = params.get('course');
+  const urlLevel = params.get('level');
+  const validCourse = urlCourse === 'CA' || urlCourse === 'CMA';
+  const validLevel = urlLevel === 'Foundation' || urlLevel === 'Intermediate' || urlLevel === 'Final';
+
+  if(validCourse && validLevel){
+    currentCourse = urlCourse;
+    currentLevel = urlLevel;
+    coursesHeading.textContent = urlCourse + ' ' + urlLevel;
+    coursesSub.textContent = 'Select the papers you need, fill in every field, and add them to your cart.';
+    noSelectionMsg.classList.add('hidden');
+    renderTable();
+    tableWrap.classList.remove('hidden');
+  } else {
+    noSelectionMsg.classList.remove('hidden');
     tableWrap.classList.add('hidden');
-    levelWrap.classList.remove('hidden');
-    renderLevelButtons();
-  });
-});
-
-function renderLevelButtons(){
-  levelButtons.innerHTML = '';
-  const levels = ['Foundation','Intermediate','Final'];
-  levels.forEach(lvl=>{
-    const b = document.createElement('button');
-    b.className='level-choice';
-    b.textContent = currentCourse + ' ' + lvl;
-    b.addEventListener('click',()=>{
-      [...levelButtons.children].forEach(c=>c.classList.remove('active'));
-      b.classList.add('active');
-      currentLevel = lvl;
-      renderTable();
-      tableWrap.classList.remove('hidden');
-      setTimeout(()=>{
-        tableWrap.scrollIntoView({behavior:'smooth', block:'start'});
-      }, 50);
-    });
-    levelButtons.appendChild(b);
-  });
+  }
 }
+initCoursesFromURL();
 
 function renderTable(){
   const papers = COURSES[currentCourse][currentLevel];
