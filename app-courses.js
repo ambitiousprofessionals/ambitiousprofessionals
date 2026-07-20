@@ -32,6 +32,7 @@ function getAttemptsFor(course, level){
 }
 
 const CLASS_TYPES = ["Regular","Fast-track","Exam Oriented","Revision Classes"];
+const BOOK_PREFERENCES = ["Hard Copy","Soft Copy"];
 const MODES = ["Offline Face to Face","Online Live","Online Google Drive","Online Pen Drive"];
 
 /* ============================================================
@@ -86,10 +87,10 @@ document.getElementById('facultyOtherInput').addEventListener('keydown', (e)=>{
 const COURSES = {
 CA: {
   Foundation: [
-    {no:"Paper 1", name:"Principles and Practice of Accounting", faculty:["CA Nitin Goel","CA Hardik Manchanda","CA Anshul Agrawal","CA Parag Gupta","CA Anand Bhangariya","CA Tejas Suchak","CA Avinash Sancheti","CA Manish Mahajan","CA Parveen Sharma","CA Rishabh Rohra"]},
+    {no:"Paper 1", name:"Principles and Practice of Accounting", faculty:["Prof. Suvraprasad Tripathy","Prof. Sai Raj Patro","CA Nitin Goel","CA Hardik Manchanda","CA Anshul Agrawal","CA Parag Gupta","CA Anand Bhangariya","CA Tejas Suchak","CA Avinash Sancheti","CA Manish Mahajan","CA Parveen Sharma","CA Rishabh Rohra"]},
     {no:"Paper 2", name:"Business Laws", faculty:["Prof. Abanindra Sahu","CA Darshan Khare","CA Ankita Patni","CA Deepika Rathi","CA Indresh Gandhi","CS Arjun Chhabra","CA Sahil Grover","CA Gurpreet Singh","CA Shivangi Agrawal","CA Lovely Dhingra"]},
-    {no:"Paper 3", name:"Quantitative Aptitude", faculty:["CA Pranav Popat","CA Nishant Kumar","CA Vinod Reddy","CA Aman Khedia","Prof. Akash Agrawal","CS Vaibhav Chitlangia","CA Navneet Mundhra","Prof. Raj Awate","Prof. Mayank Maheshwari","Anurag Chauhan"]},
-    {no:"Paper 4", name:"Business Economics", faculty:["Prof. Akhilesh Daga","CA Harshad Jaju","CA Mohnish Vora","CA Hardik Manchanda","CA Sanchit Grover","CA Parag Gupta","CA Aakansha Arora","CA Divya Agarwal","CA Vijay Sarda","Prof. Love Kaushik"]}
+    {no:"Paper 3", name:"Quantitative Aptitude", faculty:["Prof. SP Praveen K Rao","CA Pranav Popat","CA Nishant Kumar","CA Vinod Reddy","CA Aman Khedia","Prof. Akash Agrawal","CS Vaibhav Chitlangia","CA Navneet Mundhra","Prof. Raj Awate","Prof. Mayank Maheshwari","Anurag Chauhan"]},
+    {no:"Paper 4", name:"Business Economics", faculty:["Prof. Prateek Nanda","Prof. Sai Raj Patro","Prof. Akhilesh Daga","CA Harshad Jaju","CA Mohnish Vora","CA Hardik Manchanda","CA Sanchit Grover","CA Parag Gupta","CA Aakansha Arora","CA Divya Agarwal","CA Vijay Sarda","Prof. Love Kaushik"]}
   ],
   Intermediate: [
     {no:"Paper 1", name:"Advanced Accounting", group:"Group 1", faculty:["CA Parveen Sharma","CA Rohit Sethi","CA Anand Bhangariya","CA Jai Chawla","CA Chiranjeev Jain","CA Abhishek Zaware","CA Aakash Kandoi","CA Parveen Jindal","CA Tejas Suchak","CA Nitin Goel"]},
@@ -112,20 +113,20 @@ CA: {
 CMA: {
   Foundation: [
     {no:"Paper 1", name:"Fundamentals of Business Laws and Business Communication", faculty:["Prof. Abanindra Sahu","CA Shivangi Agrawal","CA Amit Bachhawat","CS Arjun Chhabra","CA Raghav Goel","CA Ruchika Saboo","CA Siddharth Agarwal","CA CS Mohit Agarwal","CA Shivam Palan","CA CS Jaspreet Singh Johar"]},
-    {no:"Paper 2", name:"Fundamentals of Financial and Cost Accounting", faculty:["CA CMA Santosh Kumar","CA CMA Abhimanyu Agarwal","CA Avinash Sancheti","CA Ranjan Periwal","CA Yashvardhan Saboo","CA Sudarshan Agrawal","CA Parveen Sharma","CA Raj K Agrawal","CA Sarthak Jain","Prof. Navneet Mundhra"]},
-    {no:"Paper 3", name:"Fundamentals of Business Mathematics and Statistics", faculty:["Prof. Mayank Agarwal","CA Pranav Chandak","CA Ashish Kedia","CA Raj K Agrawal","Prof. Deepack Sir","Prof. Navneet Mundhra","Prof. Sandeep Giri","CA Nitin Guru","Prof. Vinit Kumar","CA Sanjay Khemka"]},
-    {no:"Paper 4", name:"Fundamentals of Business Economics and Management", faculty:["CA Harshad Jaju","CA Priyanka Saxena","Prof. Sandeep Giri","Prof. Vinit Kumar","CA Yashvardhan Saboo","Prof. Kundu Sir","CA Amit Tated","Prof. Archana Khetan","CA Sarthak Jain","CA CS Mohit Agarwal"]}
+    {no:"Paper 2", name:"Fundamentals of Financial and Cost Accounting", faculty:["Prof. Suvraprasad Tripathy","Prof. Sai Raj Patro","CA CMA Santosh Kumar","CA CMA Abhimanyu Agarwal","CA Avinash Sancheti","CA Ranjan Periwal","CA Yashvardhan Saboo","CA Sudarshan Agrawal","CA Parveen Sharma","CA Raj K Agrawal","CA Sarthak Jain","Prof. Navneet Mundhra"]},
+    {no:"Paper 3", name:"Fundamentals of Business Mathematics and Statistics", faculty:["Prof. SP Praveen K Rao","Prof. Mayank Agarwal","CA Pranav Chandak","CA Ashish Kedia","CA Raj K Agrawal","Prof. Deepack Sir","Prof. Navneet Mundhra","Prof. Sandeep Giri","CA Nitin Guru","Prof. Vinit Kumar","CA Sanjay Khemka"]},
+    {no:"Paper 4", name:"Fundamentals of Business Economics and Management", faculty:["Prof. Prateek Nanda","Prof. Sai Raj Patro","CA Harshad Jaju","CA Priyanka Saxena","Prof. Sandeep Giri","Prof. Vinit Kumar","CA Yashvardhan Saboo","Prof. Kundu Sir","CA Amit Tated","Prof. Archana Khetan","CA Sarthak Jain","CA CS Mohit Agarwal"]}
   ],
   Intermediate: [
     {no:"Paper 5", name:"Business Laws and Ethics", group:"Group 1", faculty:["Prof. Abanindra Sahu","CS Arjun Chhabra","CA Shivangi Agrawal","CA CS Divya Agarwal","CA Sudhir Sachdeva","CA Amit Bachhawat","CA Shivam Palan","Prof. Hemangi Kothari","CA CS Mohit Agarwal","CA Abhishek Bansal"]},
-    {no:"Paper 6", name:"Financial Accounting", group:"Group 1", faculty:["CA CMA Santosh Kumar","CA CS Avinash Sancheti","CA Bishnu Kedia","CA CMA Abhimanyu Agarwal","CA Ranjan Periwal","CA Raj K Agrawal","CA Avinash Lala","CA Ayush Tibrewal","CA Sudarshan Agrawal","CA Parveen Sharma"]},
-    {no:"Paper 7A", name:"Direct Taxation", group:"Group 1", faculty:["CA Bhanwar Borana","CA Vijay Sarda","CA Yash Khandelwal","CA Jaspreet Singh Johar","CA Aarish Khan","CA Vinod Gupta","CA Sahil Jain","CA Pranav Chandak","CA Vivek Gaba","Prof. Vivek Soni"]},
-    {no:"Paper 7B", name:"Indirect Taxation", group:"Group 1", faculty:["CA Vishal Bhattad","CA Raj Kumar","CA Ramesh Soni","CA Yashvant Mangal","CA Nikunj Goenka","CA Akshansh Garg","CA Riddhi Baghmar","CA Arpita Tulsyan","CA Amit Jain","CA Brindavan Giri"]},
-    {no:"Paper 8", name:"Cost Accounting", group:"Group 1", faculty:["CA Satish Jalan","CA Ranjan Periwal","CA Purushottam Aggarwal","CMA Sumit Rastogi","CA Nitin Guru","CA Sankalp Kanstiya","CA Raj K Agrawal","CA Namit Arora","CA Sachin Gupta","CA Dani Khandelwal"]},
-    {no:"Paper 9", name:"Operations Management and Strategic Management", group:"Group 2", faculty:["CA Mayank Saraf","CA CS Divya Agarwal","CA Amit Tated","CMA Akshay Sen","Prof. Sandeep Giri","CA Sanjay Khemka","CA Nitin Guru","Prof. J.S. Malhotra","Prof. Vinit Kumar","CA Harshad Jaju"]},
+    {no:"Paper 6", name:"Financial Accounting", group:"Group 1", faculty:["Prof. Abhisek Mahaptro","CA Sneha Budhia","CA CMA Santosh Kumar","CA CS Avinash Sancheti","CA Bishnu Kedia","CA CMA Abhimanyu Agarwal","CA Ranjan Periwal","CA Raj K Agrawal","CA Avinash Lala","CA Ayush Tibrewal","CA Sudarshan Agrawal","CA Parveen Sharma"]},
+    {no:"Paper 7A", name:"Direct Taxation", group:"Group 1", faculty:["Prof. Aayush Dash","CA Bhanwar Borana","CA Vijay Sarda","CA Yash Khandelwal","CA Jaspreet Singh Johar","CA Aarish Khan","CA Vinod Gupta","CA Sahil Jain","CA Pranav Chandak","CA Vivek Gaba","Prof. Vivek Soni"]},
+    {no:"Paper 7B", name:"Indirect Taxation", group:"Group 1", faculty:["Prof. Aayush Dash","CA Vishal Bhattad","CA Raj Kumar","CA Ramesh Soni","CA Yashvant Mangal","CA Nikunj Goenka","CA Akshansh Garg","CA Riddhi Baghmar","CA Arpita Tulsyan","CA Amit Jain","CA Brindavan Giri"]},
+    {no:"Paper 8", name:"Cost Accounting", group:"Group 1", faculty:["CA Pranay Gangan","Prof. A. Sourav Patro","CA Satish Jalan","CA Ranjan Periwal","CA Purushottam Aggarwal","CMA Sumit Rastogi","CA Nitin Guru","CA Sankalp Kanstiya","CA Raj K Agrawal","CA Namit Arora","CA Sachin Gupta","CA Dani Khandelwal"]},
+    {no:"Paper 9", name:"Operations Management and Strategic Management", group:"Group 2", faculty:["Prof. A. Sourav Patro","CA Mayank Saraf","CA CS Divya Agarwal","CA Amit Tated","CMA Akshay Sen","Prof. Sandeep Giri","CA Sanjay Khemka","CA Nitin Guru","Prof. J.S. Malhotra","Prof. Vinit Kumar","CA Harshad Jaju"]},
     {no:"Paper 10", name:"Corporate Accounting and Auditing", group:"Group 2", faculty:["Prof. Abanindra Sahu","CA CS Avinash Sancheti","CA Bishnu Kedia","CA CMA Abhimanyu Agarwal","CA Satish Sureka","CA Raghav Goel","CA Karthik Iyer","CA Sarthak Jain","Prof. Hemangi Kothari","CA Pankaj Garg"]},
-    {no:"Paper 11", name:"Financial Management and Business Data Analytics", group:"Group 2", faculty:["CA Ranjan Periwal","CA Satish Jalan","CA Satish Sureka","CA Gourav Kabra","CA Sanjay Khemka","CA Aditya Jain","Prof. Raj Awate","CA Nitin Guru","CFA Sanjay Saraf","CA Mayank Kothari"]},
-    {no:"Paper 12", name:"Management Accounting", group:"Group 2", faculty:["CA Ranjan Periwal","CA Satish Jalan","CA Namit Arora","CMA Sumit Rastogi","CA Purushottam Aggarwal","CA Sankalp Kanstiya","CA Sachin Gupta","CA Raj K Agrawal","CA Dani Khandelwal","CA Ashish Kalra"]}
+    {no:"Paper 11", name:"Financial Management and Business Data Analytics", group:"Group 2", faculty:["Prof. Abhisek Mahaptro","CA Ranjan Periwal","CA Satish Jalan","CA Satish Sureka","CA Gourav Kabra","CA Sanjay Khemka","CA Aditya Jain","Prof. Raj Awate","CA Nitin Guru","CFA Sanjay Saraf","CA Mayank Kothari"]},
+    {no:"Paper 12", name:"Management Accounting", group:"Group 2", faculty:["Prof. A. Sourav Patro","CA Ranjan Periwal","CA Satish Jalan","CA Namit Arora","CMA Sumit Rastogi","CA Purushottam Aggarwal","CA Sankalp Kanstiya","CA Sachin Gupta","CA Raj K Agrawal","CA Dani Khandelwal","CA Ashish Kalra"]}
   ],
   Final: [
     {no:"Paper 13", name:"Corporate and Economic Laws", group:"Group 1", faculty:["Prof. Abanindra Sahu","CS Arjun Chhabra","CA Shivangi Agrawal","CA Amit Popli","CA Amit Bachhawat","CA CS Mohit Agarwal","CA Shivam Palan","CA CS Jaspreet Singh Johar","CA Abhishek Bansal","CA Siddharth Agarwal"]},
@@ -241,7 +242,7 @@ function renderTable(){
       lastGroup = paper.group;
       const gRow = document.createElement('tr');
       gRow.className='group-row';
-      gRow.innerHTML = `<td colspan="7">${paper.group}</td>`;
+      gRow.innerHTML = `<td colspan="8">${paper.group}</td>`;
       paperTableBody.appendChild(gRow);
     }
     const row = document.createElement('tr');
@@ -251,6 +252,7 @@ function renderTable(){
     const facultyOptions = paper.faculty.map(f=>`<option value="${f}">${f}</option>`).join('') + `<option value="__other__">Other (please specify)</option>`;
     const attemptOptions = getAttemptsFor(currentCourse, currentLevel).map(a=>`<option value="${a}">${a}</option>`).join('');
     const typeOptions = CLASS_TYPES.map(t=>`<option value="${t}">${t}</option>`).join('');
+    const bookOptions = BOOK_PREFERENCES.map(b=>`<option value="${b}">${b}</option>`).join('');
     const modeOptions = MODES.map(m=>`<div class="mode-option" data-value="${m}"><span class="mode-num"></span><span class="mode-text">${m}</span></div>`).join('');
     const modeList = `<div class="mode-list disabled"><div class="mode-hint">Choose according to your preference; only the available mode will be provided.</div>${modeOptions}</div>`;
 
@@ -264,6 +266,7 @@ function renderTable(){
       </td>
       <td><select class="f-attempt" disabled><option value="" selected disabled>Select attempt</option>${attemptOptions}</select></td>
       <td><select class="f-type" disabled><option value="" selected disabled>Select type</option>${typeOptions}</select></td>
+      <td><select class="f-book" disabled><option value="" selected disabled>Select preference</option>${bookOptions}</select></td>
       <td>${modeList}</td>
     `;
     paperTableBody.appendChild(row);
@@ -358,9 +361,10 @@ function checkOrderReady(){
     const facultyOtherVal = row.querySelector('.f-faculty-other').value.trim();
     const attempt = row.querySelector('.f-attempt').value;
     const type = row.querySelector('.f-type').value;
+    const bookPreference = row.querySelector('.f-book').value;
     const anyMode = row.querySelectorAll('.mode-option.selected').length > 0;
     const facultyValid = faculty && (faculty !== '__other__' || facultyOtherVal.length > 0);
-    if(!facultyValid || !attempt || !type || !anyMode) ready = false;
+    if(!facultyValid || !attempt || !type || !bookPreference || !anyMode) ready = false;
   });
   placeOrderBtn.disabled = !ready;
 }
@@ -384,11 +388,12 @@ function collectSelectedPapers(){
     }
     const attempt = row.querySelector('.f-attempt').value;
     const typeOfClass = row.querySelector('.f-type').value;
+    const bookPreference = row.querySelector('.f-book').value;
     const modeOfClass = [...row.querySelectorAll('.mode-option.selected')]
       .sort((a,b) => parseInt(a.dataset.order,10) - parseInt(b.dataset.order,10))
       .map(m => m.dataset.order + ') ' + m.dataset.value)
       .join(', ');
-    selected.push({kind:'classPaper', course: currentCourse, level: currentLevel, paperNo, paperName, faculty, attempt, typeOfClass, modeOfClass});
+    selected.push({kind:'classPaper', course: currentCourse, level: currentLevel, paperNo, paperName, faculty, attempt, typeOfClass, bookPreference, modeOfClass});
   });
   return selected;
 }
