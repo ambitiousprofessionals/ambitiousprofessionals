@@ -329,8 +329,9 @@ footer{background:var(--panel);color:var(--gray);padding:50px 0 26px;border-top:
 .footer-grid .brand-text .tag{color:var(--red);}
 footer .cols{display:flex;gap:60px;flex-wrap:wrap;}
 footer h5{font-family:var(--head);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--black);margin-bottom:12px;}
-footer .cols div p, footer .cols div a{display:block;font-size:13.5px;margin-bottom:8px;color:var(--gray);transition:.2s;}
+footer .cols div p, footer .cols div a{display:flex;align-items:flex-start;gap:8px;font-size:13.5px;margin-bottom:8px;color:var(--gray);transition:.2s;}
 footer .cols div a:hover{color:var(--red);}
+.ft-icon{width:15px;height:15px;flex:0 0 auto;margin-top:1px;color:var(--red);}
 .foot-bottom{padding-top:22px;text-align:center;font-size:12px;letter-spacing:.04em;color:var(--gray);}
 
 /* ===== MODALS ===== */
