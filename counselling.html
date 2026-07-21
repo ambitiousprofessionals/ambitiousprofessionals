@@ -153,14 +153,56 @@
 
 <!-- ===================== CART MODAL ===================== -->
 <div class="overlay hidden-overlay" id="cartOverlay">
-  <div class="modal" style="max-width:640px;">
+  <div class="modal" style="max-width:920px;">
     <button class="modal-close" data-close="cartOverlay">&times;</button>
     <h3>Your Cart</h3>
     <div class="sub">Review everything below, then place your order.</div>
-    <div id="cartItemsList" style="margin-bottom:18px;"></div>
+    <div class="table-wrap hidden" id="cartTableWrap" style="margin-bottom:20px;">
+      <table class="paper-table" id="cartTable">
+        <thead>
+          <tr><th>Exam</th><th>Paper No.</th><th>Paper Name</th><th>Faculty</th><th>Attempt</th><th>Type of Class</th><th>Book Preference</th><th>Mode of Class</th><th></th></tr>
+        </thead>
+        <tbody id="cartTableBody"></tbody>
+      </table>
+    </div>
+    <div id="cartCounsellingList" style="margin-bottom:18px;"></div>
     <div id="cartEmptyMsg" style="display:none;color:var(--gray);font-size:14px;text-align:center;padding:20px 0;">Your cart is empty.</div>
     <div id="cartError" style="color:var(--red);font-size:12.5px;margin-bottom:10px;display:none;"></div>
     <button type="button" class="btn btn-primary" id="placeCartOrderBtn" style="width:100%;justify-content:center;">Place Order</button>
+  </div>
+</div>
+
+<!-- ===================== ORDER CONFIRMATION MODAL ===================== -->
+<div class="overlay hidden-overlay" id="orderConfirmOverlay">
+  <div class="modal" style="max-width:920px;">
+    <button class="modal-close" data-close="orderConfirmOverlay">&times;</button>
+    <h3 id="orderConfirmTitle">OrderID #—</h3>
+    <div class="sub">Please review before confirming your order.</div>
+    <div class="table-wrap" style="margin-bottom:20px;">
+      <table class="paper-table" id="orderConfirmTable">
+        <thead>
+          <tr><th>Exam</th><th>Paper No.</th><th>Paper Name</th><th>Faculty</th><th>Attempt</th><th>Type of Class</th><th>Book Preference</th><th>Mode of Class</th></tr>
+        </thead>
+        <tbody id="orderConfirmTableBody"></tbody>
+      </table>
+    </div>
+    <button type="button" class="btn btn-primary" id="confirmOrderBtn" style="width:100%;justify-content:center;">Confirm Order</button>
+  </div>
+</div>
+
+<!-- ===================== ORDER DETAILS (VIEW) MODAL ===================== -->
+<div class="overlay hidden-overlay" id="orderDetailsOverlay">
+  <div class="modal" style="max-width:920px;">
+    <button class="modal-close" data-close="orderDetailsOverlay">&times;</button>
+    <h3 id="orderDetailsTitle">OrderID #—</h3>
+    <div class="table-wrap">
+      <table class="paper-table" id="orderDetailsTable">
+        <thead>
+          <tr><th>Exam</th><th>Paper No.</th><th>Paper Name</th><th>Faculty</th><th>Attempt</th><th>Type of Class</th><th>Book Preference</th><th>Mode of Class</th></tr>
+        </thead>
+        <tbody id="orderDetailsTableBody"></tbody>
+      </table>
+    </div>
   </div>
 </div>
 
@@ -184,11 +226,16 @@
 
 <!-- ===================== MY ORDERS MODAL ===================== -->
 <div class="overlay hidden-overlay" id="myOrdersOverlay">
-  <div class="modal" style="max-width:640px;">
+  <div class="modal" style="max-width:560px;">
     <button class="modal-close" data-close="myOrdersOverlay">&times;</button>
     <h3>My Orders</h3>
     <div class="sub">A history of everything you've placed with us.</div>
-    <div id="myOrdersList" style="max-height:420px;overflow-y:auto;"></div>
+    <div class="table-wrap" style="max-height:420px;overflow-y:auto;">
+      <table class="paper-table" id="myOrdersTable">
+        <thead><tr><th>Order ID</th><th>Date</th><th></th></tr></thead>
+        <tbody id="myOrdersTableBody"></tbody>
+      </table>
+    </div>
     <div id="myOrdersEmptyMsg" style="display:none;color:var(--gray);font-size:14px;text-align:center;padding:20px 0;">No orders yet.</div>
   </div>
 </div>
@@ -198,6 +245,7 @@
   <div class="modal success-modal">
     <div class="tick">✓</div>
     <h3>Your order has been placed</h3>
+    <p style="font-family:var(--head);letter-spacing:.04em;color:var(--red);font-size:13px;margin-bottom:10px;">OrderID #<span id="orderSuccessOrderId"></span></p>
     <p>A confirmation has been sent to your registered email <strong id="orderSuccessEmail"></strong>. Class availability, payments and other details will follow shortly.</p>
     <button class="btn btn-primary" data-close="orderSuccessOverlay">Close</button>
   </div>
