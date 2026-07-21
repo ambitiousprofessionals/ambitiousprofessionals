@@ -406,6 +406,12 @@ function addTablePapersToCart(){
   saveCartToFirestore().then(()=>{
     updateCartBadge();
     renderTable(); // reset the table's selections
-    openCart();
+    flashAddedToCart(placeOrderBtn);
   });
+}
+
+function flashAddedToCart(btn){
+  const original = btn.textContent;
+  btn.textContent = 'Added to Cart ✓';
+  setTimeout(()=>{ if(btn) btn.textContent = original; }, 1800);
 }
