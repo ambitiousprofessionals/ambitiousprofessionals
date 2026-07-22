@@ -176,7 +176,6 @@ const paperTableBody = document.getElementById('paperTableBody');
 const placeOrderBtn = document.getElementById('placeOrderBtn');
 const noSelectionMsg = document.getElementById('noSelectionMsg');
 const coursesHeading = document.getElementById('coursesHeading');
-const coursesSub = document.getElementById('coursesSub');
 
 /**
  * Course + level now come from the Courses nav dropdown, via URL query
@@ -191,7 +190,6 @@ function initCoursesFromURL(){
 
   if(urlCourse === 'MBA'){
     coursesHeading.textContent = 'MBA Guidance';
-    coursesSub.textContent = "Talk to us about exams, universities, and timelines — free of charge.";
     noSelectionMsg.classList.add('hidden');
     tableWrap.classList.add('hidden');
     if(mbaPanel) mbaPanel.classList.remove('hidden');
@@ -208,7 +206,6 @@ function initCoursesFromURL(){
     currentCourse = urlCourse;
     currentLevel = urlLevel;
     coursesHeading.textContent = getExamLabel(urlCourse, urlLevel);
-    coursesSub.textContent = 'Select the papers you need, fill in every field, and add them to your cart.';
     noSelectionMsg.classList.add('hidden');
     renderTable();
     tableWrap.classList.remove('hidden');
@@ -253,8 +250,7 @@ function renderTable(){
     const attemptOptions = getAttemptsFor(currentCourse, currentLevel).map(a=>`<option value="${a}">${a}</option>`).join('');
     const typeOptions = CLASS_TYPES.map(t=>`<option value="${t}">${t}</option>`).join('');
     const bookOptions = BOOK_PREFERENCES.map(b=>`<option value="${b}">${b}</option>`).join('');
-    const modeOptions = MODES.map(m=>`<div class="mode-option" data-value="${m}"><span class="mode-num"></span><span class="mode-text">${m}</span></div>`).join('');
-    const modeList = `<div class="mode-list disabled"><div class="mode-hint">Choose according to your preference; only the available mode will be provided.</div>${modeOptions}</div>`;
+    const modeSelectOptions = MODES.map(m=>`<option value="${m}">${m}</option>`).join('');
 
     row.innerHTML = `
       <td class="chk-cell"><input type="checkbox" class="row-enable"></td>
@@ -267,7 +263,7 @@ function renderTable(){
       <td><select class="f-attempt" disabled><option value="" selected disabled>Select attempt</option>${attemptOptions}</select></td>
       <td><select class="f-type" disabled><option value="" selected disabled>Select type</option>${typeOptions}</select></td>
       <td><select class="f-book" disabled><option value="" selected disabled>Select preference</option>${bookOptions}</select></td>
-      <td>${modeList}</td>
+      <td><select class="f-mode" disabled><option value="" selected disabled>Select mode</option>${modeSelectOptions}</select></td>
     `;
     paperTableBody.appendChild(row);
   });
@@ -281,8 +277,6 @@ function attachRowLogic(){
     const selects = row.querySelectorAll('select');
     const facultySelect = row.querySelector('.f-faculty');
     const facultyOther = row.querySelector('.f-faculty-other'); // hidden data store, not shown to user
-    const modeOptions = row.querySelectorAll('.mode-option');
-    const modeList = row.querySelector('.mode-list');
 
     const otherOptionEl = facultySelect.querySelector('option[value="__other__"]');
 
@@ -292,9 +286,6 @@ function attachRowLogic(){
       selects.forEach(s=>{ s.disabled = !on; if(!on) s.value=''; });
       facultyOther.value = '';
       otherOptionEl.textContent = OTHER_LABEL;
-      if(!on) resetModeOptions(modeOptions);
-      modeOptions.forEach(m=>{ m.dataset.enabled = on ? 'true' : 'false'; });
-      modeList.classList.toggle('disabled', !on);
       checkOrderReady();
     });
 
@@ -309,47 +300,7 @@ function attachRowLogic(){
     });
 
     selects.forEach(s=>s.addEventListener('change',checkOrderReady));
-    modeOptions.forEach(opt=>{
-      opt.addEventListener('click',()=>{
-        if(modeList.classList.contains('disabled')) return;
-        toggleModeOption(opt, modeOptions);
-        checkOrderReady();
-      });
-    });
   });
-}
-
-function resetModeOptions(modeOptions){
-  modeOptions.forEach(m=>{
-    m.classList.remove('selected');
-    m.dataset.order = '';
-    m.querySelector('.mode-num').textContent = '';
-  });
-}
-
-function toggleModeOption(opt, allOptions){
-  if(opt.classList.contains('selected')){
-    // deselect, then re-sequence remaining selections so numbers stay 1,2,3...
-    const removedOrder = parseInt(opt.dataset.order, 10);
-    opt.classList.remove('selected');
-    opt.dataset.order = '';
-    opt.querySelector('.mode-num').textContent = '';
-    allOptions.forEach(m=>{
-      if(m.classList.contains('selected')){
-        const o = parseInt(m.dataset.order, 10);
-        if(o > removedOrder){
-          m.dataset.order = o - 1;
-          m.querySelector('.mode-num').textContent = o - 1;
-        }
-      }
-    });
-  } else {
-    const selectedCount = [...allOptions].filter(m=>m.classList.contains('selected')).length;
-    const nextOrder = selectedCount + 1;
-    opt.classList.add('selected');
-    opt.dataset.order = nextOrder;
-    opt.querySelector('.mode-num').textContent = nextOrder;
-  }
 }
 
 function checkOrderReady(){
@@ -362,9 +313,9 @@ function checkOrderReady(){
     const attempt = row.querySelector('.f-attempt').value;
     const type = row.querySelector('.f-type').value;
     const bookPreference = row.querySelector('.f-book').value;
-    const anyMode = row.querySelectorAll('.mode-option.selected').length > 0;
+    const mode = row.querySelector('.f-mode').value;
     const facultyValid = faculty && (faculty !== '__other__' || facultyOtherVal.length > 0);
-    if(!facultyValid || !attempt || !type || !bookPreference || !anyMode) ready = false;
+    if(!facultyValid || !attempt || !type || !bookPreference || !mode) ready = false;
   });
   placeOrderBtn.disabled = !ready;
 }
@@ -389,10 +340,7 @@ function collectSelectedPapers(){
     const attempt = row.querySelector('.f-attempt').value;
     const typeOfClass = row.querySelector('.f-type').value;
     const bookPreference = row.querySelector('.f-book').value;
-    const modeOfClass = [...row.querySelectorAll('.mode-option.selected')]
-      .sort((a,b) => parseInt(a.dataset.order,10) - parseInt(b.dataset.order,10))
-      .map(m => m.dataset.order + ') ' + m.dataset.value)
-      .join(', ');
+    const modeOfClass = row.querySelector('.f-mode').value;
     selected.push({kind:'classPaper', course: currentCourse, level: currentLevel, paperNo, paperName, faculty, attempt, typeOfClass, bookPreference, modeOfClass});
   });
   return selected;
