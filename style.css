@@ -240,6 +240,12 @@ nav > ul > li > a.nav-active{color:var(--red);border-color:var(--red);}
 /* table */
 .table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);}
 table.paper-table{width:100%;border-collapse:collapse;min-width:920px;background:var(--white);}
+#myOrdersTable{min-width:0;}
+#myOrdersTable th:nth-child(1), #myOrdersTable td:nth-child(1){width:34%;}
+#myOrdersTable th:nth-child(2), #myOrdersTable td:nth-child(2){width:33%;}
+#myOrdersTable th:nth-child(3), #myOrdersTable td:nth-child(3){width:33%;text-align:right;}
+#myOrdersTable .view-order-btn{padding:6px 12px;font-size:10.5px;border:1.5px solid var(--line);color:var(--black);background:var(--white);border-radius:var(--radius);white-space:nowrap;}
+#myOrdersTable .view-order-btn:hover{border-color:var(--red);color:var(--red);}
 .paper-table thead th{
   background:var(--red-dark);color:var(--white);
   font-family:var(--head);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;
