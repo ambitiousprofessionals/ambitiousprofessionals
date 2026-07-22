@@ -81,6 +81,19 @@ document.addEventListener('click',(e)=>{
   }
 });
 
+/* ===== EMAIL LINKS: Gmail app on mobile, Gmail web compose on desktop ===== */
+document.querySelectorAll('a.mail-link').forEach(a=>{
+  a.addEventListener('click', function(e){
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if(!isMobile){
+      e.preventDefault();
+      const email = a.dataset.email;
+      window.open('https://mail.google.com/mail/?view=cm&fs=1&to=' + email, '_blank');
+    }
+    // On mobile, let the default mailto: link proceed — this opens the Gmail app directly.
+  });
+});
+
 /* ===== ACTIVE NAV HIGHLIGHT ===== */
 (function highlightActiveNav(){
   const path = window.location.pathname.split('/').pop() || 'index.html';
@@ -230,6 +243,7 @@ function buildPaperRowHTML(p, withRemove, idx){
 
 let pendingOrderId = null;
 let pendingOrderItems = [];
+let pendingCounsellingItems = [];
 
 function renderCart(){
   const tbody = document.getElementById('cartTableBody');
@@ -291,7 +305,14 @@ document.getElementById('placeCartOrderBtn').addEventListener('click', ()=>{
   const classPaperItems = cartItems.filter(i => i.kind === 'classPaper');
   const counsellingItems = cartItems.filter(i => i.kind === 'counselling');
 
-  if(counsellingItems.length > 0){
+  generateOrderId().then((orderId)=>{
+    pendingOrderId = orderId;
+    pendingOrderItems = classPaperItems;
+    pendingCounsellingItems = counsellingItems;
+
+    // Counselling requests go to their own Sheet immediately (unaffected by the
+    // paper confirmation step below) — but stay bundled under this same Order ID
+    // in "My Orders" so the student sees everything from one "Place Order" together.
     counsellingItems.forEach(item=>{
       sendToSheet({
         formType: 'counselling',
@@ -302,24 +323,13 @@ document.getElementById('placeCartOrderBtn').addEventListener('click', ()=>{
         whatWantToKnow: item.whatWantToKnow
       });
     });
-    cartItems = cartItems.filter(i => i.kind !== 'counselling');
-  }
 
-  if(classPaperItems.length === 0){
-    saveCartToFirestore().then(()=>{
-      updateCartBadge();
-      closeOverlay('cartOverlay');
-      document.getElementById('bookedSuccessEmail').textContent = currentUserProfile.email;
-      openOverlay('bookedSuccessOverlay');
-    });
-    return;
-  }
+    if(classPaperItems.length === 0){
+      // Pure counselling order — no paper table to confirm, finalize right away.
+      finalizeOrder(orderId, [], counsellingItems, true);
+      return;
+    }
 
-  saveCartToFirestore().then(()=> updateCartBadge()); // persist counselling removal in the background
-
-  generateOrderId().then((orderId)=>{
-    pendingOrderId = orderId;
-    pendingOrderItems = classPaperItems;
     document.getElementById('orderConfirmTitle').textContent = 'OrderID #' + orderId;
     document.getElementById('orderConfirmTableBody').innerHTML =
       classPaperItems.map(p => buildPaperRowHTML(p, false)).join('');
@@ -330,39 +340,53 @@ document.getElementById('placeCartOrderBtn').addEventListener('click', ()=>{
 
 document.getElementById('confirmOrderBtn').addEventListener('click', ()=>{
   if(!pendingOrderId || !currentUserProfile) return;
-  const orderId = pendingOrderId;
-  const items = pendingOrderItems;
+  finalizeOrder(pendingOrderId, pendingOrderItems, pendingCounsellingItems, false);
+});
 
-  sendToSheet({
-    formType: 'order',
-    orderId: orderId,
-    studentId: currentUserProfile.studentId,
-    name: currentUserProfile.name,
-    email: currentUserProfile.email,
-    extraInfo: '',
-    papers: items.map(p => Object.assign({}, p, { exam: getExamLabel(p.course, p.level) }))
-  });
+function finalizeOrder(orderId, paperItems, counsellingItems, isCounsellingOnly){
+  if(paperItems.length > 0){
+    sendToSheet({
+      formType: 'order',
+      orderId: orderId,
+      studentId: currentUserProfile.studentId,
+      name: currentUserProfile.name,
+      email: currentUserProfile.email,
+      extraInfo: '',
+      papers: paperItems.map(p => Object.assign({}, p, { exam: getExamLabel(p.course, p.level) }))
+    });
+  }
+
+  const historyItems = paperItems.map(p => Object.assign({}, p, { exam: getExamLabel(p.course, p.level), _type: 'classPaper' }))
+    .concat(counsellingItems.map(c => Object.assign({}, c, { _type: 'counselling' })));
 
   const uid = auth.currentUser.uid;
   db.collection('users').doc(uid).update({
     orderHistory: firebase.firestore.FieldValue.arrayUnion({
       orderId: orderId,
       date: new Date().toISOString(),
-      items: items.map(p => Object.assign({}, p, { exam: getExamLabel(p.course, p.level) }))
+      items: historyItems
     })
   });
 
-  cartItems = cartItems.filter(i => items.indexOf(i) === -1);
+  const removedItems = paperItems.concat(counsellingItems);
+  cartItems = cartItems.filter(i => removedItems.indexOf(i) === -1);
   saveCartToFirestore().then(()=>{
     updateCartBadge();
+    closeOverlay('cartOverlay');
     closeOverlay('orderConfirmOverlay');
-    document.getElementById('orderSuccessOrderId').textContent = orderId;
-    document.getElementById('orderSuccessEmail').textContent = currentUserProfile.email;
-    openOverlay('orderSuccessOverlay');
+    if(isCounsellingOnly){
+      document.getElementById('bookedSuccessEmail').textContent = currentUserProfile.email;
+      openOverlay('bookedSuccessOverlay');
+    } else {
+      document.getElementById('orderSuccessOrderId').textContent = orderId;
+      document.getElementById('orderSuccessEmail').textContent = currentUserProfile.email;
+      openOverlay('orderSuccessOverlay');
+    }
     pendingOrderId = null;
     pendingOrderItems = [];
+    pendingCounsellingItems = [];
   });
-});
+}
 
 /* ============================================================
    MY ORDERS
@@ -383,15 +407,27 @@ function renderMyOrders(){
       const realIdx = history.length - 1 - i;
       const dateStr = entry.date ? new Date(entry.date).toLocaleDateString() : '—';
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${entry.orderId || '—'}</td><td>${dateStr}</td><td><button type="button" class="btn btn-outline view-order-btn" style="padding:6px 14px;font-size:11px;border:1.5px solid var(--line);color:var(--black);" data-idx="${realIdx}">View Details</button></td>`;
+      tr.innerHTML = `<td>${entry.orderId || '—'}</td><td>${dateStr}</td><td><button type="button" class="btn btn-outline view-order-btn" data-idx="${realIdx}">View Details</button></td>`;
       tbody.appendChild(tr);
     });
     tbody.querySelectorAll('.view-order-btn').forEach(btn=>{
       btn.addEventListener('click', ()=>{
         const entry = history[parseInt(btn.dataset.idx, 10)];
+        const items = entry.items || [];
+        // Backward-compat: entries saved before this update have no _type — treat as classPaper.
+        const paperItems = items.filter(i => !i._type || i._type === 'classPaper');
+        const counsellingItems = items.filter(i => i._type === 'counselling');
+
         document.getElementById('orderDetailsTitle').textContent = 'OrderID #' + (entry.orderId || '—');
-        document.getElementById('orderDetailsTableBody').innerHTML =
-          (entry.items || []).map(p => buildPaperRowHTML(p, false)).join('');
+        document.getElementById('orderDetailsTableWrap').classList.toggle('hidden', paperItems.length === 0);
+        document.getElementById('orderDetailsTableBody').innerHTML = paperItems.map(p => buildPaperRowHTML(p, false)).join('');
+
+        const counsellingList = document.getElementById('orderDetailsCounsellingList');
+        counsellingList.innerHTML = counsellingItems.map(item =>
+          `<div style="padding:12px 0;border-bottom:1px solid var(--line);font-size:13.5px;">${describeCartItem(item)}</div>`
+        ).join('');
+
+        closeOverlay('myOrdersOverlay');
         openOverlay('orderDetailsOverlay');
       });
     });
