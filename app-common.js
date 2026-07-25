@@ -42,6 +42,13 @@ document.querySelectorAll('.overlay').forEach(ov=>{
   if(ov.id === 'completeProfileOverlay' || ov.id === 'googleSetPasswordOverlay') return; // mandatory — no dismiss until saved
   ov.addEventListener('click',(e)=>{ if(e.target===ov) closeOverlay(ov.id); });
 });
+document.addEventListener('keydown',(e)=>{
+  if(e.key !== 'Escape') return;
+  document.querySelectorAll('.overlay:not(.hidden-overlay)').forEach(ov=>{
+    if(ov.id === 'completeProfileOverlay' || ov.id === 'googleSetPasswordOverlay') return; // mandatory
+    closeOverlay(ov.id);
+  });
+});
 
 /* ============================================================
    MOBILE NAV (hamburger)
@@ -147,6 +154,12 @@ function getExamLabel(course, level){
   return course + ' ' + level;
 }
 
+function flashAddedToCart(btn){
+  const original = btn.textContent;
+  btn.textContent = 'Added to Cart ✓';
+  setTimeout(()=>{ if(btn) btn.textContent = original; }, 1800);
+}
+
 function addCounsellingToCart(examOrCourse, whatWantToKnow){
   if(!requireAuthOrPrompt()) return;
   cartItems.push({ kind:'counselling', examOrCourse: examOrCourse, whatWantToKnow: whatWantToKnow });
@@ -241,30 +254,58 @@ function buildPaperRowHTML(p, withRemove, idx){
   </tr>`;
 }
 
+function buildTestSeriesRowHTML(t, withRemove, idx){
+  const removeCell = withRemove ? `<td><a href="#" class="cart-remove-ts-link" data-idx="${idx}" style="color:var(--red);">Remove</a></td>` : '';
+  return `<tr>
+    <td>${t.examToAppear}</td>
+    <td>${t.attempt}</td>
+    <td>${t.attemptingFor}</td>
+    <td>${t.testSeriesType}</td>
+    ${removeCell}
+  </tr>`;
+}
+
 let pendingOrderId = null;
 let pendingOrderItems = [];
 let pendingCounsellingItems = [];
+let pendingTestSeriesItems = [];
 
 function renderCart(){
   const tbody = document.getElementById('cartTableBody');
   const tableWrap = document.getElementById('cartTableWrap');
+  const tsBody = document.getElementById('cartTestSeriesTableBody');
+  const tsWrap = document.getElementById('cartTestSeriesWrap');
   const counsellingList = document.getElementById('cartCounsellingList');
   const emptyMsg = document.getElementById('cartEmptyMsg');
   const placeBtn = document.getElementById('placeCartOrderBtn');
   tbody.innerHTML = '';
+  tsBody.innerHTML = '';
   counsellingList.innerHTML = '';
 
   const classItems = cartItems.filter(i => i.kind === 'classPaper');
+  const testSeriesItems = cartItems.filter(i => i.kind === 'testSeries');
   const counsellingItems = cartItems.filter(i => i.kind === 'counselling');
 
   tableWrap.classList.toggle('hidden', classItems.length === 0);
+  tsWrap.classList.toggle('hidden', testSeriesItems.length === 0);
 
   cartItems.forEach((item, idx)=>{
     if(item.kind === 'classPaper'){
       tbody.insertAdjacentHTML('beforeend', buildPaperRowHTML(item, true, idx));
     }
+    if(item.kind === 'testSeries'){
+      tsBody.insertAdjacentHTML('beforeend', buildTestSeriesRowHTML(item, true, idx));
+    }
   });
   tbody.querySelectorAll('.cart-remove-link').forEach(a=>{
+    a.addEventListener('click', (e)=>{
+      e.preventDefault();
+      const idx = parseInt(a.dataset.idx, 10);
+      cartItems.splice(idx, 1);
+      saveCartToFirestore().then(()=>{ updateCartBadge(); renderCart(); });
+    });
+  });
+  tsBody.querySelectorAll('.cart-remove-ts-link').forEach(a=>{
     a.addEventListener('click', (e)=>{
       e.preventDefault();
       const idx = parseInt(a.dataset.idx, 10);
@@ -303,19 +344,22 @@ function openCart(){
 document.getElementById('placeCartOrderBtn').addEventListener('click', ()=>{
   if(cartItems.length === 0 || !currentUserProfile) return;
   const classPaperItems = cartItems.filter(i => i.kind === 'classPaper');
+  const testSeriesItems = cartItems.filter(i => i.kind === 'testSeries');
   const counsellingItems = cartItems.filter(i => i.kind === 'counselling');
 
   generateOrderId().then((orderId)=>{
     pendingOrderId = orderId;
     pendingOrderItems = classPaperItems;
+    pendingTestSeriesItems = testSeriesItems;
     pendingCounsellingItems = counsellingItems;
 
     // Counselling requests go to their own Sheet immediately (unaffected by the
-    // paper confirmation step below) — but stay bundled under this same Order ID
+    // confirmation step below) — but stay bundled under this same Order ID
     // in "My Orders" so the student sees everything from one "Place Order" together.
     counsellingItems.forEach(item=>{
       sendToSheet({
         formType: 'counselling',
+        orderId: orderId,
         studentId: currentUserProfile.studentId,
         name: currentUserProfile.name,
         email: currentUserProfile.email,
@@ -324,15 +368,19 @@ document.getElementById('placeCartOrderBtn').addEventListener('click', ()=>{
       });
     });
 
-    if(classPaperItems.length === 0){
-      // Pure counselling order — no paper table to confirm, finalize right away.
-      finalizeOrder(orderId, [], counsellingItems, true);
+    if(classPaperItems.length === 0 && testSeriesItems.length === 0){
+      // Pure counselling order — no table to confirm, finalize right away.
+      finalizeOrder(orderId, [], [], counsellingItems, true);
       return;
     }
 
     document.getElementById('orderConfirmTitle').textContent = 'OrderID #' + orderId;
+    document.getElementById('orderConfirmTableWrap').classList.toggle('hidden', classPaperItems.length === 0);
     document.getElementById('orderConfirmTableBody').innerHTML =
       classPaperItems.map(p => buildPaperRowHTML(p, false)).join('');
+    document.getElementById('orderConfirmTestSeriesWrap').classList.toggle('hidden', testSeriesItems.length === 0);
+    document.getElementById('orderConfirmTestSeriesTableBody').innerHTML =
+      testSeriesItems.map(t => buildTestSeriesRowHTML(t, false)).join('');
     closeOverlay('cartOverlay');
     openOverlay('orderConfirmOverlay');
   });
@@ -340,10 +388,10 @@ document.getElementById('placeCartOrderBtn').addEventListener('click', ()=>{
 
 document.getElementById('confirmOrderBtn').addEventListener('click', ()=>{
   if(!pendingOrderId || !currentUserProfile) return;
-  finalizeOrder(pendingOrderId, pendingOrderItems, pendingCounsellingItems, false);
+  finalizeOrder(pendingOrderId, pendingOrderItems, pendingTestSeriesItems, pendingCounsellingItems, false);
 });
 
-function finalizeOrder(orderId, paperItems, counsellingItems, isCounsellingOnly){
+function finalizeOrder(orderId, paperItems, testSeriesItems, counsellingItems, isCounsellingOnly){
   if(paperItems.length > 0){
     sendToSheet({
       formType: 'order',
@@ -356,7 +404,19 @@ function finalizeOrder(orderId, paperItems, counsellingItems, isCounsellingOnly)
     });
   }
 
+  if(testSeriesItems.length > 0){
+    sendToSheet({
+      formType: 'testSeries',
+      orderId: orderId,
+      studentId: currentUserProfile.studentId,
+      name: currentUserProfile.name,
+      email: currentUserProfile.email,
+      series: testSeriesItems
+    });
+  }
+
   const historyItems = paperItems.map(p => Object.assign({}, p, { exam: getExamLabel(p.course, p.level), _type: 'classPaper' }))
+    .concat(testSeriesItems.map(t => Object.assign({}, t, { _type: 'testSeries' })))
     .concat(counsellingItems.map(c => Object.assign({}, c, { _type: 'counselling' })));
 
   const uid = auth.currentUser.uid;
@@ -368,7 +428,7 @@ function finalizeOrder(orderId, paperItems, counsellingItems, isCounsellingOnly)
     })
   });
 
-  const removedItems = paperItems.concat(counsellingItems);
+  const removedItems = paperItems.concat(testSeriesItems).concat(counsellingItems);
   cartItems = cartItems.filter(i => removedItems.indexOf(i) === -1);
   saveCartToFirestore().then(()=>{
     updateCartBadge();
@@ -384,6 +444,7 @@ function finalizeOrder(orderId, paperItems, counsellingItems, isCounsellingOnly)
     }
     pendingOrderId = null;
     pendingOrderItems = [];
+    pendingTestSeriesItems = [];
     pendingCounsellingItems = [];
   });
 }
@@ -416,11 +477,15 @@ function renderMyOrders(){
         const items = entry.items || [];
         // Backward-compat: entries saved before this update have no _type — treat as classPaper.
         const paperItems = items.filter(i => !i._type || i._type === 'classPaper');
+        const testSeriesItems = items.filter(i => i._type === 'testSeries');
         const counsellingItems = items.filter(i => i._type === 'counselling');
 
         document.getElementById('orderDetailsTitle').textContent = 'OrderID #' + (entry.orderId || '—');
         document.getElementById('orderDetailsTableWrap').classList.toggle('hidden', paperItems.length === 0);
         document.getElementById('orderDetailsTableBody').innerHTML = paperItems.map(p => buildPaperRowHTML(p, false)).join('');
+
+        document.getElementById('orderDetailsTestSeriesWrap').classList.toggle('hidden', testSeriesItems.length === 0);
+        document.getElementById('orderDetailsTestSeriesTableBody').innerHTML = testSeriesItems.map(t => buildTestSeriesRowHTML(t, false)).join('');
 
         const counsellingList = document.getElementById('orderDetailsCounsellingList');
         counsellingList.innerHTML = counsellingItems.map(item =>
