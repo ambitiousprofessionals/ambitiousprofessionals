@@ -372,6 +372,29 @@ input:disabled{background:#f1efe9;color:#aaa;cursor:not-allowed;}
 }
 .otp-box:focus{border-color:var(--red);outline:none;}
 .pw-hint{font-family:var(--serif);font-style:italic;font-size:13px;color:var(--gray);margin-bottom:6px;}
+
+/* ===== TEST SERIES TYPE CARDS ===== */
+.ts-type-card{
+  position:relative;flex:1 1 320px;max-width:380px;text-align:left;
+  background:var(--white);border:2px solid var(--line);border-radius:12px;
+  padding:30px 24px 24px;cursor:pointer;transition:.2s;font-family:var(--body);
+}
+.ts-type-card:hover{border-color:var(--red);}
+.ts-type-card.selected{border-color:#1B5E20;background:#F4FAF5;}
+.ts-type-card h4{font-family:var(--head);font-size:14.5px;letter-spacing:.02em;color:var(--black);margin-bottom:16px;text-transform:none;font-weight:600;}
+.ts-type-card ul{list-style:none;display:flex;flex-direction:column;gap:10px;font-size:13.5px;color:var(--charcoal);}
+.ts-type-card li{display:flex;align-items:flex-start;gap:8px;}
+.ts-recommended{
+  position:absolute;top:-11px;right:16px;background:var(--red);color:var(--white);
+  font-family:var(--head);font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+  padding:4px 10px;border-radius:20px;
+}
+.ts-check{
+  position:absolute;top:-13px;left:16px;width:26px;height:26px;border-radius:50%;
+  background:#1B5E20;color:var(--white);display:none;align-items:center;justify-content:center;
+  font-size:14px;font-weight:700;
+}
+.ts-type-card.selected .ts-check{display:flex;}
 .phone-row{display:flex;gap:8px;}
 .phone-row select{flex:0 0 108px;}
 .phone-row input{flex:1;}
