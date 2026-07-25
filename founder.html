@@ -58,6 +58,7 @@
           </ul>
         </li>
         <li><a href="counselling.html">Counselling</a></li>
+        <li><a href="test-series.html">Test Series</a></li>
         <li><a href="founder.html">Founder</a></li>
         <li><a href="#footer">Contact</a></li>
       </ul>
@@ -184,6 +185,14 @@
         <tbody id="cartTableBody"></tbody>
       </table>
     </div>
+    <div class="table-wrap hidden" id="cartTestSeriesWrap" style="margin-bottom:20px;">
+      <table class="paper-table" id="cartTestSeriesTable" style="min-width:0;">
+        <thead>
+          <tr><th>Exam to Appear</th><th>Attempt</th><th>Attempting For</th><th>Test Series Type</th><th></th></tr>
+        </thead>
+        <tbody id="cartTestSeriesTableBody"></tbody>
+      </table>
+    </div>
     <div id="cartCounsellingList" style="margin-bottom:18px;"></div>
     <div id="cartEmptyMsg" style="display:none;color:var(--gray);font-size:14px;text-align:center;padding:20px 0;">Your cart is empty.</div>
     <div id="cartError" style="color:var(--red);font-size:12.5px;margin-bottom:10px;display:none;"></div>
@@ -197,12 +206,20 @@
     <button class="modal-close" data-close="orderConfirmOverlay">&times;</button>
     <h3 id="orderConfirmTitle">OrderID #—</h3>
     <div class="sub">Please review before confirming your order.</div>
-    <div class="table-wrap" style="margin-bottom:20px;">
+    <div class="table-wrap hidden" id="orderConfirmTableWrap" style="margin-bottom:20px;">
       <table class="paper-table" id="orderConfirmTable">
         <thead>
           <tr><th>Exam</th><th>Paper No.</th><th>Paper Name</th><th>Faculty</th><th>Attempt</th><th>Type of Class</th><th>Book Preference</th><th>Mode of Class</th></tr>
         </thead>
         <tbody id="orderConfirmTableBody"></tbody>
+      </table>
+    </div>
+    <div class="table-wrap hidden" id="orderConfirmTestSeriesWrap" style="margin-bottom:20px;">
+      <table class="paper-table" id="orderConfirmTestSeriesTable" style="min-width:0;">
+        <thead>
+          <tr><th>Exam to Appear</th><th>Attempt</th><th>Attempting For</th><th>Test Series Type</th></tr>
+        </thead>
+        <tbody id="orderConfirmTestSeriesTableBody"></tbody>
       </table>
     </div>
     <button type="button" class="btn btn-primary" id="confirmOrderBtn" style="width:100%;justify-content:center;">Confirm Order</button>
@@ -220,6 +237,14 @@
           <tr><th>Exam</th><th>Paper No.</th><th>Paper Name</th><th>Faculty</th><th>Attempt</th><th>Type of Class</th><th>Book Preference</th><th>Mode of Class</th></tr>
         </thead>
         <tbody id="orderDetailsTableBody"></tbody>
+      </table>
+    </div>
+    <div class="table-wrap hidden" id="orderDetailsTestSeriesWrap" style="margin-top:16px;">
+      <table class="paper-table" id="orderDetailsTestSeriesTable" style="min-width:0;">
+        <thead>
+          <tr><th>Exam to Appear</th><th>Attempt</th><th>Attempting For</th><th>Test Series Type</th></tr>
+        </thead>
+        <tbody id="orderDetailsTestSeriesTableBody"></tbody>
       </table>
     </div>
     <div id="orderDetailsCounsellingList" style="margin-top:16px;"></div>
