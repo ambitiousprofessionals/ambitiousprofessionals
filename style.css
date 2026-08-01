@@ -93,8 +93,9 @@ nav ul{list-style:none;display:flex;gap:30px;}
   .submenu{position:static;box-shadow:none;border:none;padding-left:14px;}
 }
 nav a{
-  font-family:var(--head);font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;
+  font-family:var(--head);font-size:12px;letter-spacing:.08em;text-transform:uppercase;
   color:var(--charcoal);font-weight:500;padding:6px 2px;border-bottom:2px solid transparent;transition:.2s;
+  white-space:nowrap;
 }
 nav a:hover{color:var(--red);border-color:var(--red);}
 nav > ul > li > a.nav-active{color:var(--red);border-color:var(--red);}
