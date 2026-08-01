@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Redirecting to payment…</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  body{font-family:'Inter',sans-serif;background:#FBF9F5;color:#2B2823;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:24px;text-align:center;}
+  .box{max-width:420px;}
+  h1{font-size:20px;margin-bottom:12px;}
+  p{font-size:15px;color:#555;margin-bottom:20px;}
+  a.btn{display:inline-block;padding:14px 28px;background:#AE1029;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;}
+  .hint{margin-top:24px;font-size:13px;color:#888;}
+</style>
+</head>
+<body>
+<div class="box">
+  <h1>Opening your UPI app…</h1>
+  <p>If nothing happens automatically, tap the button below.</p>
+  <a class="btn" id="payBtn" href="#">Open UPI App</a>
+  <p class="hint">On a laptop or desktop? UPI apps only work on phones — please scan the QR code from the email instead, using your phone's camera or UPI app.</p>
+</div>
+<script>
+  var params = new URLSearchParams(window.location.search);
+  var upi = params.get('upi');
+  if (upi) {
+    document.getElementById('payBtn').href = upi;
+    // Attempt an automatic hand-off — this works on phones where a UPI app is
+    // registered to handle the upi:// scheme. Nothing happens on desktop, which
+    // is expected since there's no UPI app there.
+    window.location.href = upi;
+  }
+</script>
+</body>
+</html>
