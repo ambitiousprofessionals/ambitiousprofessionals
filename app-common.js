@@ -131,14 +131,21 @@ function wireWordCount(textareaId, counterId, max){
    ============================================================ */
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzSkJLi9__1V-dC9Rp_e_uAGPBCDh1pwf47NhR9u8RhYql3EtMusnfq3K98E3UR8wO1UQ/exec';
 
-function sendToSheet(payload){
+function sendToSheet(payload, retriesLeft){
   // no-cors: we can't read the response, but the data still reaches the script.
-  fetch(SCRIPT_URL, {
+  if (retriesLeft === undefined) retriesLeft = 1;
+  return fetch(SCRIPT_URL, {
     method: 'POST',
     mode: 'no-cors',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify(payload)
-  }).catch(err => console.error('Submission error:', err));
+  }).catch(err => {
+    console.error('Submission error:', err);
+    if (retriesLeft > 0) {
+      return new Promise(resolve => setTimeout(resolve, 1000)).then(() => sendToSheet(payload, retriesLeft - 1));
+    }
+    throw err;
+  });
 }
 
 /* ============================================================
@@ -1023,7 +1030,7 @@ document.getElementById('completeProfileForm').addEventListener('submit', (e)=>{
         email: user.email,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       }).then(()=>{
-        sendToSheet({
+        return sendToSheet({
           formType: 'studentSignup',
           studentId: studentId,
           name: name,
@@ -1031,9 +1038,15 @@ document.getElementById('completeProfileForm').addEventListener('submit', (e)=>{
           address: address,
           phone: phone,
           email: user.email
+        }).then(()=>{
+          closeOverlay('completeProfileOverlay');
+          refreshProfileUI(user);
+        }).catch(()=>{
+          // Firestore profile is saved, but we couldn't confirm the Sheet write reached the server.
+          closeOverlay('completeProfileOverlay');
+          refreshProfileUI(user);
+          alert('Your profile was saved, but we had trouble syncing it — if things look off later, please contact us.');
         });
-        closeOverlay('completeProfileOverlay');
-        refreshProfileUI(user);
       });
     });
   }).catch((err)=>{
