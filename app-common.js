@@ -197,7 +197,7 @@ function requireAuthOrPrompt(){
   if(auth.currentUser && currentUserProfile){
     return true;
   }
-  alert('Please sign in or sign up first to add items to your cart.');
+  showToast('Please sign in or sign up first to add items to your cart.', 'error');
   openOverlay(auth.currentUser ? 'signInOverlay' : 'signUpOverlay');
   return false;
 }
@@ -214,6 +214,9 @@ function updateCartBadge(){
   if(cartItems.length > 0){
     badge.textContent = cartItems.length;
     badge.classList.remove('hidden');
+    badge.classList.remove('bump');
+    void badge.offsetWidth; // restart the animation even if it's already running
+    badge.classList.add('bump');
   } else {
     badge.classList.add('hidden');
   }
@@ -677,7 +680,7 @@ wireOtpBoxes('fpOtpBoxes');
 
 function requestOtp(emailInputId, sendBtnId, otpSectionId, otpBoxesId){
   const email = document.getElementById(emailInputId).value.trim();
-  if(!email || !email.includes('@')){ alert('Enter a valid email first.'); return; }
+  if(!email || !email.includes('@')){ showToast('Enter a valid email first.', 'error'); return; }
   const code = generateOtpCode();
   const expiresAt = Date.now() + 10 * 60 * 1000;
   db.collection('otps').doc(email.toLowerCase()).set({ code: code, expiresAt: expiresAt, attempts: 0 }).then(()=>{
@@ -744,7 +747,7 @@ function resetSignUpOtpState(){
 
 document.getElementById('suSendOtpBtn').addEventListener('click', ()=>{
   const email = document.getElementById('suEmail').value.trim();
-  if(!email || !email.includes('@')){ alert('Enter a valid email first.'); return; }
+  if(!email || !email.includes('@')){ showToast('Enter a valid email first.', 'error'); return; }
   const btn = document.getElementById('suSendOtpBtn');
   btn.disabled = true;
   btn.textContent = 'Checking...';
@@ -863,12 +866,12 @@ function handleGoogleAuth(intent){
 
       if(intent === 'signup' && hasProfile){
         auth.signOut();
-        alert('This Google account is already registered. Please sign in instead.');
+        showToast('This Google account is already registered. Please sign in instead.', 'error');
         return;
       }
       if(intent === 'signin' && !hasProfile){
         auth.signOut();
-        alert('This Google account is not registered yet. Please sign up first.');
+        showToast('This Google account is not registered yet. Please sign up first.', 'error');
         return;
       }
 
@@ -884,7 +887,7 @@ function handleGoogleAuth(intent){
     });
   }).catch((err)=>{
     if(err.code !== 'auth/popup-closed-by-user'){
-      alert('Google sign-in failed: ' + err.message);
+      showToast('Google sign-in failed: ' + err.message, 'error');
     }
   });
 }
@@ -1045,7 +1048,7 @@ document.getElementById('completeProfileForm').addEventListener('submit', (e)=>{
           // Firestore profile is saved, but we couldn't confirm the Sheet write reached the server.
           closeOverlay('completeProfileOverlay');
           refreshProfileUI(user);
-          alert('Your profile was saved, but we had trouble syncing it — if things look off later, please contact us.');
+          showToast('Your profile was saved, but we had trouble syncing it — if things look off later, please contact us.', 'error');
         });
       });
     });
@@ -1072,7 +1075,7 @@ document.getElementById('myProfileLink').addEventListener('click', (e)=>{
     document.getElementById('mpPhoneNumber').value = phoneParts.slice(1).join(' ') || '';
     document.getElementById('mpEmail').value = d.email || '';
     openOverlay('myProfileOverlay');
-    document.getElementById('profileDropdown').classList.add('hidden');
+    document.getElementById('profileDropdown').classList.add('pd-closed');
   });
 });
 
@@ -1136,12 +1139,12 @@ document.getElementById('changeEmailForm').addEventListener('submit', (e)=>{
    PROFILE DROPDOWN TOGGLE
    ============================================================ */
 document.getElementById('profileAvatarBtn').addEventListener('click', ()=>{
-  document.getElementById('profileDropdown').classList.toggle('hidden');
+  document.getElementById('profileDropdown').classList.toggle('pd-closed');
 });
 document.addEventListener('click', (e)=>{
   const wrap = document.getElementById('profileMenuWrap');
   if(!wrap.contains(e.target)){
-    document.getElementById('profileDropdown').classList.add('hidden');
+    document.getElementById('profileDropdown').classList.add('pd-closed');
   }
 });
 
@@ -1165,7 +1168,7 @@ document.getElementById('signOutLink').addEventListener('click', (e)=>{
    ============================================================ */
 document.getElementById('deleteAccountLink').addEventListener('click', (e)=>{
   e.preventDefault();
-  document.getElementById('profileDropdown').classList.add('hidden');
+  document.getElementById('profileDropdown').classList.add('pd-closed');
   document.getElementById('deleteAccountStep1').classList.remove('hidden');
   document.getElementById('deleteAccountStep2').classList.add('hidden');
   document.getElementById('daPassword').value = '';
@@ -1212,7 +1215,7 @@ document.getElementById('deleteAccountForm').addEventListener('submit', (e)=>{
   }).then(()=>{
     closeOverlay('deleteAccountOverlay');
     resetFinderToHome();
-    alert('Your account has been permanently deleted. We\'re sorry to see you go.');
+    showToast('Your account has been permanently deleted. We\'re sorry to see you go.', 'success');
   }).catch((err)=>{
     if(err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential'){
       showError('deleteAccountError', 'Incorrect password.');
@@ -1230,13 +1233,13 @@ document.getElementById('cpSignOutLink').addEventListener('click', (e)=>{
 
 document.getElementById('myOrdersLink').addEventListener('click', (e)=>{
   e.preventDefault();
-  document.getElementById('profileDropdown').classList.add('hidden');
+  document.getElementById('profileDropdown').classList.add('pd-closed');
   renderMyOrders();
   openOverlay('myOrdersOverlay');
 });
 document.getElementById('myCartLink').addEventListener('click', (e)=>{
   e.preventDefault();
-  document.getElementById('profileDropdown').classList.add('hidden');
+  document.getElementById('profileDropdown').classList.add('pd-closed');
   openCart();
 });
 document.getElementById('cartIconBtn').addEventListener('click', ()=>{
