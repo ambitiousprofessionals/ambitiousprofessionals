@@ -1,0 +1,74 @@
+/* ============================================================
+   SHARED MOTION / UX LAYER
+   Toasts (replaces browser alert()), a smooth fade between page
+   loads, and scroll-reveal for major sections. Loaded on every
+   page, near the top, so it can act before the rest of the page
+   finishes loading.
+   ============================================================ */
+
+/* ---- Toast notifications ---- */
+function showToast(message, type) {
+  var container = document.getElementById('toastContainer');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toastContainer';
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+  }
+  var toast = document.createElement('div');
+  toast.className = 'toast' + (type ? ' toast-' + type : '');
+  toast.textContent = message;
+  container.appendChild(toast);
+  requestAnimationFrame(function () { toast.classList.add('toast-in'); });
+  setTimeout(function () {
+    toast.classList.remove('toast-in');
+    toast.classList.add('toast-out');
+    setTimeout(function () { toast.remove(); }, 300);
+  }, 3800);
+}
+
+/* ---- Page load fade-in (paired with the js-loading class already on <html>) ---- */
+document.addEventListener('DOMContentLoaded', function () {
+  document.documentElement.classList.remove('js-loading');
+});
+
+/* ---- Smooth internal navigation: fade out before leaving for another page ---- */
+document.addEventListener('click', function (e) {
+  var a = e.target.closest('a');
+  if (!a) return;
+  if (e.defaultPrevented) return;
+  if (a.target === '_blank' || a.hasAttribute('download')) return;
+  if (a.classList.contains('dropdown-toggle') || a.classList.contains('submenu-toggle')) return;
+  if (a.dataset.noTransition !== undefined) return;
+  var href = a.getAttribute('href');
+  if (!href) return;
+  if (href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('javascript:')) return;
+  if (a.origin && a.origin !== window.location.origin) return; // external link — leave alone
+  if (!/\.html(\?|#|$)/.test(href)) return; // only intercept normal same-site page links
+
+  e.preventDefault();
+  document.documentElement.classList.add('page-leaving');
+  setTimeout(function () { window.location.href = href; }, 180);
+});
+
+/* ---- Scroll-reveal for major sections (auto-applies to every <section>,
+   except ones already visible on load — those carry class "no-reveal") ---- */
+(function () {
+  var targets = document.querySelectorAll('section:not(.no-reveal)');
+  if (targets.length === 0) return;
+
+  if (!('IntersectionObserver' in window)) {
+    targets.forEach(function (t) { t.classList.add('revealed'); });
+    return;
+  }
+  targets.forEach(function (t) { t.classList.add('reveal'); });
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('revealed');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  targets.forEach(function (t) { observer.observe(t); });
+})();
