@@ -67,6 +67,10 @@ nav ul{list-style:none;display:flex;gap:30px;}
 /* ===== NAV DROPDOWN (Courses) ===== */
 .has-dropdown{position:relative;}
 .caret{font-size:13px;margin-left:6px;color:var(--red);font-weight:700;}
+.caret-icon{display:inline-flex;vertical-align:middle;margin-left:6px;}
+.caret-icon svg{width:11px;height:11px;color:var(--red);}
+.caret-icon-sm{margin-left:8px;}
+.caret-icon-sm svg{width:9px;height:9px;}
 .dropdown-menu{
   display:none;position:absolute;top:calc(100% + 14px);left:-14px;
   background:var(--white);border:1px solid var(--line);border-radius:var(--radius);
