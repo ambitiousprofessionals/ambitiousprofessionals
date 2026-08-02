@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="js-loading">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,6 +13,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
+<script src="app-motion.js"></script>
 
 <header>
   <div class="top-bar">
@@ -34,7 +35,7 @@
         <button class="profile-avatar-btn" id="profileAvatarBtn">
           <span id="profileAvatarInitial">A</span>
         </button>
-        <div class="profile-dropdown hidden" id="profileDropdown">
+        <div class="profile-dropdown pd-closed" id="profileDropdown">
           <div class="profile-dropdown-name" id="profileDropdownName">—</div>
           <div class="profile-dropdown-id" id="profileDropdownId">—</div>
           <a href="#" id="myOrdersLink">My Orders</a>
@@ -91,7 +92,7 @@
   </div>
 </header>
 
-<section class="about" id="about">
+<section class="about no-reveal" id="about">
   <div class="container about-grid">
     <div>
       <span class="eyebrow">About the institute</span>
