@@ -1146,7 +1146,12 @@ document.addEventListener('click', (e)=>{
 });
 
 function resetFinderToHome(){
-  window.scrollTo({top: 0, behavior: 'smooth'});
+  const path = window.location.pathname.split('/').pop() || 'index.html';
+  if (path === 'index.html' || path === '') {
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  } else {
+    window.location.href = 'index.html';
+  }
 }
 
 document.getElementById('signOutLink').addEventListener('click', (e)=>{
