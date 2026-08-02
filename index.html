@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="js-loading">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,6 +13,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
+<script src="app-motion.js"></script>
 
 <header>
   <div class="top-bar">
@@ -34,7 +35,7 @@
         <button class="profile-avatar-btn" id="profileAvatarBtn">
           <span id="profileAvatarInitial">A</span>
         </button>
-        <div class="profile-dropdown hidden" id="profileDropdown">
+        <div class="profile-dropdown pd-closed" id="profileDropdown">
           <div class="profile-dropdown-name" id="profileDropdownName">—</div>
           <div class="profile-dropdown-id" id="profileDropdownId">—</div>
           <a href="#" id="myOrdersLink">My Orders</a>
@@ -90,7 +91,7 @@
     </nav>
   </div></header>
 
-<section class="result-banners">
+<section class="result-banners no-reveal">
   <div class="rb-carousel-wrap">
     <button class="rb-arrow rb-arrow-left" id="rbPrev" aria-label="Previous result">&#10094;</button>
     <div class="rb-viewport">
@@ -102,7 +103,7 @@
 <script src="app-carousel.js"></script>
 <script src="app-result-banners.js"></script>
 
-<section class="hero" id="top">
+<section class="hero no-reveal" id="top">
   <div class="hero-inner">
     <span class="eyebrow" style="color:var(--red-bright)">Brahmapur, Odisha · Since 2018</span>
     <h1>Precision coaching for <em>CA &amp; CMA</em> aspirants who mean business.</h1>
@@ -129,7 +130,9 @@
       <button class="ll-arrow ll-arrow-left" id="llPrev" aria-label="Previous lectures">&#10094;</button>
       <div class="ll-viewport">
         <div class="ll-track" id="llTrack">
-          <p class="ll-loading">Loading latest lectures…</p>
+          <div class="ll-skeleton-card"><div class="skeleton skeleton-thumb"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line short"></div></div>
+          <div class="ll-skeleton-card"><div class="skeleton skeleton-thumb"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line short"></div></div>
+          <div class="ll-skeleton-card"><div class="skeleton skeleton-thumb"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line short"></div></div>
         </div>
       </div>
       <button class="ll-arrow ll-arrow-right" id="llNext" aria-label="Next lectures">&#10095;</button>
