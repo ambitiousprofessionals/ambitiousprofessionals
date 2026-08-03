@@ -12,8 +12,7 @@
     'images/result-banner-2.png',
     'images/result-banner-3.png',
     'images/result-banner-4.png',
-    'images/result-banner-5.png',
-    'images/result-banner-6.png'
+    'images/result-banner-5.png'
   ];
 
   const slidesHtml = banners.map(function (src) {
