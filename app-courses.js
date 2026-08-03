@@ -73,11 +73,13 @@ function renderTable(){
       const gRow = document.createElement('tr');
       gRow.className='group-row';
       gRow.innerHTML = `<td colspan="8">${paper.group}</td>`;
+      gRow.style.animationDelay = (idx * 35) + 'ms';
       paperTableBody.appendChild(gRow);
     }
     const row = document.createElement('tr');
     row.className='paper-row disabled';
     row.dataset.idx = idx;
+    row.style.animationDelay = (idx * 35) + 'ms';
 
     const facultyOptions = paper.faculty.map(f=>`<option value="${f}">${f}</option>`).join('') + `<option value="__other__">Other (please specify)</option>`;
     const attemptOptions = getAttemptsFor(currentCourse, currentLevel).map(a=>`<option value="${a}">${a}</option>`).join('');
