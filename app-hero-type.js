@@ -7,7 +7,7 @@
   var el = document.getElementById('heroTyped');
   if (!el) return;
 
-  var words = ['Chartered Accountancy', 'Cost & Management Accountancy', 'Company Secretary', 'MBA Entrances'];
+  var words = ['CA', 'CMA', 'CS', 'MBA Entrances'];
   var wordIndex = 0;
   var charIndex = words[0].length; // start fully typed (matches the static markup)
   var deleting = false;
