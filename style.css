@@ -32,23 +32,23 @@ a{color:inherit;text-decoration:none;}
 .cursor-glow{
   position:fixed;top:0;left:0;width:280px;height:280px;margin-left:-140px;margin-top:-140px;
   border-radius:50%;pointer-events:none;z-index:9999;
-  background:radial-gradient(circle, rgba(174,16,41,.09) 0%, rgba(174,16,41,0) 70%);
+  background:radial-gradient(circle, rgba(255,193,7,.16) 0%, rgba(255,193,7,0) 70%);
   opacity:0;transition:opacity .3s ease, transform .06s linear;
   will-change:transform;
 }
 .cursor-glow-on{opacity:1;}
 
-/* ===== ROTATING LIGHT BEHIND BUTTONS ===== */
+/* ===== ROTATING DOTTED OUTLINE BEHIND BUTTONS ===== */
 .btn, .btn-auth, .btn-order{position:relative;isolation:isolate;}
 .btn::before, .btn-auth::before, .btn-order::before{
-  content:"";position:absolute;inset:-4px;border-radius:inherit;z-index:-1;
-  background:conic-gradient(from 0deg, var(--red), transparent 25%, var(--gold), transparent 60%, var(--red));
-  opacity:0;filter:blur(7px);
-  transition:opacity .3s ease;
-  animation:btnGlowSpin 3s linear infinite;
+  content:"";position:absolute;inset:-6px;border-radius:inherit;z-index:-1;
+  border:2px dotted rgba(174,16,41,.65);
+  opacity:0;
+  transition:opacity .25s ease;
+  animation:btnGlowSpin 4.5s linear infinite;
   animation-play-state:paused;
 }
-.btn:hover::before, .btn-auth:hover::before, .btn-order:hover::before{opacity:.55;animation-play-state:running;}
+.btn:hover::before, .btn-auth:hover::before, .btn-order:hover::before{opacity:1;animation-play-state:running;}
 @keyframes btnGlowSpin{to{transform:rotate(360deg);}}
 @media(hover:none){
   .cursor-glow{display:none;}
@@ -299,7 +299,7 @@ nav > ul > li > a.nav-active{color:var(--red);border-color:var(--red);}
   color:var(--black);
 }
 .hero h1 em{color:var(--red);font-style:italic;}
-#heroTyped{display:inline-block;min-height:2.16em;border-right:2px solid var(--red);padding-right:3px;font-size:clamp(24px,3.6vw,38px);}
+#heroTyped{display:inline-block;min-height:1.2em;border-right:2px solid var(--red);padding-right:3px;}
 .hero p{max-width:520px;color:var(--gray);font-size:17px;margin-bottom:36px;}
 .btn-row{display:flex;gap:16px;flex-wrap:wrap;}
 .btn{
@@ -339,12 +339,23 @@ nav > ul > li > a.nav-active{color:var(--red);border-color:var(--red);}
   .hero-aim{width:110px;height:110px;right:10px;top:14%;transform:none;opacity:.55;}
 }
 
-/* ===== SITE-WIDE AMBIENT ORBIT (fixed background, every page) ===== */
-.bg-orbit{position:fixed;bottom:-70px;left:-70px;width:260px;height:260px;pointer-events:none;z-index:0;opacity:.16;}
-.bg-orbit .orbit-outer{border-color:rgba(174,16,41,.5);border-top-color:transparent;animation:spinCW 30s linear infinite;}
-.bg-orbit .orbit-middle{animation:spinCCW 20s linear infinite;}
-.bg-orbit .orbit-inner{position:absolute;top:50%;left:50%;width:34%;height:34%;border-radius:50%;border:2px solid rgba(174,16,41,.5);transform:translate(-50%,-50%);animation:aimPulse 3.2s ease-in-out infinite;}
-@media(max-width:600px){.bg-orbit{width:160px;height:160px;bottom:-40px;left:-40px;}}
+/* ===== SITE-WIDE AMBIENT ORBIT (fixed, full-screen background, every page) ===== */
+.bg-orbit{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+.bg-orbit .orbit-outer{
+  position:absolute;top:50%;left:50%;width:150vmax;height:150vmax;
+  border:1.5px solid rgba(174,16,41,.05);border-top-color:rgba(174,16,41,.13);border-radius:50%;
+  transform:translate(-50%,-50%);animation:spinCW 100s linear infinite;
+}
+.bg-orbit .orbit-middle{
+  position:absolute;top:50%;left:50%;width:105vmax;height:105vmax;
+  border:1.5px dashed rgba(174,16,41,.06);border-radius:50%;
+  transform:translate(-50%,-50%);animation:spinCCW 70s linear infinite;
+}
+.bg-orbit .orbit-inner{
+  position:absolute;top:50%;left:50%;width:62vmax;height:62vmax;
+  border:1.5px solid rgba(174,16,41,.05);border-radius:50%;
+  transform:translate(-50%,-50%);animation:spinCW 45s linear infinite;
+}
 
 /* ===== ABOUT ===== */
 .about{padding:56px 0 88px;background:var(--off);}
