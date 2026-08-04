@@ -21,7 +21,7 @@
     .then(function (data) {
       const videos = (data.videos || []).slice(0, 10);
       if (videos.length === 0) {
-        track.innerHTML = '<p class="ll-loading">No lectures available right now.</p>';
+        track.innerHTML = '<p class="ll-loading">No videos available right now.</p>';
         return;
       }
       const cardsHtml = videos.map(function (v) {
@@ -41,6 +41,6 @@
       });
     })
     .catch(function () {
-      track.innerHTML = '<p class="ll-loading">Couldn\'t load the latest lectures right now.</p>';
+      track.innerHTML = '<p class="ll-loading">Couldn\'t load the latest videos right now.</p>';
     });
 })();
