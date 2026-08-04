@@ -27,6 +27,23 @@ function showToast(message, type) {
   }, 3800);
 }
 
+/* ---- Cursor glow (desktop / mouse devices only) ---- */
+(function () {
+  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+  var glow = document.createElement('div');
+  glow.className = 'cursor-glow';
+  document.body.appendChild(glow);
+  var shown = false;
+  window.addEventListener('mousemove', function (e) {
+    if (!shown) { glow.classList.add('cursor-glow-on'); shown = true; }
+    glow.style.transform = 'translate(' + e.clientX + 'px, ' + e.clientY + 'px)';
+  });
+  window.addEventListener('mouseleave', function () {
+    glow.classList.remove('cursor-glow-on');
+    shown = false;
+  });
+})();
+
 /* ---- Page load fade-in (paired with the js-loading class already on <html>) ---- */
 document.addEventListener('DOMContentLoaded', function () {
   document.documentElement.classList.remove('js-loading');
