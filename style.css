@@ -47,12 +47,12 @@ a{color:inherit;text-decoration:none;}
   animation-play-state:paused;
 }
 .btn::before, .btn-auth::before, .btn-order::before{
-  width:3.6em;height:3.6em;border:2px solid rgba(174,16,41,.5);
-  animation:btnGlowSpin 4s linear infinite;
+  width:5.6em;height:5.6em;border:1.5px solid rgba(174,16,41,.28);
+  animation:btnGlowSpin 5s linear infinite;
 }
 .btn::after, .btn-auth::after, .btn-order::after{
-  width:2.5em;height:2.5em;border:2px dashed rgba(174,16,41,.35);
-  animation:btnGlowSpinCCW 3s linear infinite;
+  width:4.2em;height:4.2em;border:1.5px dashed rgba(174,16,41,.2);
+  animation:btnGlowSpinCCW 3.6s linear infinite;
 }
 .btn:hover::before, .btn-auth:hover::before, .btn-order:hover::before,
 .btn:hover::after, .btn-auth:hover::after, .btn-order:hover::after{
@@ -350,21 +350,22 @@ nav > ul > li > a.nav-active{color:var(--red);border-color:var(--red);}
   .hero-aim{width:110px;height:110px;right:10px;top:14%;transform:none;opacity:.55;}
 }
 
-/* ===== SITE-WIDE AMBIENT ORBIT (fixed, full-screen background, every page) ===== */
-.bg-orbit{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+/* ===== SITE-WIDE AMBIENT ORBIT (scrolls with the page, clipped above the footer) ===== */
+.page-scope{position:relative;overflow:hidden;}
+.bg-orbit{position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
 .bg-orbit .orbit-outer{
   position:absolute;top:50%;left:50%;width:150vmax;height:150vmax;
-  border:1.5px solid rgba(174,16,41,.05);border-top-color:rgba(174,16,41,.13);border-radius:50%;
+  border:1.5px solid rgba(174,16,41,.09);border-top-color:rgba(174,16,41,.22);border-radius:50%;
   transform:translate(-50%,-50%);animation:spinCW 100s linear infinite;
 }
 .bg-orbit .orbit-middle{
   position:absolute;top:50%;left:50%;width:105vmax;height:105vmax;
-  border:1.5px dashed rgba(174,16,41,.06);border-radius:50%;
+  border:1.5px dashed rgba(174,16,41,.11);border-radius:50%;
   transform:translate(-50%,-50%);animation:spinCCW 70s linear infinite;
 }
 .bg-orbit .orbit-inner{
   position:absolute;top:50%;left:50%;width:62vmax;height:62vmax;
-  border:1.5px solid rgba(174,16,41,.05);border-radius:50%;
+  border:1.5px solid rgba(174,16,41,.09);border-radius:50%;
   transform:translate(-50%,-50%);animation:spinCW 45s linear infinite;
 }
 
