@@ -310,7 +310,9 @@ nav > ul > li > a.nav-active{color:var(--red);border-color:var(--red);}
   color:var(--black);
 }
 .hero h1 em{color:var(--red);font-style:italic;}
-#heroTyped{display:inline-block;line-height:1.08;min-height:1.08em;border-right:2px solid var(--red);padding-right:3px;}
+.hero-type-wrap{position:relative;display:inline-block;vertical-align:top;}
+.hero-type-spacer{visibility:hidden;white-space:nowrap;}
+#heroTyped{position:absolute;top:0;left:0;white-space:nowrap;border-right:2px solid var(--red);padding-right:3px;}
 .hero p{max-width:520px;color:var(--gray);font-size:17px;margin-bottom:36px;}
 .btn-row{display:flex;gap:16px;flex-wrap:wrap;}
 .btn{
