@@ -7,16 +7,6 @@
   var el = document.getElementById('heroTyped');
   if (!el) return;
 
-  // Lock the box's height in real pixels BEFORE animating, so typing/erasing
-  // can never shift anything around it — CSS min-height/line-height alone
-  // wasn't reliably stable across browsers, so we measure once and hard-fix
-  // the height directly here instead.
-  var fixedHeight = el.getBoundingClientRect().height;
-  if (fixedHeight > 0) {
-    el.style.height = fixedHeight + 'px';
-    el.style.lineHeight = fixedHeight + 'px';
-  }
-
   var words = ['CA', 'CMA', 'CS', 'MBA Entrances'];
   var wordIndex = 0;
   var charIndex = words[0].length; // start fully typed (matches the static markup)
