@@ -16,7 +16,7 @@
 <script src="app-motion.js"></script>
 
 <div class="page-scope">
-<div class="bg-orbit" aria-hidden="true"><span class="orbit-outer"></span><span class="orbit-middle"></span><span class="orbit-inner"></span></div>
+<div class="bg-orbit" aria-hidden="true"><svg class="orbit-outer" viewBox="0 0 500 500"><circle cx="250" cy="250" r="248" fill="none" stroke="rgba(174,16,41,.35)" stroke-width="3" stroke-linecap="round" stroke-dasharray="2 26"/></svg><svg class="orbit-middle" viewBox="0 0 500 500"><circle cx="250" cy="250" r="248" fill="none" stroke="rgba(174,16,41,.4)" stroke-width="3" stroke-dasharray="14 20"/></svg><svg class="orbit-inner" viewBox="0 0 500 500"><circle cx="250" cy="250" r="248" fill="none" stroke="rgba(174,16,41,.35)" stroke-width="3" stroke-linecap="round" stroke-dasharray="2 26"/></svg></div>
 <header>
   <div class="top-bar">
     <a href="index.html" class="brand">
@@ -119,59 +119,6 @@
 </section>
 <script src="app-hero-type.js"></script>
 
-<section class="result-banners no-reveal">
-  <div class="rb-carousel-wrap">
-    <button class="rb-arrow rb-arrow-left" id="rbPrev" aria-label="Previous result">&#10094;</button>
-    <div class="rb-viewport">
-      <div class="rb-track" id="rbTrack"></div>
-    </div>
-    <button class="rb-arrow rb-arrow-right" id="rbNext" aria-label="Next result">&#10095;</button>
-  </div>
-</section>
-<script src="app-carousel.js"></script>
-<script src="app-result-banners.js"></script>
-
-
-<section class="latest-lectures">
-  <div class="container">
-    <div class="ll-head">
-      <svg class="ll-play-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none"/></svg>
-      <h2 class="section-title">Latest Videos</h2>
-    </div>
-    <div class="ll-carousel-wrap">
-      <button class="ll-arrow ll-arrow-left" id="llPrev" aria-label="Previous lectures">&#10094;</button>
-      <div class="ll-viewport">
-        <div class="ll-track" id="llTrack">
-          <div class="ll-skeleton-card"><div class="skeleton skeleton-thumb"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line short"></div></div>
-          <div class="ll-skeleton-card"><div class="skeleton skeleton-thumb"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line short"></div></div>
-          <div class="ll-skeleton-card"><div class="skeleton skeleton-thumb"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line short"></div></div>
-        </div>
-      </div>
-      <button class="ll-arrow ll-arrow-right" id="llNext" aria-label="Next lectures">&#10095;</button>
-    </div>
-  </div>
-</section>
-
-<script src="app-latest-lectures.js"></script>
-
-<section class="founder-msg">
-  <div class="container founder-msg-grid">
-    <div class="founder-msg-photo entrance-fade">
-      <img src="images/founder.jpg" alt="Prof. Abanindra Sahu, Founder">
-    </div>
-    <div class="founder-msg-text entrance-group">
-      <span class="eyebrow">A word from our founder</span>
-      <h2 class="section-title" style="margin-top:8px;">Founder's Message</h2>
-      <p>"When I started Ambitious Professionals in 2018, it was with one belief — that every student deserves teaching that goes beyond memorised formulas and actually builds understanding. Over the years, watching students walk in unsure of Corporate Law or Auditing and walk out as qualified professionals has been the most rewarding part of this journey."</p>
-      <p>"My promise to every student who joins us stays the same: honest guidance, real attention, and a classroom that pushes you toward the result you came here for."</p>
-      <div class="founder-msg-sign">
-        <strong>Prof. Abanindra Sahu</strong>
-        <span>Founder, Ambitious Professionals</span>
-      </div>
-    </div>
-  </div>
-</section>
-
 <section class="who-we-are">
   <div class="container who-we-are-grid">
     <div class="wwa-stat">
@@ -204,11 +151,18 @@
   </div>
 </section>
 
-<section class="quote-strip no-reveal">
-  <div class="container">
-    <p>Delivering <span class="hl">clarity</span> through <span class="hl">concept-driven</span> teaching, one student at a time.</p>
+<section class="result-banners">
+  <div class="rb-carousel-wrap">
+    <button class="rb-arrow rb-arrow-left" id="rbPrev" aria-label="Previous result">&#10094;</button>
+    <div class="rb-viewport">
+      <div class="rb-track" id="rbTrack"></div>
+    </div>
+    <button class="rb-arrow rb-arrow-right" id="rbNext" aria-label="Next result">&#10095;</button>
   </div>
 </section>
+<script src="app-carousel.js"></script>
+<script src="app-result-banners.js"></script>
+
 
 <section class="loved-by">
   <div class="container">
@@ -225,6 +179,54 @@
   </div>
 </section>
 <script src="app-testimonials.js"></script>
+
+<section class="founder-msg">
+  <div class="container founder-msg-grid">
+    <div class="founder-msg-photo entrance-fade">
+      <img src="images/founder.jpg" alt="Prof. Abanindra Sahu, Founder">
+    </div>
+    <div class="founder-msg-text entrance-group">
+      <span class="eyebrow">A word from our founder</span>
+      <h2 class="section-title" style="margin-top:8px;">Founder's Message</h2>
+      <p>"When I started Ambitious Professionals in 2018, it was with one belief — that every student deserves teaching that goes beyond memorised formulas and actually builds understanding. Over the years, watching students walk in unsure of Corporate Law or Auditing and walk out as qualified professionals has been the most rewarding part of this journey."</p>
+      <p>"My promise to every student who joins us stays the same: honest guidance, real attention, and a classroom that pushes you toward the result you came here for."</p>
+      <div class="founder-msg-sign">
+        <strong>Prof. Abanindra Sahu</strong>
+        <span>Founder, Ambitious Professionals</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="latest-lectures">
+  <div class="container">
+    <div class="ll-head">
+      <svg class="ll-play-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none"/></svg>
+      <h2 class="section-title">Latest Videos</h2>
+    </div>
+    <div class="ll-carousel-wrap">
+      <button class="ll-arrow ll-arrow-left" id="llPrev" aria-label="Previous lectures">&#10094;</button>
+      <div class="ll-viewport">
+        <div class="ll-track" id="llTrack">
+          <div class="ll-skeleton-card"><div class="skeleton skeleton-thumb"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line short"></div></div>
+          <div class="ll-skeleton-card"><div class="skeleton skeleton-thumb"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line short"></div></div>
+          <div class="ll-skeleton-card"><div class="skeleton skeleton-thumb"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line short"></div></div>
+        </div>
+      </div>
+      <button class="ll-arrow ll-arrow-right" id="llNext" aria-label="Next lectures">&#10095;</button>
+    </div>
+  </div>
+</section>
+
+<script src="app-latest-lectures.js"></script>
+
+<section class="quote-strip">
+  <div class="container">
+    <p>Delivering <span class="hl">clarity</span> through <span class="hl">concept-driven</span> teaching, one student at a time.</p>
+  </div>
+</section>
+
+
 
 </div>
 
