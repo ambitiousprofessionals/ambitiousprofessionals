@@ -9,6 +9,8 @@ function updateFounderYears(){
   if(now < cutoff) years -= 1;
   const el = document.getElementById('founderYears');
   if(el) el.textContent = years;
+  const el2 = document.getElementById('wwaYears');
+  if(el2) el2.textContent = years;
 }
 updateFounderYears();
 
