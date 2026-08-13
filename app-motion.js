@@ -70,7 +70,7 @@ document.addEventListener('click', function (e) {
 
 /* ---- Scroll-reveal for major sections (auto-applies to every <section>,
    except ones already visible on load — those carry class "no-reveal") ---- */
-(function () {
+document.addEventListener('DOMContentLoaded', function () {
   var targets = document.querySelectorAll('section:not(.no-reveal)');
   if (targets.length === 0) return;
 
@@ -88,4 +88,4 @@ document.addEventListener('click', function (e) {
     });
   }, { threshold: 0.12 });
   targets.forEach(function (t) { observer.observe(t); });
-})();
+});
