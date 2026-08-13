@@ -12,7 +12,7 @@
   --gold:#B08A3E;
   --radius:2px;
   --serif:'Fraunces', serif;
-  --head:'Oswald', sans-serif;
+  --head:'Plus Jakarta Sans', sans-serif;
   --body:'Inter', sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -202,13 +202,13 @@ nav ul{list-style:none;display:flex;gap:30px;justify-content:center;padding:10px
 }
 .dropdown-menu a:hover{background:var(--panel);color:var(--red);}
 .submenu{
-  position:absolute;top:-9px;left:100%;
+  position:absolute;top:100%;left:0;margin-top:6px;
   background:var(--white);border:1px solid var(--line);border-radius:var(--radius);
   min-width:180px;box-shadow:0 10px 28px rgba(43,40,35,.14);z-index:401;padding:8px 0;
-  opacity:0;visibility:hidden;transform:translateX(-6px);
+  opacity:0;visibility:hidden;transform:translateY(-6px);
   transition:opacity .16s ease, transform .16s ease, visibility 0s linear .16s;
 }
-.submenu.open{opacity:1;visibility:visible;transform:translateX(0);transition:opacity .16s ease, transform .16s ease;}
+.submenu.open{opacity:1;visibility:visible;transform:translateY(0);transition:opacity .16s ease, transform .16s ease;}
 .submenu a{padding:10px 16px;}
 @media(max-width:860px){
   .dropdown-menu{position:static;box-shadow:none;border:none;padding-left:14px;
