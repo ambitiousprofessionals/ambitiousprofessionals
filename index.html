@@ -6,7 +6,7 @@
 <title>Ambitious Professionals — CA & CMA Coaching, Brahmapur</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
@@ -16,7 +16,7 @@
 <script src="app-motion.js"></script>
 
 <div class="page-scope">
-<div class="bg-orbit" aria-hidden="true"><svg class="orbit-outer" viewBox="0 0 500 500"><circle cx="250" cy="250" r="248" fill="none" stroke="rgba(174,16,41,.35)" stroke-width="3" stroke-linecap="round" stroke-dasharray="2 26"/></svg><svg class="orbit-middle" viewBox="0 0 500 500"><circle cx="250" cy="250" r="248" fill="none" stroke="rgba(174,16,41,.4)" stroke-width="3" stroke-dasharray="14 20"/></svg><svg class="orbit-inner" viewBox="0 0 500 500"><circle cx="250" cy="250" r="248" fill="none" stroke="rgba(174,16,41,.35)" stroke-width="3" stroke-linecap="round" stroke-dasharray="2 26"/></svg></div>
+<div class="bg-orbit" aria-hidden="true"><svg class="orbit-outer" viewBox="0 0 500 500"><circle cx="250" cy="250" r="248" fill="none" stroke="rgba(174,16,41,.06)" stroke-width="3" stroke-linecap="round" stroke-dasharray="2 26"/></svg><svg class="orbit-middle" viewBox="0 0 500 500"><circle cx="250" cy="250" r="248" fill="none" stroke="rgba(174,16,41,.08)" stroke-width="3" stroke-dasharray="14 20"/></svg><svg class="orbit-inner" viewBox="0 0 500 500"><circle cx="250" cy="250" r="248" fill="none" stroke="rgba(174,16,41,.06)" stroke-width="3" stroke-linecap="round" stroke-dasharray="2 26"/></svg></div>
 <header>
   <div class="top-bar">
     <a href="index.html" class="brand">
@@ -119,6 +119,19 @@
 </section>
 <script src="app-hero-type.js"></script>
 
+<section class="result-banners">
+  <div class="rb-carousel-wrap">
+    <button class="rb-arrow rb-arrow-left" id="rbPrev" aria-label="Previous result">&#10094;</button>
+    <div class="rb-viewport">
+      <div class="rb-track" id="rbTrack"></div>
+    </div>
+    <button class="rb-arrow rb-arrow-right" id="rbNext" aria-label="Next result">&#10095;</button>
+  </div>
+</section>
+<script src="app-carousel.js"></script>
+<script src="app-result-banners.js"></script>
+
+
 <section class="who-we-are">
   <div class="container who-we-are-grid">
     <div class="wwa-stat">
@@ -151,19 +164,11 @@
   </div>
 </section>
 
-<section class="result-banners">
-  <div class="rb-carousel-wrap">
-    <button class="rb-arrow rb-arrow-left" id="rbPrev" aria-label="Previous result">&#10094;</button>
-    <div class="rb-viewport">
-      <div class="rb-track" id="rbTrack"></div>
-    </div>
-    <button class="rb-arrow rb-arrow-right" id="rbNext" aria-label="Next result">&#10095;</button>
+<section class="quote-strip">
+  <div class="container">
+    <p>Delivering <span class="hl">clarity</span> through <span class="hl">concept-driven</span> teaching, one student at a time.</p>
   </div>
 </section>
-<script src="app-carousel.js"></script>
-<script src="app-result-banners.js"></script>
-
-
 <section class="loved-by">
   <div class="container">
     <div class="ll-head">
@@ -220,11 +225,6 @@
 
 <script src="app-latest-lectures.js"></script>
 
-<section class="quote-strip">
-  <div class="container">
-    <p>Delivering <span class="hl">clarity</span> through <span class="hl">concept-driven</span> teaching, one student at a time.</p>
-  </div>
-</section>
 
 
 
