@@ -11,8 +11,23 @@ function updateFounderYears(){
   if(el) el.textContent = years;
   const el2 = document.getElementById('wwaYears');
   if(el2) el2.textContent = years;
+  const el3 = document.getElementById('footYears');
+  if(el3) el3.textContent = years;
 }
 updateFounderYears();
+
+/* ============================================================
+   PASSWORD SHOW/HIDE TOGGLES
+   ============================================================ */
+document.querySelectorAll('.pw-toggle').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const input = btn.previousElementSibling;
+    const showing = input.type === 'text';
+    input.type = showing ? 'password' : 'text';
+    btn.classList.toggle('showing', !showing);
+    btn.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+  });
+});
 
 /* ============================================================
    MODALS
@@ -174,6 +189,45 @@ function addCounsellingToCart(examOrCourse, whatWantToKnow){
   cartItems.push({ kind:'counselling', examOrCourse: examOrCourse, whatWantToKnow: whatWantToKnow });
   saveCartToFirestore().then(()=>{
     updateCartBadge();
+  });
+}
+
+/* ============================================================
+   HOMEPAGE INLINE COUNSELLING FORM
+   ============================================================ */
+function fillHomeCounsellingProfile(profile){
+  const nameEl = document.getElementById('hcName');
+  const emailEl = document.getElementById('hcEmail');
+  const phoneEl = document.getElementById('hcPhone');
+  if(!nameEl) return;
+  if(profile){
+    nameEl.value = profile.name || '';
+    emailEl.value = profile.email || '';
+    phoneEl.value = profile.phone || '';
+    nameEl.disabled = true;
+    emailEl.disabled = true;
+    phoneEl.disabled = true;
+  } else {
+    nameEl.value = '';
+    emailEl.value = '';
+    phoneEl.value = '';
+    nameEl.disabled = false;
+    emailEl.disabled = false;
+    phoneEl.disabled = false;
+  }
+}
+
+const homeCounsellingForm = document.getElementById('homeCounsellingForm');
+if(homeCounsellingForm){
+  homeCounsellingForm.addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const exam = document.getElementById('hcExam').value.trim();
+    const extra = document.getElementById('hcExtra').value.trim();
+    addCounsellingToCart(exam, extra);
+    if(auth.currentUser && currentUserProfile){
+      document.getElementById('hcExam').value = '';
+      document.getElementById('hcExtra').value = '';
+    }
   });
 }
 
@@ -1261,9 +1315,10 @@ function refreshProfileUI(user){
     document.getElementById('profileDropdownId').textContent = d.studentId ? ('Student ID: ' + d.studentId) : '';
     const initial = (d.name || user.email || 'A').charAt(0).toUpperCase();
     document.getElementById('profileAvatarInitial').textContent = initial;
-    currentUserProfile = { studentId: d.studentId, name: d.name || user.email, email: user.email };
+    currentUserProfile = { studentId: d.studentId, name: d.name || user.email, email: user.email, phone: d.phone || '' };
     cartItems = d.cart || [];
     updateCartBadge();
+    fillHomeCounsellingProfile(currentUserProfile);
 
     // Self-healing: if the user verified a "Change Email" since their last visit,
     // Firebase Auth's email is now new but Firestore/Sheet still have the old one — sync them.
@@ -1304,6 +1359,7 @@ auth.onAuthStateChanged((user)=>{
     currentUserProfile = null;
     cartItems = [];
     updateCartBadge();
+    fillHomeCounsellingProfile(null);
     initialAuthCheckDone = true;
     return;
   }
