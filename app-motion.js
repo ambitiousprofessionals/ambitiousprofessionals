@@ -49,6 +49,14 @@ document.addEventListener('DOMContentLoaded', function () {
   document.documentElement.classList.remove('js-loading');
 });
 
+/* ---- Fix for browser back/forward showing a blank page: when a page is restored
+   from bfcache (or simply re-shown), make sure it's never stuck invisible from a
+   fade-out that was mid-flight when the user navigated away from it. ---- */
+window.addEventListener('pageshow', function () {
+  document.documentElement.classList.remove('page-leaving');
+  document.documentElement.classList.remove('js-loading');
+});
+
 /* ---- Smooth internal navigation: fade out before leaving for another page ---- */
 document.addEventListener('click', function (e) {
   var a = e.target.closest('a');
