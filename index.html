@@ -391,6 +391,18 @@
   </div>
 </div>
 
+<div class="overlay hidden-overlay" id="attentionPromiseOverlay">
+  <div class="modal" style="max-width:480px;text-align:center;">
+    <button class="modal-close" data-close="attentionPromiseOverlay">&times;</button>
+    <h3 style="color:var(--red);">⚠️ Attention!</h3>
+    <div class="sub" style="margin-bottom:24px;">Classes and test series only work if you actually show up for them. Before you place this order — are you promising yourself you will attend, practise, and follow through?</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
+      <button type="button" class="btn btn-primary" id="attentionPromiseYesBtn">I Promise</button>
+      <button type="button" class="btn btn-outline" id="attentionPromiseNoBtn">No, I Can't</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===================== ORDER DETAILS (VIEW) MODAL ===================== -->
 <div class="overlay hidden-overlay" id="orderDetailsOverlay">
   <div class="modal" style="max-width:920px;">
