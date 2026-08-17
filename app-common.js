@@ -454,7 +454,19 @@ document.getElementById('placeCartOrderBtn').addEventListener('click', ()=>{
 
 document.getElementById('confirmOrderBtn').addEventListener('click', ()=>{
   if(!pendingOrderId || !currentUserProfile) return;
+  closeOverlay('orderConfirmOverlay');
+  openOverlay('attentionPromiseOverlay');
+});
+
+document.getElementById('attentionPromiseYesBtn').addEventListener('click', ()=>{
+  closeOverlay('attentionPromiseOverlay');
   finalizeOrder(pendingOrderId, pendingOrderItems, pendingTestSeriesItems, pendingCounsellingItems, false);
+  showToast('That\'s the spirit! We\'re excited to help you get there — see you in class.', 'success');
+});
+
+document.getElementById('attentionPromiseNoBtn').addEventListener('click', ()=>{
+  closeOverlay('attentionPromiseOverlay');
+  showToast('No worries — take your time. Come back and place the order whenever you\'re truly ready to commit.', null);
 });
 
 function finalizeOrder(orderId, paperItems, testSeriesItems, counsellingItems, isCounsellingOnly){
