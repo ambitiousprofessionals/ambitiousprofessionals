@@ -49,9 +49,14 @@ document.addEventListener('DOMContentLoaded', function () {
   document.documentElement.classList.remove('js-loading');
 });
 
-/* ---- Fix for browser back/forward showing a blank page: when a page is restored
-   from bfcache (or simply re-shown), make sure it's never stuck invisible from a
-   fade-out that was mid-flight when the user navigated away from it. ---- */
+/* ---- Fix for browser back/forward showing a blank page: the browser can
+   snapshot a page for its cache (bfcache) mid-fade, freezing it at opacity 0.
+   Clear the fading class right as the page is being left (pagehide) so the
+   snapshot is always captured in a normal, visible state — and also clear it
+   on restore (pageshow) as a second safety net. ---- */
+window.addEventListener('pagehide', function () {
+  document.documentElement.classList.remove('page-leaving');
+});
 window.addEventListener('pageshow', function () {
   document.documentElement.classList.remove('page-leaving');
   document.documentElement.classList.remove('js-loading');
