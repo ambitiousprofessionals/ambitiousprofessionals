@@ -95,7 +95,7 @@
 <section class="founder no-reveal" id="founder">
   <img src="images/rotating-circle.png" class="page-decor-circle" alt="" aria-hidden="true">
   <div class="container founder-grid">
-    <div class="founder-photo entrance-fade">
+    <div class="founder-photo entrance-fade founder-color-target">
       <img src="images/founder.jpg" alt="Abanindra Sahu, Founder of Ambitious Professionals">
     </div>
     <div class="founder-text entrance-group">
@@ -112,6 +112,19 @@
       <div class="qual">CS Executive · M.Com (Law)</div>
       <p>Abanindra Sahu founded Ambitious Professionals in <span class="hl">October 2018</span> with a clear mission: deliver quality, concept-driven learning in commerce and professional education.</p>
       <p>With over <span class="hl"><span id="founderYears">8</span> years</span> of dedicated teaching experience since founding the institute in <span class="hl">2018</span>, he specialises in <span class="hl">Corporate Law</span> and <span class="hl">Auditing</span>, mentoring students across multiple academic and professional levels. His classrooms blend academic rigour with real-world insight — turning difficult topics into clear, workable concepts, and helping students build genuine professional confidence, not just exam recall. Teaching Corporate Law to <span class="hl">CA Foundation</span>, <span class="hl">CMA Foundation</span> &amp; <span class="hl">CMA Intermediate</span> students, and Auditing to <span class="hl">CMA Intermediate</span> students — with both subjects also open to <span class="hl">B.Com (Hons)</span> learners.</p>
+    </div>
+  </div>
+</section>
+
+<section class="founder-msg-page">
+  <div class="container">
+    <span class="pill-badge">A Word From the Founder</span>
+    <h2 class="wc-heading" style="margin-top:8px;">Founder's Message</h2>
+    <p>"When I started Ambitious Professionals in 2018, it was with one belief — that every student deserves teaching that goes beyond memorised formulas and actually builds understanding. Over the years, watching students walk in unsure of Corporate Law or Auditing and walk out as qualified professionals has been the most rewarding part of this journey."</p>
+    <p>"My promise to every student who joins us stays the same: honest guidance, real attention, and a classroom that pushes you toward the result you came here for."</p>
+    <div class="founder-msg-sign">
+      <strong>Prof. Abanindra Sahu</strong>
+      <span>Founder, Ambitious Professionals</span>
     </div>
   </div>
 </section>
@@ -222,11 +235,29 @@
   <div class="modal" style="max-width:480px;text-align:center;">
     <button class="modal-close" data-close="attentionPromiseOverlay">&times;</button>
     <h3 style="color:var(--red);">⚠️ Attention!</h3>
-    <div class="sub" style="margin-bottom:24px;">Classes and test series only work if you actually show up for them. Before you place this order — are you promising yourself you will attend, practise, and follow through?</div>
+    <div class="sub" id="attentionPromiseMessage" style="margin-bottom:24px;"></div>
     <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
       <button type="button" class="btn btn-primary" id="attentionPromiseYesBtn">I Promise</button>
       <button type="button" class="btn btn-outline" id="attentionPromiseNoBtn">No, I Can't</button>
     </div>
+  </div>
+</div>
+
+<div class="overlay hidden-overlay" id="journeyBeginOverlay">
+  <div class="modal" style="max-width:440px;text-align:center;">
+    <button class="modal-close" data-close="journeyBeginOverlay">&times;</button>
+    <h3 style="color:var(--red);">🚀 Let's Begin the Journey</h3>
+    <div class="sub" style="margin-bottom:24px;">Let's begin the journey with Ambitious Professionals! We're glad to have you with us.</div>
+    <button type="button" class="btn btn-primary" id="journeyBeginContinueBtn" style="width:100%;justify-content:center;">Continue to Confirm Order</button>
+  </div>
+</div>
+
+<div class="overlay hidden-overlay" id="noWorriesOverlay">
+  <div class="modal" style="max-width:440px;text-align:center;">
+    <button class="modal-close" data-close="noWorriesOverlay">&times;</button>
+    <h3>All the Best for Your Future!</h3>
+    <div class="sub" style="margin-bottom:24px;">No worries at all. Your items are still safely in your cart — come back and confirm whenever you're truly ready.</div>
+    <button type="button" class="btn btn-outline" data-close="noWorriesOverlay" style="width:100%;justify-content:center;">Close</button>
   </div>
 </div>
 
@@ -562,6 +593,7 @@
 
 
 
+<script src="app-founder-color.js"></script>
 <script src="app-common.js"></script>
 
 </body>
