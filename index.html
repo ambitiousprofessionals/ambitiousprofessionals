@@ -190,7 +190,7 @@
 
 <section class="founder-msg">
   <div class="container founder-msg-grid">
-    <div class="founder-msg-photo entrance-fade">
+    <div class="founder-msg-photo entrance-fade founder-color-target">
       <img src="images/founder.jpg" alt="Prof. Abanindra Sahu, Founder">
     </div>
     <div class="founder-msg-text entrance-group">
@@ -265,6 +265,16 @@
 </section>
 <script src="app-testimonials.js"></script>
 
+<section class="stats-counter">
+  <div class="container stats-counter-grid">
+    <div class="stat-item"><div class="stat-num" data-target="10">0</div><div class="stat-label">Experienced Faculties</div></div>
+    <div class="stat-item"><div class="stat-num" data-target="1000">0</div><div class="stat-label">Students Taught</div></div>
+    <div class="stat-item"><div class="stat-num" data-target="500">0</div><div class="stat-label">Professionals Produced</div></div>
+    <div class="stat-item"><div class="stat-num" data-target="7">0</div><div class="stat-label">Years of Excellence</div></div>
+  </div>
+</section>
+<script src="app-stats-counter.js"></script>
+
 <section class="latest-lectures">
   <div class="container">
     <div class="ll-head">
@@ -286,6 +296,16 @@
 </section>
 
 <script src="app-latest-lectures.js"></script>
+
+<section class="map-section">
+  <div class="container">
+    <span class="pill-badge">Find Us</span>
+    <h2 class="wc-heading" style="margin-top:8px;">Visit Our Institute</h2>
+    <div class="map-embed-wrap">
+      <iframe src="https://www.google.com/maps?q=Gandhi+Nagar,+1st+Line+Extn,+Brahmapur,+Odisha&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Ambitious Professionals location"></iframe>
+    </div>
+  </div>
+</section>
 
 
 
@@ -395,11 +415,29 @@
   <div class="modal" style="max-width:480px;text-align:center;">
     <button class="modal-close" data-close="attentionPromiseOverlay">&times;</button>
     <h3 style="color:var(--red);">⚠️ Attention!</h3>
-    <div class="sub" style="margin-bottom:24px;">Classes and test series only work if you actually show up for them. Before you place this order — are you promising yourself you will attend, practise, and follow through?</div>
+    <div class="sub" id="attentionPromiseMessage" style="margin-bottom:24px;"></div>
     <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
       <button type="button" class="btn btn-primary" id="attentionPromiseYesBtn">I Promise</button>
       <button type="button" class="btn btn-outline" id="attentionPromiseNoBtn">No, I Can't</button>
     </div>
+  </div>
+</div>
+
+<div class="overlay hidden-overlay" id="journeyBeginOverlay">
+  <div class="modal" style="max-width:440px;text-align:center;">
+    <button class="modal-close" data-close="journeyBeginOverlay">&times;</button>
+    <h3 style="color:var(--red);">🚀 Let's Begin the Journey</h3>
+    <div class="sub" style="margin-bottom:24px;">Let's begin the journey with Ambitious Professionals! We're glad to have you with us.</div>
+    <button type="button" class="btn btn-primary" id="journeyBeginContinueBtn" style="width:100%;justify-content:center;">Continue to Confirm Order</button>
+  </div>
+</div>
+
+<div class="overlay hidden-overlay" id="noWorriesOverlay">
+  <div class="modal" style="max-width:440px;text-align:center;">
+    <button class="modal-close" data-close="noWorriesOverlay">&times;</button>
+    <h3>All the Best for Your Future!</h3>
+    <div class="sub" style="margin-bottom:24px;">No worries at all. Your items are still safely in your cart — come back and confirm whenever you're truly ready.</div>
+    <button type="button" class="btn btn-outline" data-close="noWorriesOverlay" style="width:100%;justify-content:center;">Close</button>
   </div>
 </div>
 
@@ -735,6 +773,7 @@
 
 
 
+<script src="app-founder-color.js"></script>
 <script src="app-common.js"></script>
 
 </body>
