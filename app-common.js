@@ -455,18 +455,42 @@ document.getElementById('placeCartOrderBtn').addEventListener('click', ()=>{
 document.getElementById('confirmOrderBtn').addEventListener('click', ()=>{
   if(!pendingOrderId || !currentUserProfile) return;
   closeOverlay('orderConfirmOverlay');
+  const hasLectures = pendingOrderItems.length > 0;
+  const hasTestSeries = pendingTestSeriesItems.length > 0;
+  const hasCounselling = pendingCounsellingItems.length > 0;
+  document.getElementById('attentionPromiseMessage').textContent = buildAttentionMessage(hasLectures, hasTestSeries, hasCounselling);
   openOverlay('attentionPromiseOverlay');
 });
 
+function buildAttentionMessage(hasLectures, hasTestSeries, hasCounselling){
+  let core;
+  if(hasLectures && hasTestSeries){
+    core = 'Only taking classes and a test series from us will not guarantee you success — they only work if you actually show up regularly and put in the practice.';
+  } else if(hasLectures){
+    core = 'Only taking classes from us will not guarantee you success — they only work if you attend regularly and put in the practice.';
+  } else {
+    core = 'Only taking a test series from us will not guarantee you success — it only works if you appear for every test on time and review your mistakes afterward.';
+  }
+  let tail = ' Before you place this order — are you promising yourself you will stay regular, follow our guidance, and see it through?';
+  if(hasCounselling){
+    tail = ' Before you place this order — are you promising yourself you will stay regular, follow our guidance, act on the counselling advice we give you, and see it through?';
+  }
+  return core + tail;
+}
+
 document.getElementById('attentionPromiseYesBtn').addEventListener('click', ()=>{
   closeOverlay('attentionPromiseOverlay');
+  openOverlay('journeyBeginOverlay');
+});
+
+document.getElementById('journeyBeginContinueBtn').addEventListener('click', ()=>{
+  closeOverlay('journeyBeginOverlay');
   finalizeOrder(pendingOrderId, pendingOrderItems, pendingTestSeriesItems, pendingCounsellingItems, false);
-  showToast('That\'s the spirit! We\'re excited to help you get there — see you in class.', 'success');
 });
 
 document.getElementById('attentionPromiseNoBtn').addEventListener('click', ()=>{
   closeOverlay('attentionPromiseOverlay');
-  showToast('No worries — take your time. Come back and place the order whenever you\'re truly ready to commit.', null);
+  openOverlay('noWorriesOverlay');
 });
 
 function finalizeOrder(orderId, paperItems, testSeriesItems, counsellingItems, isCounsellingOnly){
