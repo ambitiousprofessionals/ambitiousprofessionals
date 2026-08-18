@@ -253,11 +253,29 @@
   <div class="modal" style="max-width:480px;text-align:center;">
     <button class="modal-close" data-close="attentionPromiseOverlay">&times;</button>
     <h3 style="color:var(--red);">⚠️ Attention!</h3>
-    <div class="sub" style="margin-bottom:24px;">Classes and test series only work if you actually show up for them. Before you place this order — are you promising yourself you will attend, practise, and follow through?</div>
+    <div class="sub" id="attentionPromiseMessage" style="margin-bottom:24px;"></div>
     <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
       <button type="button" class="btn btn-primary" id="attentionPromiseYesBtn">I Promise</button>
       <button type="button" class="btn btn-outline" id="attentionPromiseNoBtn">No, I Can't</button>
     </div>
+  </div>
+</div>
+
+<div class="overlay hidden-overlay" id="journeyBeginOverlay">
+  <div class="modal" style="max-width:440px;text-align:center;">
+    <button class="modal-close" data-close="journeyBeginOverlay">&times;</button>
+    <h3 style="color:var(--red);">🚀 Let's Begin the Journey</h3>
+    <div class="sub" style="margin-bottom:24px;">Let's begin the journey with Ambitious Professionals! We're glad to have you with us.</div>
+    <button type="button" class="btn btn-primary" id="journeyBeginContinueBtn" style="width:100%;justify-content:center;">Continue to Confirm Order</button>
+  </div>
+</div>
+
+<div class="overlay hidden-overlay" id="noWorriesOverlay">
+  <div class="modal" style="max-width:440px;text-align:center;">
+    <button class="modal-close" data-close="noWorriesOverlay">&times;</button>
+    <h3>All the Best for Your Future!</h3>
+    <div class="sub" style="margin-bottom:24px;">No worries at all. Your items are still safely in your cart — come back and confirm whenever you're truly ready.</div>
+    <button type="button" class="btn btn-outline" data-close="noWorriesOverlay" style="width:100%;justify-content:center;">Close</button>
   </div>
 </div>
 
