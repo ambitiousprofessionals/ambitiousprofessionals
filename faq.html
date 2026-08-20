@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en" class="js-loading">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FAQs — Ambitious Professionals</title>
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500;1,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+<script src="app-motion.js"></script>
+
+<div class="page-scope">
+<header>
+  <div class="top-bar">
+    <a href="index.html" class="brand">
+      <img src="images/logo.png" alt="Ambitious Professionals logo" class="brand-logo">
+    </a>
+    <nav id="mainNav">
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">About</a></li>
+        <li class="has-dropdown">
+          <a href="courses.html" class="dropdown-toggle">Lectures <span class="caret-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></a>
+          <ul class="dropdown-menu">
+            <li class="has-submenu">
+              <a href="#" class="submenu-toggle">CA <span class="caret-icon caret-icon-sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></span></a>
+              <ul class="submenu">
+                <li><a href="courses.html?course=CA&level=Foundation">CA Foundation</a></li>
+                <li><a href="courses.html?course=CA&level=Intermediate">CA Intermediate</a></li>
+                <li><a href="courses.html?course=CA&level=Final">CA Final</a></li>
+              </ul>
+            </li>
+            <li class="has-submenu">
+              <a href="#" class="submenu-toggle">CMA <span class="caret-icon caret-icon-sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></span></a>
+              <ul class="submenu">
+                <li><a href="courses.html?course=CMA&level=Foundation">CMA Foundation</a></li>
+                <li><a href="courses.html?course=CMA&level=Intermediate">CMA Intermediate</a></li>
+                <li><a href="courses.html?course=CMA&level=Final">CMA Final</a></li>
+              </ul>
+            </li>
+            <li class="has-submenu">
+              <a href="#" class="submenu-toggle">CS <span class="caret-icon caret-icon-sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></span></a>
+              <ul class="submenu">
+                <li><a href="courses.html?course=CS&level=CSEET">CSEET</a></li>
+                <li><a href="courses.html?course=CS&level=Executive">CS Executive</a></li>
+                <li><a href="courses.html?course=CS&level=Professional">CS Professional</a></li>
+              </ul>
+            </li>
+            <li><a href="courses.html?course=MBA">MBA</a></li>
+          </ul>
+        </li>
+        
+        <li><a href="test-series.html">Test Series</a></li>
+        <li><a href="founder.html">Founder</a></li>
+        <li><a href="faq.html">FAQ</a></li>
+        <li><a href="contact.html">Contact Us</a></li>
+      </ul>
+    </nav>
+    
+    <div class="auth-area" id="authArea">
+      <button class="btn-auth" id="signInBtn">Sign In</button>
+      <button class="btn-auth btn-auth-primary" id="signUpBtn">Sign Up</button>
+      <div class="profile-menu-wrap hidden" id="profileMenuWrap">
+        <button class="cart-icon-btn" id="cartIconBtn">
+          🛒<span class="cart-badge hidden" id="cartBadge">0</span>
+        </button>
+        <button class="profile-avatar-btn" id="profileAvatarBtn">
+          <span id="profileAvatarInitial">A</span>
+        </button>
+        <div class="profile-dropdown pd-closed" id="profileDropdown">
+          <div class="profile-dropdown-name" id="profileDropdownName">—</div>
+          <div class="profile-dropdown-id" id="profileDropdownId">—</div>
+          <a href="#" id="myOrdersLink">My Orders</a>
+          <a href="#" id="myCartLink">Cart</a>
+          <a href="#" id="myProfileLink">My Profile</a>
+          <a href="#" id="signOutLink">Sign Out</a>
+          <a href="#" id="deleteAccountLink" style="color:var(--red);">Delete Account</a>
+        </div>
+      </div>
+    </div>
+    <button class="hamburger" id="hamburgerBtn" aria-label="menu">&#9776;</button>
+  </div>
+</header>
+
+<section class="page-hero-bar">
+  <div class="container page-hero-bar-inner">
+    <h1 class="page-hero-bar-title">Contact Us</h1>
+    <svg class="page-hero-bar-illus" viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">
+      <rect x="30" y="60" width="140" height="95" rx="10" fill="var(--white)" stroke="var(--black)" stroke-width="3"/>
+      <path d="M34 65 L100 115 L166 65" stroke="var(--red)" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="150" cy="175" r="32" fill="var(--red)"/>
+      <path d="M138 168 q0-8 8-8 h6 q4 0 5 5 q1 5-2 8 l-4 4 q6 10 15 13 q5-3 8-1 l6 5 q4 4-1 9 q-8 7-18-1 q-16-11-23-27 q-1-3 0-7z" fill="var(--white)"/>
+    </svg>
+  </div>
+</section>
+
+<section class="page-hero-bar">
+  <div class="container page-hero-bar-inner">
+    <h1 class="page-hero-bar-title">Frequently Asked Questions</h1>
+    <svg class="page-hero-bar-illus" viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="100" cy="95" r="70" fill="var(--red)" opacity=".9"/>
+      <path d="M75 75 a25 25 0 1 1 32 24 q-7 4-7 14" stroke="var(--white)" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="100" cy="135" r="5" fill="var(--white)"/>
+      <path d="M60 190 l20-20 h40 l20 20 z" fill="var(--black)"/>
+    </svg>
+  </div>
+</section>
+
+<section class="faq-page no-reveal" id="faq-page">
+  <img src="images/rotating-circle.png" class="page-decor-circle" alt="" aria-hidden="true">
+  <div class="container">
+    <span class="pill-badge">Questions</span>
+    <h2 class="wc-heading" style="margin-top:8px;margin-bottom:10px;">Got Questions?</h2>
+    <p class="faq-page-sub">Hover over any question to see the answer.</p>
+    <div class="faq-list">
+      <div class="faq-item">
+        <div class="faq-q">Do you offer both online and offline classes?</div>
+        <div class="faq-a">Yes — most of our courses are available in both online live and offline classroom mode. You can choose whichever suits you at the time of enrolment.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Is the free counselling session really free?</div>
+        <div class="faq-a">Yes, completely — no obligation to enrol afterward. We'll help you plan your course, level, and attempt honestly.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">How do I know which paper/faculty to choose?</div>
+        <div class="faq-a">Our counselling session covers exactly this — or you can call/WhatsApp us directly and we'll guide you paper by paper.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Can I get books along with my classes?</div>
+        <div class="faq-a">Yes — when booking a class you can choose your book preference (soft copy or hard copy) right in the order form.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Do you offer test series without joining classes?</div>
+        <div class="faq-a">Yes, our Test Series can be booked independently of classes — chapter-wise or full syllabus.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">How do I track my order or contact you after enrolling?</div>
+        <div class="faq-a">Sign in anytime to see "My Orders" from your profile menu, or reach us directly via Call, WhatsApp, or Email from our Contact page.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">What if I need to change my faculty or attempt after ordering?</div>
+        <div class="faq-a">Just reach out to us via Call or WhatsApp — we're happy to help adjust your order before classes begin.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+</div>
+
+<footer id="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="foot-brand">
+        <a href="index.html"><img src="images/logo.png" alt="Ambitious Professionals logo" class="foot-logo"></a>
+        <p class="foot-about">Ambitious Professionals delivers concept-driven CA, CMA and CS coaching in Brahmapur. Since 2018, we've helped students build genuine understanding and achieve real results &mdash; not just clear exams.</p>
+      </div>
+      <div class="cols">
+        <div class="foot-years-col">
+          <div class="foot-years"><span class="foot-years-num"><span id="footYears">7</span>+</span> <em>Years of<br>Experience</em></div>
+          <div class="foot-social">
+            <a href="tel:+919853170049" class="ico-call" aria-label="Call"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></a>
+            <a href="mailto:ambitiousprofessionals12@gmail.com" class="ico-mail mail-link" data-email="ambitiousprofessionals12@gmail.com" aria-label="Email"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></a>
+            <a href="https://wa.me/919853170049" target="_blank" rel="noopener" class="ico-whatsapp" aria-label="WhatsApp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></a>
+            <a href="https://www.youtube.com/@AMBITIOUSPROFESSIONALS" target="_blank" rel="noopener" class="ico-youtube" aria-label="YouTube"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a2.999 2.999 0 0 0-2.112-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.386.505A2.999 2.999 0 0 0 .502 6.186 31.32 31.32 0 0 0 0 12a31.32 31.32 0 0 0 .502 5.814 2.999 2.999 0 0 0 2.112 2.136c1.881.505 9.386.505 9.386.505s7.505 0 9.386-.505a2.999 2.999 0 0 0 2.112-2.136A31.32 31.32 0 0 0 24 12a31.32 31.32 0 0 0-.502-5.814zM9.75 15.568V8.432L15.818 12l-6.068 3.568z"/></svg></a>
+            <a href="https://www.facebook.com/p/Ambitious-professionals-100063694280018/" target="_blank" rel="noopener" class="ico-facebook" aria-label="Facebook"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"/></svg></a>
+            <a href="https://www.linkedin.com/company/ambitious-professionals-brahmapur/" target="_blank" rel="noopener" class="ico-linkedin" aria-label="LinkedIn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 1 1 0-4.124 2.062 2.062 0 0 1 0 4.124zM7.119 20.452H3.554V9h3.565v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0z"/></svg></a>
+            <a href="https://t.me/ambitiousprofessionals" target="_blank" rel="noopener" class="ico-telegram" aria-label="Telegram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></a>
+            <a href="https://www.instagram.com/ambitiousprofessionals" target="_blank" rel="noopener" class="ico-instagram" aria-label="Instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></a>
+          </div>
+        </div>
+        <div>
+          <h5>Explore</h5>
+          <a href="index.html">Home</a>
+          <a href="about.html">About</a>
+          <a href="courses.html">Lectures</a>
+          <a href="test-series.html">Test Series</a>
+          <a href="faq.html">FAQ</a>
+          <a href="contact.html">Contact Us</a>
+        </div>
+        <div>
+          <h5>Visit Our Institute</h5>
+          <a href="https://maps.app.goo.gl/geMpKZPtFQkq3epp8" target="_blank" rel="noopener" class="ft-map-link"><span class="ft-map-badge"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C7.86 2 4.5 5.36 4.5 9.5c0 5.5 7.5 12.5 7.5 12.5s7.5-7 7.5-12.5C19.5 5.36 16.14 2 12 2zm0 10.25a2.75 2.75 0 1 1 0-5.5 2.75 2.75 0 0 1 0 5.5z"/></svg></span><span>Gandhi Nagar, 1st Line Extn,<br>Brahmapur, Odisha</span></a>
+          <a href="index.html#counselling" style="margin-top:14px;"><svg class="ft-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg><span>Book a Free Counselling</span></a>
+        </div>
+      </div>
+    </div>
+    <div class="foot-bottom foot-bottom-split">
+      <span>&copy; 2026 Ambitious Professionals, Brahmapur. All rights reserved.</span>
+      <span>Designed &amp; Developed by <a href="https://anilkumarhotta.vercel.app" target="_blank" rel="noopener">Anil Kumar Hotta</a></span>
+    </div>
+  </div>
+</footer>
+
+
+<!-- ===================== CART MODAL ===================== -->
+<div class="overlay hidden-overlay" id="cartOverlay">
+  <div class="modal" style="max-width:920px;">
+    <button class="modal-close" data-close="cartOverlay">&times;</button>
+    <h3>Your Cart</h3>
+    <div class="sub">Review everything below, then place your order.</div>
+    <div class="table-wrap hidden" id="cartTableWrap" style="margin-bottom:20px;">
+      <table class="paper-table" id="cartTable">
+        <thead>
+          <tr><th>Exam</th><th>Paper No.</th><th>Paper Name</th><th>Faculty</th><th>Attempt</th><th>Type of Class</th><th>Book Preference</th><th>Mode of Class</th><th></th></tr>
+        </thead>
+        <tbody id="cartTableBody"></tbody>
+      </table>
+    </div>
+    <div class="table-wrap hidden" id="cartTestSeriesWrap" style="margin-bottom:20px;">
+      <table class="paper-table" id="cartTestSeriesTable" style="min-width:0;">
+        <thead>
+          <tr><th>Exam to Appear</th><th>Attempt</th><th>Attempting For</th><th>Test Series Type</th><th></th></tr>
+        </thead>
+        <tbody id="cartTestSeriesTableBody"></tbody>
+      </table>
+    </div>
+    <div id="cartCounsellingList" style="margin-bottom:18px;"></div>
+    <div id="cartEmptyMsg" style="display:none;color:var(--gray);font-size:14px;text-align:center;padding:20px 0;">Your cart is empty.</div>
+    <div id="cartError" style="color:var(--red);font-size:12.5px;margin-bottom:10px;display:none;"></div>
+    <button type="button" class="btn btn-primary" id="placeCartOrderBtn" style="width:100%;justify-content:center;">Place Order</button>
+  </div>
+</div>
+
+<!-- ===================== ORDER CONFIRMATION MODAL ===================== -->
+<div class="overlay hidden-overlay" id="orderConfirmOverlay">
+  <div class="modal" style="max-width:920px;">
+    <button class="modal-close" data-close="orderConfirmOverlay">&times;</button>
+    <h3 id="orderConfirmTitle">OrderID #—</h3>
+    <div class="sub">Please review before confirming your order.</div>
+    <div class="table-wrap hidden" id="orderConfirmTableWrap" style="margin-bottom:20px;">
+      <table class="paper-table" id="orderConfirmTable">
+        <thead>
+          <tr><th>Exam</th><th>Paper No.</th><th>Paper Name</th><th>Faculty</th><th>Attempt</th><th>Type of Class</th><th>Book Preference</th><th>Mode of Class</th></tr>
+        </thead>
+        <tbody id="orderConfirmTableBody"></tbody>
+      </table>
+    </div>
+    <div class="table-wrap hidden" id="orderConfirmTestSeriesWrap" style="margin-bottom:20px;">
+      <table class="paper-table" id="orderConfirmTestSeriesTable" style="min-width:0;">
+        <thead>
+          <tr><th>Exam to Appear</th><th>Attempt</th><th>Attempting For</th><th>Test Series Type</th></tr>
+        </thead>
+        <tbody id="orderConfirmTestSeriesTableBody"></tbody>
+      </table>
+    </div>
+    <button type="button" class="btn btn-primary" id="confirmOrderBtn" style="width:100%;justify-content:center;">Confirm Order</button>
+  </div>
+</div>
+
+<div class="overlay hidden-overlay" id="attentionPromiseOverlay">
+  <div class="modal" style="max-width:480px;text-align:center;">
+    <button class="modal-close" data-close="attentionPromiseOverlay">&times;</button>
+    <h3 style="color:var(--red);">⚠️ Attention!</h3>
+    <div class="sub" id="attentionPromiseMessage" style="margin-bottom:24px;"></div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
+      <button type="button" class="btn btn-primary" id="attentionPromiseYesBtn">I Promise</button>
+      <button type="button" class="btn btn-outline" id="attentionPromiseNoBtn">No, I Can't</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden-overlay" id="journeyBeginOverlay">
+  <div class="modal" style="max-width:440px;text-align:center;">
+    <button class="modal-close" data-close="journeyBeginOverlay">&times;</button>
+    <h3 style="color:var(--red);">🚀 Let's Begin the Journey</h3>
+    <div class="sub" style="margin-bottom:24px;">Let's begin the journey with Ambitious Professionals! We're glad to have you with us.</div>
+    <button type="button" class="btn btn-primary" id="journeyBeginContinueBtn" style="width:100%;justify-content:center;">Continue to Confirm Order</button>
+  </div>
+</div>
+
+<div class="overlay hidden-overlay" id="noWorriesOverlay">
+  <div class="modal" style="max-width:440px;text-align:center;">
+    <button class="modal-close" data-close="noWorriesOverlay">&times;</button>
+    <h3>All the Best for Your Future!</h3>
+    <div class="sub" style="margin-bottom:24px;">No worries at all. Your items are still safely in your cart — come back and confirm whenever you're truly ready.</div>
+    <button type="button" class="btn btn-outline" data-close="noWorriesOverlay" style="width:100%;justify-content:center;">Close</button>
+  </div>
+</div>
+
+<!-- ===================== ORDER DETAILS (VIEW) MODAL ===================== -->
+<div class="overlay hidden-overlay" id="orderDetailsOverlay">
+  <div class="modal" style="max-width:920px;">
+    <button class="modal-close" data-close="orderDetailsOverlay">&times;</button>
+    <h3 id="orderDetailsTitle">OrderID #—</h3>
+    <div class="table-wrap hidden" id="orderDetailsTableWrap">
+      <table class="paper-table" id="orderDetailsTable">
+        <thead>
+          <tr><th>Exam</th><th>Paper No.</th><th>Paper Name</th><th>Faculty</th><th>Attempt</th><th>Type of Class</th><th>Book Preference</th><th>Mode of Class</th></tr>
+        </thead>
+        <tbody id="orderDetailsTableBody"></tbody>
+      </table>
+    </div>
+    <div class="table-wrap hidden" id="orderDetailsTestSeriesWrap" style="margin-top:16px;">
+      <table class="paper-table" id="orderDetailsTestSeriesTable" style="min-width:0;">
+        <thead>
+          <tr><th>Exam to Appear</th><th>Attempt</th><th>Attempting For</th><th>Test Series Type</th></tr>
+        </thead>
+        <tbody id="orderDetailsTestSeriesTableBody"></tbody>
+      </table>
+    </div>
+    <div id="orderDetailsCounsellingList" style="margin-top:16px;"></div>
+  </div>
+</div>
+
+<!-- ===================== COUNSELLING DETAILS MODAL (feeds into Cart) ===================== -->
+<div class="overlay hidden-overlay" id="counsellingDetailsOverlay">
+  <div class="modal">
+    <button class="modal-close" data-close="counsellingDetailsOverlay">&times;</button>
+    <h3 id="counsellingDetailsTitle">Counselling Request</h3>
+    <div class="sub">Just a couple of details — your profile info will be used for the rest.</div>
+    <form id="counsellingDetailsForm">
+      <div class="field hidden" id="cdExamField"><label>The exam you want to appear</label><input type="text" id="cdExam" placeholder="e.g. CA Foundation, CMA Intermediate..."></div>
+      <div class="field">
+        <label>The real thing you want to know (in 200 words)</label>
+        <textarea id="cdExtra" maxlength="2000" required></textarea>
+        <div class="char-count"><span id="cdWordCount">0</span> / 200 words</div>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">Add to Cart</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===================== MY ORDERS MODAL ===================== -->
+<div class="overlay hidden-overlay" id="myOrdersOverlay">
+  <div class="modal" style="max-width:560px;">
+    <button class="modal-close" data-close="myOrdersOverlay">&times;</button>
+    <h3>My Orders</h3>
+    <div class="sub">A history of everything you've placed with us.</div>
+    <div class="table-wrap" style="max-height:420px;overflow-y:auto;">
+      <table class="paper-table" id="myOrdersTable">
+        <thead><tr><th>Order ID</th><th>Date</th><th></th></tr></thead>
+        <tbody id="myOrdersTableBody"></tbody>
+      </table>
+    </div>
+    <div id="myOrdersEmptyMsg" style="display:none;color:var(--gray);font-size:14px;text-align:center;padding:20px 0;">No orders yet.</div>
+  </div>
+</div>
+
+<!-- ===================== SUCCESS MODALS ===================== -->
+<div class="overlay hidden-overlay" id="orderSuccessOverlay">
+  <div class="modal success-modal">
+    <div class="tick">✓</div>
+    <h3>Your order has been placed</h3>
+    <p style="font-family:var(--head);letter-spacing:.04em;color:var(--red);font-size:13px;margin-bottom:10px;">OrderID #<span id="orderSuccessOrderId"></span></p>
+    <p>A confirmation has been sent to your registered email <strong id="orderSuccessEmail"></strong>. Class availability, payments and other details will follow shortly.</p>
+    <button class="btn btn-primary" data-close="orderSuccessOverlay">Close</button>
+  </div>
+</div>
+
+<div class="overlay hidden-overlay" id="bookedSuccessOverlay">
+  <div class="modal success-modal">
+    <div class="tick">✓</div>
+    <h3>Booked!</h3>
+    <p>A confirmation has been sent to your registered email <strong id="bookedSuccessEmail"></strong>. The date, time and other details for your counselling session will follow shortly.</p>
+    <button class="btn btn-primary" data-close="bookedSuccessOverlay">Close</button>
+  </div>
+</div>
+
+<!-- ===================== SIGN UP MODAL ===================== -->
+<div class="overlay hidden-overlay" id="signUpOverlay">
+  <div class="modal">
+    <button class="modal-close" data-close="signUpOverlay">&times;</button>
+    <h3>Create Your Student Account</h3>
+    <div class="sub">Choose how you'd like to sign up.</div>
+    <button type="button" class="btn btn-outline" id="googleSignUpBtn" style="width:100%;justify-content:center;border:1.5px solid var(--line);color:var(--black);margin-bottom:14px;">
+      <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.706A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962L3.964 7.294C4.672 5.167 6.656 3.58 9 3.58z"/></svg>
+      Continue with Google
+    </button>
+    <div style="text-align:center;font-size:12px;color:var(--gray);margin:8px 0 16px;">— or sign up with email —</div>
+    <form id="emailSignUpForm">
+      <div class="field">
+        <label>Email</label>
+        <div style="display:flex;gap:8px;">
+          <input type="email" id="suEmail" required style="flex:1;">
+          <button type="button" class="btn btn-outline" id="suSendOtpBtn" style="white-space:nowrap;padding:0 16px;border:1.5px solid var(--line);color:var(--black);">Verify Email</button>
+        </div>
+        <div id="suEmailDupError" style="color:var(--red);font-size:12px;margin-top:6px;display:none;"></div>
+      </div>
+      <div class="field hidden" id="suOtpSection">
+        <label>Enter 4-Digit Code Sent to Your Email</label>
+        <div class="otp-boxes" id="suOtpBoxes">
+          <input type="text" inputmode="numeric" maxlength="1" class="otp-box">
+          <input type="text" inputmode="numeric" maxlength="1" class="otp-box">
+          <input type="text" inputmode="numeric" maxlength="1" class="otp-box">
+          <input type="text" inputmode="numeric" maxlength="1" class="otp-box">
+        </div>
+        <button type="button" class="btn btn-primary" id="suVerifyOtpBtn" style="margin-top:12px;padding:9px 20px;">Verify Code</button>
+        <div id="suOtpMsg" style="font-size:12px;margin-top:8px;display:none;"></div>
+        <div style="margin-top:8px;font-size:12px;">
+          <a href="#" id="suResendOtpLink" style="color:var(--gray);text-decoration:underline;">Resend code</a> ·
+          <a href="#" id="suChangeEmailLink" style="color:var(--gray);text-decoration:underline;">Change email</a>
+        </div>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <div class="pw-hint">Give a strong password</div>
+        <span class="pw-wrap"><input type="password" id="suPassword" required disabled placeholder="Verify your email first" autocomplete="new-password"><button type="button" class="pw-toggle" aria-label="Show password" tabindex="-1"><svg class="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button></span>
+        <ul class="pw-checklist" id="pwChecklist">
+          <li id="pwRuleLength"><span class="pw-icon">✕</span> At least 8 characters</li>
+          <li id="pwRuleUpper"><span class="pw-icon">✕</span> An upper case letter</li>
+          <li id="pwRuleLower"><span class="pw-icon">✕</span> A lower case letter</li>
+          <li id="pwRuleNumber"><span class="pw-icon">✕</span> A numeric figure</li>
+          <li id="pwRuleSymbol"><span class="pw-icon">✕</span> A symbol</li>
+        </ul>
+      </div>
+      <div class="field"><label>Confirm Password</label><span class="pw-wrap"><input type="password" id="suPasswordConfirm" required disabled autocomplete="new-password"><button type="button" class="pw-toggle" aria-label="Show password" tabindex="-1"><svg class="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button></span></div>
+      <div id="signUpError" style="color:var(--red);font-size:12.5px;margin-bottom:10px;display:none;"></div>
+      <button type="submit" class="btn btn-primary" id="suCreateAccountBtn" style="width:100%;justify-content:center;" disabled>Create Account</button>
+    </form>
+    <div style="text-align:center;margin-top:16px;font-size:13px;">
+      Already have an account? <a href="#" id="switchToSignIn" style="color:var(--red);text-decoration:underline;">Sign in</a>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SIGN IN MODAL ===================== -->
+<div class="overlay hidden-overlay" id="signInOverlay">
+  <div class="modal">
+    <button class="modal-close" data-close="signInOverlay">&times;</button>
+    <h3>Sign In</h3>
+    <div class="sub">Welcome back.</div>
+    <button type="button" class="btn btn-outline" id="googleSignInBtn" style="width:100%;justify-content:center;border:1.5px solid var(--line);color:var(--black);margin-bottom:14px;">
+      <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.706A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962L3.964 7.294C4.672 5.167 6.656 3.58 9 3.58z"/></svg>
+      Continue with Google
+    </button>
+    <div style="text-align:center;font-size:12px;color:var(--gray);margin:8px 0 16px;">— or sign in with email/mobile —</div>
+    <form id="emailSignInForm">
+      <div class="field"><label>Email or Mobile Number</label><input type="text" id="siIdentifier" required></div>
+      <div class="field"><label>Password</label><span class="pw-wrap"><input type="password" id="siPassword" required><button type="button" class="pw-toggle" aria-label="Show password" tabindex="-1"><svg class="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button></span></div>
+      <div id="signInError" style="color:var(--red);font-size:12.5px;margin-bottom:10px;display:none;"></div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">Sign In</button>
+    </form>
+    <div style="text-align:center;margin-top:14px;font-size:13px;display:flex;justify-content:space-between;">
+      <a href="#" id="switchToSignUp" style="color:var(--red);text-decoration:underline;">Create account</a>
+      <a href="#" id="forgotPasswordLink" style="color:var(--gray);text-decoration:underline;">Forgot password?</a>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== FORGOT PASSWORD MODAL ===================== -->
+<div class="overlay hidden-overlay" id="forgotPasswordOverlay">
+  <div class="modal" style="max-width:420px;">
+    <button class="modal-close" data-close="forgotPasswordOverlay">&times;</button>
+    <h3>Reset Your Password</h3>
+    <div class="sub">Enter your registered email — we'll send a reset link.</div>
+    <form id="forgotPasswordForm">
+      <div class="field"><label>Email</label><input type="email" id="fpEmail" required></div>
+      <div id="forgotPasswordMsg" style="font-size:12.5px;margin-bottom:10px;display:none;"></div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">Send Reset Link</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===================== DELETE ACCOUNT MODAL ===================== -->
+<div class="overlay hidden-overlay" id="deleteAccountOverlay">
+  <div class="modal">
+    <button class="modal-close" data-close="deleteAccountOverlay">&times;</button>
+    <div id="deleteAccountStep1">
+      <h3>Sad to see you go</h3>
+      <div class="sub">Before you go, please read this carefully.</div>
+      <p style="font-size:14px;color:var(--charcoal);line-height:1.7;margin-bottom:20px;">
+        Deleting your account will permanently remove all your data — your profile, your Student ID, your cart, and your order history. <strong>This action cannot be undone, and your account cannot be recovered in any way.</strong>
+      </p>
+      <button type="button" class="btn btn-primary" id="proceedToDeleteBtn" style="width:100%;justify-content:center;background:var(--red-dark);">Proceed to Account Deletion</button>
+    </div>
+    <div id="deleteAccountStep2" class="hidden">
+      <h3>Confirm Your Password</h3>
+      <div class="sub">For your security, re-enter your password to permanently delete your account.</div>
+      <form id="deleteAccountForm">
+        <div class="field"><label>Password</label><span class="pw-wrap"><input type="password" id="daPassword" required autocomplete="current-password"><button type="button" class="pw-toggle" aria-label="Show password" tabindex="-1"><svg class="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button></span></div>
+        <div id="deleteAccountError" style="color:var(--red);font-size:12.5px;margin-bottom:10px;display:none;"></div>
+        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;background:var(--red-dark);">Permanently Delete My Account</button>
+      </form>
+      <div style="text-align:center;margin-top:14px;font-size:13px;">
+        <a href="#" id="daForgotPasswordLink" style="color:var(--gray);text-decoration:underline;">Forgot password?</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SET PASSWORD MODAL (Google sign-up only) ===================== -->
+<div class="overlay hidden-overlay" id="googleSetPasswordOverlay">
+  <div class="modal">
+    <h3>Set a Password</h3>
+    <div class="sub">You're signing up with Google — set a password too, so you can also sign in with your email later.</div>
+    <form id="googleSetPasswordForm">
+      <div class="field">
+        <label>Password</label>
+        <div class="pw-hint">Give a strong password</div>
+        <span class="pw-wrap"><input type="password" id="gpPassword" required autocomplete="new-password"><button type="button" class="pw-toggle" aria-label="Show password" tabindex="-1"><svg class="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button></span>
+        <ul class="pw-checklist" id="gpChecklist">
+          <li id="gpRuleLength"><span class="pw-icon">✕</span> At least 8 characters</li>
+          <li id="gpRuleUpper"><span class="pw-icon">✕</span> An upper case letter</li>
+          <li id="gpRuleLower"><span class="pw-icon">✕</span> A lower case letter</li>
+          <li id="gpRuleNumber"><span class="pw-icon">✕</span> A numeric figure</li>
+          <li id="gpRuleSymbol"><span class="pw-icon">✕</span> A symbol</li>
+        </ul>
+      </div>
+      <div class="field"><label>Confirm Password</label><span class="pw-wrap"><input type="password" id="gpPasswordConfirm" required disabled autocomplete="new-password"><button type="button" class="pw-toggle" aria-label="Show password" tabindex="-1"><svg class="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button></span></div>
+      <div id="googleSetPasswordError" style="color:var(--red);font-size:12.5px;margin-bottom:10px;display:none;"></div>
+      <button type="submit" class="btn btn-primary" id="gpContinueBtn" style="width:100%;justify-content:center;" disabled>Continue</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===================== COMPLETE PROFILE MODAL (mandatory after signup) ===================== -->
+<div class="overlay hidden-overlay" id="completeProfileOverlay">
+  <div class="modal">
+    <h3>Complete Your Profile</h3>
+    <div class="sub">Just a few details before you continue — this only takes a minute.</div>
+    <form id="completeProfileForm">
+      <div class="field"><label>Full Name</label><input type="text" id="cpName" required></div>
+      <div class="field"><label>Father's Name</label><input type="text" id="cpFathersName" required></div>
+      <div class="field"><label>Residential Address (for book delivery)</label><input type="text" id="cpAddress" required></div>
+      <div class="field">
+        <label>Mobile Number</label>
+        <div class="phone-row">
+          <select id="cpPhoneCode">
+            <option value="+91" selected>🇮🇳 +91</option>
+            <option value="+1">🇺🇸 +1</option>
+            <option value="+1">🇨🇦 +1</option>
+            <option value="+44">🇬🇧 +44</option>
+            <option value="+61">🇦🇺 +61</option>
+            <option value="+971">🇦🇪 +971</option>
+            <option value="+966">🇸🇦 +966</option>
+            <option value="+65">🇸🇬 +65</option>
+            <option value="+60">🇲🇾 +60</option>
+            <option value="+49">🇩🇪 +49</option>
+            <option value="+33">🇫🇷 +33</option>
+            <option value="+81">🇯🇵 +81</option>
+            <option value="+86">🇨🇳 +86</option>
+            <option value="+880">🇧🇩 +880</option>
+            <option value="+94">🇱🇰 +94</option>
+            <option value="+977">🇳🇵 +977</option>
+          </select>
+          <input type="text" id="cpPhoneNumber" pattern="[0-9]{6,12}" required style="flex:1;">
+        </div>
+        <div id="cpPhoneDupError" style="color:var(--red);font-size:12px;margin-top:6px;display:none;"></div>
+      </div>
+      <div class="field"><label>Email</label><input type="email" id="cpEmail" readonly style="background:#f1efe9;"></div>
+      <div id="completeProfileError" style="color:var(--red);font-size:12.5px;margin-bottom:10px;display:none;"></div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">Save and Continue</button>
+    </form>
+    <div style="text-align:center;margin-top:16px;font-size:13px;">
+      Signed in as <strong id="cpSignedInAs"></strong> — not you? <a href="#" id="cpSignOutLink" style="color:var(--red);text-decoration:underline;">Sign out</a>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MY PROFILE (EDIT) MODAL ===================== -->
+<div class="overlay hidden-overlay" id="myProfileOverlay">
+  <div class="modal">
+    <button class="modal-close" data-close="myProfileOverlay">&times;</button>
+    <h3>My Profile</h3>
+    <div class="sub">Student ID: <strong id="mpStudentId">—</strong></div>
+    <form id="myProfileForm">
+      <div class="field"><label>Full Name</label><input type="text" id="mpName" required></div>
+      <div class="field"><label>Father's Name</label><input type="text" id="mpFathersName" required></div>
+      <div class="field"><label>Residential Address</label><input type="text" id="mpAddress" required></div>
+      <div class="field">
+        <label>Mobile Number</label>
+        <div class="phone-row">
+          <select id="mpPhoneCode">
+            <option value="+91">🇮🇳 +91</option>
+            <option value="+1">🇺🇸 +1</option>
+            <option value="+1">🇨🇦 +1</option>
+            <option value="+44">🇬🇧 +44</option>
+            <option value="+61">🇦🇺 +61</option>
+            <option value="+971">🇦🇪 +971</option>
+            <option value="+966">🇸🇦 +966</option>
+            <option value="+65">🇸🇬 +65</option>
+            <option value="+60">🇲🇾 +60</option>
+            <option value="+49">🇩🇪 +49</option>
+            <option value="+33">🇫🇷 +33</option>
+            <option value="+81">🇯🇵 +81</option>
+            <option value="+86">🇨🇳 +86</option>
+            <option value="+880">🇧🇩 +880</option>
+            <option value="+94">🇱🇰 +94</option>
+            <option value="+977">🇳🇵 +977</option>
+          </select>
+          <input type="text" id="mpPhoneNumber" pattern="[0-9]{6,12}" required style="flex:1;">
+        </div>
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="mpEmail" readonly style="background:#f1efe9;">
+        <div style="margin-top:6px;"><a href="#" id="changeEmailLink" style="font-size:12px;color:var(--red);text-decoration:underline;">Change email</a></div>
+      </div>
+      <div id="myProfileSaved" style="color:var(--red);font-size:12.5px;margin-bottom:10px;display:none;">Saved.</div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">Save Changes</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===================== CHANGE EMAIL MODAL ===================== -->
+<div class="overlay hidden-overlay" id="changeEmailOverlay">
+  <div class="modal" style="max-width:420px;">
+    <button class="modal-close" data-close="changeEmailOverlay">&times;</button>
+    <h3>Change Registered Email</h3>
+    <div class="sub">For security, re-enter your password, then your new email.</div>
+    <form id="changeEmailForm">
+      <div class="field"><label>Current Password</label><span class="pw-wrap"><input type="password" id="ceCurrentPassword" required><button type="button" class="pw-toggle" aria-label="Show password" tabindex="-1"><svg class="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button></span></div>
+      <div class="field"><label>New Email</label><input type="email" id="ceNewEmail" required></div>
+      <div id="changeEmailMsg" style="font-size:12.5px;margin-bottom:10px;display:none;"></div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">Send Verification Link</button>
+    </form>
+  </div>
+</div>
+
+
+
+<script src="app-common.js"></script>
+
+</body>
+</html>
