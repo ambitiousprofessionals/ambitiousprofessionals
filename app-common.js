@@ -1426,3 +1426,15 @@ document.querySelectorAll('.faq-item .faq-q').forEach(btn=>{
     item.classList.toggle('open', !wasOpen);
   });
 });
+
+/* ===== WHY CHOOSE US ROWS (tap to toggle on touch — fixes Android "stuck open" hover bug) ===== */
+document.querySelectorAll('.wc-row').forEach(row=>{
+  row.addEventListener('click', (e)=>{
+    if(e.target.closest('a,button')) return;
+    const wasOpen = row.classList.contains('open');
+    document.querySelectorAll('.wc-row.open').forEach(other=>{
+      if(other!==row) other.classList.remove('open');
+    });
+    row.classList.toggle('open', !wasOpen);
+  });
+});
