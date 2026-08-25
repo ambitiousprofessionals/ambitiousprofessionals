@@ -1414,3 +1414,15 @@ auth.onAuthStateChanged((user)=>{
     initialAuthCheckDone = true;
   });
 });
+
+/* ===== FAQ ACCORDION (click to expand — works the same on desktop, Android and iOS) ===== */
+document.querySelectorAll('.faq-item .faq-q').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const item = btn.closest('.faq-item');
+    const wasOpen = item.classList.contains('open');
+    item.parentElement.querySelectorAll('.faq-item.open').forEach(other=>{
+      if(other!==item) other.classList.remove('open');
+    });
+    item.classList.toggle('open', !wasOpen);
+  });
+});
