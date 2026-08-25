@@ -432,6 +432,17 @@ document.getElementById('placeCartOrderBtn').addEventListener('click', ()=>{
         examOrCourse: item.examOrCourse,
         whatWantToKnow: item.whatWantToKnow
       });
+      db.collection('counsellingRequests').add({
+        orderId: orderId,
+        studentId: currentUserProfile.studentId,
+        name: currentUserProfile.name,
+        email: currentUserProfile.email,
+        examOrCourse: item.examOrCourse,
+        whatWantToKnow: item.whatWantToKnow,
+        remarks: '',
+        contacted: false,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
     });
 
     if(classPaperItems.length === 0 && testSeriesItems.length === 0){
@@ -495,6 +506,7 @@ document.getElementById('attentionPromiseNoBtn').addEventListener('click', ()=>{
 
 function finalizeOrder(orderId, paperItems, testSeriesItems, counsellingItems, isCounsellingOnly){
   if(paperItems.length > 0){
+    const papersForRecord = paperItems.map(p => Object.assign({}, p, { exam: getExamLabel(p.course, p.level) }));
     sendToSheet({
       formType: 'order',
       orderId: orderId,
@@ -502,7 +514,18 @@ function finalizeOrder(orderId, paperItems, testSeriesItems, counsellingItems, i
       name: currentUserProfile.name,
       email: currentUserProfile.email,
       extraInfo: '',
-      papers: paperItems.map(p => Object.assign({}, p, { exam: getExamLabel(p.course, p.level) }))
+      papers: papersForRecord
+    });
+    db.collection('orders').add({
+      orderId: orderId,
+      studentId: currentUserProfile.studentId,
+      name: currentUserProfile.name,
+      email: currentUserProfile.email,
+      extraInfo: '',
+      papers: papersForRecord,
+      remarks: '',
+      confirmationSent: false,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
   }
 
@@ -514,6 +537,16 @@ function finalizeOrder(orderId, paperItems, testSeriesItems, counsellingItems, i
       name: currentUserProfile.name,
       email: currentUserProfile.email,
       series: testSeriesItems
+    });
+    db.collection('testSeriesOrders').add({
+      orderId: orderId,
+      studentId: currentUserProfile.studentId,
+      name: currentUserProfile.name,
+      email: currentUserProfile.email,
+      series: testSeriesItems,
+      remarks: '',
+      confirmationSent: false,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
   }
 
