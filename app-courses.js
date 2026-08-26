@@ -103,6 +103,7 @@ function renderTable(){
     paperTableBody.appendChild(row);
   });
   attachRowLogic();
+  attachHoverOpenSelectsIn(paperTableBody);
   checkOrderReady();
 }
 
