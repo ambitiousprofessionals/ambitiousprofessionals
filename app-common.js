@@ -595,8 +595,11 @@ function renderMyOrders(){
     history.slice().reverse().forEach((entry, i)=>{
       const realIdx = history.length - 1 - i;
       const dateStr = entry.date ? new Date(entry.date).toLocaleDateString() : '—';
+      const entryItems = entry.items || [];
+      const isCounsellingEntry = !entry.orderId && entryItems.length > 0 && entryItems.every(it => it._type === 'counselling');
+      const orderIdDisplay = entry.orderId || (isCounsellingEntry ? 'Counselling' : '—');
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${entry.orderId || '—'}</td><td>${dateStr}</td><td><button type="button" class="btn btn-outline view-order-btn" data-idx="${realIdx}">View Details</button></td>`;
+      tr.innerHTML = `<td>${orderIdDisplay}</td><td>${dateStr}</td><td><button type="button" class="btn btn-outline view-order-btn" data-idx="${realIdx}">View Details</button></td>`;
       tbody.appendChild(tr);
     });
     tbody.querySelectorAll('.view-order-btn').forEach(btn=>{
@@ -607,8 +610,10 @@ function renderMyOrders(){
         const paperItems = items.filter(i => !i._type || i._type === 'classPaper');
         const testSeriesItems = items.filter(i => i._type === 'testSeries');
         const counsellingItems = items.filter(i => i._type === 'counselling');
+        const isCounsellingEntry = !entry.orderId && items.length > 0 && items.every(it => it._type === 'counselling');
 
-        document.getElementById('orderDetailsTitle').textContent = 'OrderID #' + (entry.orderId || '—');
+        document.getElementById('orderDetailsTitle').textContent =
+          isCounsellingEntry ? 'Counselling Request' : ('OrderID #' + (entry.orderId || '—'));
         document.getElementById('orderDetailsTableWrap').classList.toggle('hidden', paperItems.length === 0);
         document.getElementById('orderDetailsTableBody').innerHTML = paperItems.map(p => buildPaperRowHTML(p, false)).join('');
 
@@ -1464,3 +1469,24 @@ document.querySelectorAll('.wc-row').forEach(row=>{
     row.classList.toggle('open', !wasOpen);
   });
 });
+
+/* ===== HOVER-TO-OPEN DROPDOWNS (desktop/laptop with a real mouse only —
+   never on touch devices, where opening on hover makes no sense) =====
+   Uses the browser's native select.showPicker() where supported (modern
+   Chrome/Edge). On browsers without it, selects just fall back to their
+   normal click-to-open behaviour — nothing breaks. */
+function attachHoverOpenSelect(select){
+  if(select.dataset.hoverOpenBound) return;
+  select.dataset.hoverOpenBound = '1';
+  select.addEventListener('mouseenter', ()=>{
+    if(!window.matchMedia || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+    if(select.disabled) return;
+    if(typeof select.showPicker !== 'function') return;
+    try{ select.showPicker(); }catch(e){ /* ignore — e.g. picker already open */ }
+  });
+}
+function attachHoverOpenSelectsIn(root){
+  (root || document).querySelectorAll('select').forEach(attachHoverOpenSelect);
+}
+// Static selects already on the page at load time (e.g. the Test Series form).
+attachHoverOpenSelectsIn(document);
