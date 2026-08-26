@@ -331,9 +331,7 @@ function buildTestSeriesRowHTML(t, withRemove, idx){
   </tr>`;
 }
 
-let pendingOrderId = null;
 let pendingOrderItems = [];
-let pendingCounsellingItems = [];
 let pendingTestSeriesItems = [];
 
 function renderCart(){
@@ -413,67 +411,71 @@ document.getElementById('placeCartOrderBtn').addEventListener('click', ()=>{
   const testSeriesItems = cartItems.filter(i => i.kind === 'testSeries');
   const counsellingItems = cartItems.filter(i => i.kind === 'counselling');
 
-  generateOrderId().then((orderId)=>{
-    pendingOrderId = orderId;
-    pendingOrderItems = classPaperItems;
-    pendingTestSeriesItems = testSeriesItems;
-    pendingCounsellingItems = counsellingItems;
-
-    // Counselling requests go to their own Sheet immediately (unaffected by the
-    // confirmation step below) — but stay bundled under this same Order ID
-    // in "My Orders" so the student sees everything from one "Place Order" together.
-    counsellingItems.forEach(item=>{
-      sendToSheet({
-        formType: 'counselling',
-        orderId: orderId,
-        studentId: currentUserProfile.studentId,
-        name: currentUserProfile.name,
-        email: currentUserProfile.email,
-        examOrCourse: item.examOrCourse,
-        whatWantToKnow: item.whatWantToKnow
-      });
-      db.collection('counsellingRequests').add({
-        orderId: orderId,
-        studentId: currentUserProfile.studentId,
-        name: currentUserProfile.name,
-        email: currentUserProfile.email,
-        examOrCourse: item.examOrCourse,
-        whatWantToKnow: item.whatWantToKnow,
-        remarks: '',
-        contacted: false,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
+  // Counselling is a free service — it needs no Order ID and isn't affected by
+  // the "I Promise" step below, so it's submitted immediately either way.
+  counsellingItems.forEach(item=>{
+    sendToSheet({
+      formType: 'counselling',
+      studentId: currentUserProfile.studentId,
+      name: currentUserProfile.name,
+      email: currentUserProfile.email,
+      examOrCourse: item.examOrCourse,
+      whatWantToKnow: item.whatWantToKnow
     });
-
-    if(classPaperItems.length === 0 && testSeriesItems.length === 0){
-      // Pure counselling order — no table to confirm, finalize right away.
-      finalizeOrder(orderId, [], [], counsellingItems, true);
-      return;
-    }
-
-    document.getElementById('orderConfirmTitle').textContent = 'OrderID #' + orderId;
-    document.getElementById('orderConfirmTableWrap').classList.toggle('hidden', classPaperItems.length === 0);
-    document.getElementById('orderConfirmTableBody').innerHTML =
-      classPaperItems.map(p => buildPaperRowHTML(p, false)).join('');
-    document.getElementById('orderConfirmTestSeriesWrap').classList.toggle('hidden', testSeriesItems.length === 0);
-    document.getElementById('orderConfirmTestSeriesTableBody').innerHTML =
-      testSeriesItems.map(t => buildTestSeriesRowHTML(t, false)).join('');
-    closeOverlay('cartOverlay');
-    openOverlay('orderConfirmOverlay');
+    db.collection('counsellingRequests').add({
+      studentId: currentUserProfile.studentId,
+      name: currentUserProfile.name,
+      email: currentUserProfile.email,
+      examOrCourse: item.examOrCourse,
+      whatWantToKnow: item.whatWantToKnow,
+      confirmationSent: false,
+      scheduledAt: null,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    const uid = auth.currentUser.uid;
+    db.collection('users').doc(uid).update({
+      orderHistory: firebase.firestore.FieldValue.arrayUnion({
+        date: new Date().toISOString(),
+        items: [Object.assign({}, item, { _type: 'counselling' })]
+      })
+    });
   });
+
+  pendingOrderItems = classPaperItems;
+  pendingTestSeriesItems = testSeriesItems;
+
+  if(classPaperItems.length === 0 && testSeriesItems.length === 0){
+    // Pure counselling request — nothing left to confirm.
+    cartItems = cartItems.filter(i => counsellingItems.indexOf(i) === -1);
+    saveCartToFirestore().then(()=>{
+      updateCartBadge();
+      closeOverlay('cartOverlay');
+      document.getElementById('bookedSuccessEmail').textContent = currentUserProfile.email;
+      openOverlay('bookedSuccessOverlay');
+    });
+    return;
+  }
+
+  document.getElementById('orderConfirmTableWrap').classList.toggle('hidden', classPaperItems.length === 0);
+  document.getElementById('orderConfirmTableBody').innerHTML =
+    classPaperItems.map(p => buildPaperRowHTML(p, false)).join('');
+  document.getElementById('orderConfirmTestSeriesWrap').classList.toggle('hidden', testSeriesItems.length === 0);
+  document.getElementById('orderConfirmTestSeriesTableBody').innerHTML =
+    testSeriesItems.map(t => buildTestSeriesRowHTML(t, false)).join('');
+  closeOverlay('cartOverlay');
+  openOverlay('orderConfirmOverlay');
 });
 
 document.getElementById('confirmOrderBtn').addEventListener('click', ()=>{
-  if(!pendingOrderId || !currentUserProfile) return;
+  if(!currentUserProfile) return;
   closeOverlay('orderConfirmOverlay');
   const hasLectures = pendingOrderItems.length > 0;
   const hasTestSeries = pendingTestSeriesItems.length > 0;
-  const hasCounselling = pendingCounsellingItems.length > 0;
-  document.getElementById('attentionPromiseMessage').textContent = buildAttentionMessage(hasLectures, hasTestSeries, hasCounselling);
+  document.getElementById('attentionPromiseMessage').textContent = buildAttentionMessage(hasLectures, hasTestSeries);
   openOverlay('attentionPromiseOverlay');
 });
 
-function buildAttentionMessage(hasLectures, hasTestSeries, hasCounselling){
+function buildAttentionMessage(hasLectures, hasTestSeries){
   let core;
   if(hasLectures && hasTestSeries){
     core = 'Only taking classes and a test series from us will not guarantee you success — they only work if you actually show up regularly and put in the practice.';
@@ -482,10 +484,7 @@ function buildAttentionMessage(hasLectures, hasTestSeries, hasCounselling){
   } else {
     core = 'Only taking a test series from us will not guarantee you success — it only works if you appear for every test on time and review your mistakes afterward.';
   }
-  let tail = ' Before you place this order — are you promising yourself you will stay regular, follow our guidance, and see it through?';
-  if(hasCounselling){
-    tail = ' Before you place this order — are you promising yourself you will stay regular, follow our guidance, act on the counselling advice we give you, and see it through?';
-  }
+  const tail = ' Before you place this order — are you promising yourself you will stay regular, follow our guidance, and see it through?';
   return core + tail;
 }
 
@@ -496,7 +495,9 @@ document.getElementById('attentionPromiseYesBtn').addEventListener('click', ()=>
 
 document.getElementById('journeyBeginContinueBtn').addEventListener('click', ()=>{
   closeOverlay('journeyBeginOverlay');
-  finalizeOrder(pendingOrderId, pendingOrderItems, pendingTestSeriesItems, pendingCounsellingItems, false);
+  generateOrderId().then((orderId)=>{
+    finalizeOrder(orderId, pendingOrderItems, pendingTestSeriesItems);
+  });
 });
 
 document.getElementById('attentionPromiseNoBtn').addEventListener('click', ()=>{
@@ -504,7 +505,7 @@ document.getElementById('attentionPromiseNoBtn').addEventListener('click', ()=>{
   openOverlay('noWorriesOverlay');
 });
 
-function finalizeOrder(orderId, paperItems, testSeriesItems, counsellingItems, isCounsellingOnly){
+function finalizeOrder(orderId, paperItems, testSeriesItems){
   if(paperItems.length > 0){
     const papersForRecord = paperItems.map(p => Object.assign({}, p, { exam: getExamLabel(p.course, p.level) }));
     sendToSheet({
@@ -551,8 +552,7 @@ function finalizeOrder(orderId, paperItems, testSeriesItems, counsellingItems, i
   }
 
   const historyItems = paperItems.map(p => Object.assign({}, p, { exam: getExamLabel(p.course, p.level), _type: 'classPaper' }))
-    .concat(testSeriesItems.map(t => Object.assign({}, t, { _type: 'testSeries' })))
-    .concat(counsellingItems.map(c => Object.assign({}, c, { _type: 'counselling' })));
+    .concat(testSeriesItems.map(t => Object.assign({}, t, { _type: 'testSeries' })));
 
   const uid = auth.currentUser.uid;
   db.collection('users').doc(uid).update({
@@ -563,24 +563,17 @@ function finalizeOrder(orderId, paperItems, testSeriesItems, counsellingItems, i
     })
   });
 
-  const removedItems = paperItems.concat(testSeriesItems).concat(counsellingItems);
+  const removedItems = paperItems.concat(testSeriesItems);
   cartItems = cartItems.filter(i => removedItems.indexOf(i) === -1);
   saveCartToFirestore().then(()=>{
     updateCartBadge();
     closeOverlay('cartOverlay');
     closeOverlay('orderConfirmOverlay');
-    if(isCounsellingOnly){
-      document.getElementById('bookedSuccessEmail').textContent = currentUserProfile.email;
-      openOverlay('bookedSuccessOverlay');
-    } else {
-      document.getElementById('orderSuccessOrderId').textContent = orderId;
-      document.getElementById('orderSuccessEmail').textContent = currentUserProfile.email;
-      openOverlay('orderSuccessOverlay');
-    }
-    pendingOrderId = null;
+    document.getElementById('orderSuccessOrderId').textContent = orderId;
+    document.getElementById('orderSuccessEmail').textContent = currentUserProfile.email;
+    openOverlay('orderSuccessOverlay');
     pendingOrderItems = [];
     pendingTestSeriesItems = [];
-    pendingCounsellingItems = [];
   });
 }
 
