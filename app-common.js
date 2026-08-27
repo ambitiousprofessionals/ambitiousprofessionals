@@ -1469,24 +1469,3 @@ document.querySelectorAll('.wc-row').forEach(row=>{
     row.classList.toggle('open', !wasOpen);
   });
 });
-
-/* ===== HOVER-TO-OPEN DROPDOWNS (desktop/laptop with a real mouse only —
-   never on touch devices, where opening on hover makes no sense) =====
-   Uses the browser's native select.showPicker() where supported (modern
-   Chrome/Edge). On browsers without it, selects just fall back to their
-   normal click-to-open behaviour — nothing breaks. */
-function attachHoverOpenSelect(select){
-  if(select.dataset.hoverOpenBound) return;
-  select.dataset.hoverOpenBound = '1';
-  select.addEventListener('mouseenter', ()=>{
-    if(!window.matchMedia || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
-    if(select.disabled) return;
-    if(typeof select.showPicker !== 'function') return;
-    try{ select.showPicker(); }catch(e){ /* ignore — e.g. picker already open */ }
-  });
-}
-function attachHoverOpenSelectsIn(root){
-  (root || document).querySelectorAll('select').forEach(attachHoverOpenSelect);
-}
-// Static selects already on the page at load time (e.g. the Test Series form).
-attachHoverOpenSelectsIn(document);
