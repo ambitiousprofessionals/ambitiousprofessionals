@@ -316,17 +316,39 @@
 
 <!-- ===================== MY ORDERS MODAL ===================== -->
 <div class="overlay hidden-overlay" id="myOrdersOverlay">
-  <div class="modal" style="max-width:560px;">
+  <div class="modal" style="max-width:700px;">
     <button class="modal-close" data-close="myOrdersOverlay">&times;</button>
     <h3>My Orders</h3>
     <div class="sub">A history of everything you've placed with us.</div>
     <div class="table-wrap" style="max-height:420px;overflow-y:auto;">
       <table class="paper-table" id="myOrdersTable">
-        <thead><tr><th>Order ID</th><th>Date</th><th></th></tr></thead>
+        <thead><tr><th>Order ID</th><th>Date</th><th></th><th></th></tr></thead>
         <tbody id="myOrdersTableBody"></tbody>
       </table>
     </div>
     <div id="myOrdersEmptyMsg" style="display:none;color:var(--gray);font-size:14px;text-align:center;padding:20px 0;">No orders yet.</div>
+  </div>
+</div>
+
+<div class="overlay hidden-overlay" id="trackOrderOverlay">
+  <div class="modal" style="max-width:460px;">
+    <button class="modal-close" data-close="trackOrderOverlay">&times;</button>
+    <h3>Track Order</h3>
+    <div class="sub" id="trackOrderSubtitle"></div>
+    <div id="trackOrderTimeline" class="track-timeline"></div>
+    <button type="button" class="btn btn-outline" id="cancelOrderBtn" style="margin-top:18px;width:100%;">Cancel Order</button>
+  </div>
+</div>
+
+<div class="overlay hidden-overlay" id="cancelConfirmOverlay">
+  <div class="modal" style="max-width:380px;text-align:center;">
+    <button class="modal-close" data-close="cancelConfirmOverlay">&times;</button>
+    <h3>Cancel this order?</h3>
+    <p class="sub">Are you sure you want to cancel this order? This can't be undone.</p>
+    <div style="display:flex;gap:12px;margin-top:18px;">
+      <button type="button" class="btn btn-outline" id="cancelConfirmNoBtn" style="flex:1;">No</button>
+      <button type="button" class="btn btn-primary" id="cancelConfirmYesBtn" style="flex:1;">Yes, Cancel</button>
+    </div>
   </div>
 </div>
 
