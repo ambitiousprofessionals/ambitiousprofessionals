@@ -752,13 +752,16 @@ function openTrackOrder(entry){
   });
 }
 
-document.getElementById('cancelOrderBtn').addEventListener('click', ()=>{
+const cancelOrderBtnEl = document.getElementById('cancelOrderBtn');
+if(cancelOrderBtnEl) cancelOrderBtnEl.addEventListener('click', ()=>{
   openOverlay('cancelConfirmOverlay');
 });
-document.getElementById('cancelConfirmNoBtn').addEventListener('click', ()=>{
+const cancelConfirmNoBtnEl = document.getElementById('cancelConfirmNoBtn');
+if(cancelConfirmNoBtnEl) cancelConfirmNoBtnEl.addEventListener('click', ()=>{
   closeOverlay('cancelConfirmOverlay');
 });
-document.getElementById('cancelConfirmYesBtn').addEventListener('click', ()=>{
+const cancelConfirmYesBtnEl = document.getElementById('cancelConfirmYesBtn');
+if(cancelConfirmYesBtnEl) cancelConfirmYesBtnEl.addEventListener('click', ()=>{
   if(!currentTrackContext) return;
   const { collectionName, docId, isCounselling } = currentTrackContext;
   db.collection(collectionName).doc(docId).update({
