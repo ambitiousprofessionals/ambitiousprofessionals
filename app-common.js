@@ -413,6 +413,7 @@ document.getElementById('placeCartOrderBtn').addEventListener('click', ()=>{
 
   // Counselling is a free service — it needs no Order ID and isn't affected by
   // the "I Promise" step below, so it's submitted immediately either way.
+  const uid = auth.currentUser.uid;
   counsellingItems.forEach(item=>{
     sendToSheet({
       formType: 'counselling',
@@ -423,6 +424,7 @@ document.getElementById('placeCartOrderBtn').addEventListener('click', ()=>{
       whatWantToKnow: item.whatWantToKnow
     });
     db.collection('counsellingRequests').add({
+      uid: uid,
       studentId: currentUserProfile.studentId,
       name: currentUserProfile.name,
       email: currentUserProfile.email,
@@ -430,14 +432,20 @@ document.getElementById('placeCartOrderBtn').addEventListener('click', ()=>{
       whatWantToKnow: item.whatWantToKnow,
       confirmationSent: false,
       scheduledAt: null,
+      scheduleEmailSentAt: null,
+      deliveryStatus: 'pending',
+      deliveredAt: null,
+      cancelledAt: null,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    const uid = auth.currentUser.uid;
-    db.collection('users').doc(uid).update({
-      orderHistory: firebase.firestore.FieldValue.arrayUnion({
-        date: new Date().toISOString(),
-        items: [Object.assign({}, item, { _type: 'counselling' })]
-      })
+    }).then(docRef=>{
+      db.collection('users').doc(uid).update({
+        orderHistory: firebase.firestore.FieldValue.arrayUnion({
+          date: new Date().toISOString(),
+          docId: docRef.id,
+          docCollection: 'counsellingRequests',
+          items: [Object.assign({}, item, { _type: 'counselling' })]
+        })
+      });
     });
   });
 
@@ -506,6 +514,7 @@ document.getElementById('attentionPromiseNoBtn').addEventListener('click', ()=>{
 });
 
 function finalizeOrder(orderId, paperItems, testSeriesItems){
+  const uid = auth.currentUser.uid;
   if(paperItems.length > 0){
     const papersForRecord = paperItems.map(p => Object.assign({}, p, { exam: getExamLabel(p.course, p.level) }));
     sendToSheet({
@@ -518,6 +527,7 @@ function finalizeOrder(orderId, paperItems, testSeriesItems){
       papers: papersForRecord
     });
     db.collection('orders').add({
+      uid: uid,
       orderId: orderId,
       studentId: currentUserProfile.studentId,
       name: currentUserProfile.name,
@@ -526,6 +536,12 @@ function finalizeOrder(orderId, paperItems, testSeriesItems){
       papers: papersForRecord,
       remarks: '',
       confirmationSent: false,
+      billSentAt: null,
+      paymentRecd: 'no',
+      paymentRecdAt: null,
+      deliveryStatus: 'pending',
+      deliveredAt: null,
+      cancelledAt: null,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
   }
@@ -540,6 +556,7 @@ function finalizeOrder(orderId, paperItems, testSeriesItems){
       series: testSeriesItems
     });
     db.collection('testSeriesOrders').add({
+      uid: uid,
       orderId: orderId,
       studentId: currentUserProfile.studentId,
       name: currentUserProfile.name,
@@ -547,6 +564,12 @@ function finalizeOrder(orderId, paperItems, testSeriesItems){
       series: testSeriesItems,
       remarks: '',
       confirmationSent: false,
+      billSentAt: null,
+      paymentRecd: 'no',
+      paymentRecdAt: null,
+      deliveryStatus: 'pending',
+      deliveredAt: null,
+      cancelledAt: null,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
   }
@@ -554,7 +577,6 @@ function finalizeOrder(orderId, paperItems, testSeriesItems){
   const historyItems = paperItems.map(p => Object.assign({}, p, { exam: getExamLabel(p.course, p.level), _type: 'classPaper' }))
     .concat(testSeriesItems.map(t => Object.assign({}, t, { _type: 'testSeries' })));
 
-  const uid = auth.currentUser.uid;
   db.collection('users').doc(uid).update({
     orderHistory: firebase.firestore.FieldValue.arrayUnion({
       orderId: orderId,
@@ -599,8 +621,14 @@ function renderMyOrders(){
       const isCounsellingEntry = !entry.orderId && entryItems.length > 0 && entryItems.every(it => it._type === 'counselling');
       const orderIdDisplay = entry.orderId || (isCounsellingEntry ? 'Counselling' : '—');
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${orderIdDisplay}</td><td>${dateStr}</td><td><button type="button" class="btn btn-outline view-order-btn" data-idx="${realIdx}">View Details</button></td>`;
+      tr.innerHTML = `<td>${orderIdDisplay}</td><td>${dateStr}</td><td><button type="button" class="btn btn-outline view-order-btn" data-idx="${realIdx}">View Details</button></td><td><button type="button" class="btn btn-outline track-order-btn" data-idx="${realIdx}">Track Order</button></td>`;
       tbody.appendChild(tr);
+    });
+    tbody.querySelectorAll('.track-order-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const entry = history[parseInt(btn.dataset.idx, 10)];
+        openTrackOrder(entry);
+      });
     });
     tbody.querySelectorAll('.view-order-btn').forEach(btn=>{
       btn.addEventListener('click', ()=>{
@@ -631,6 +659,122 @@ function renderMyOrders(){
     });
   });
 }
+
+/* ============================================================
+   TRACK ORDER
+   ============================================================ */
+let currentTrackContext = null;
+
+function trackEsc(str){
+  return (str===undefined||str===null) ? '' : String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function formatTrackTime(ts){
+  if(!ts) return '';
+  const d = (ts && typeof ts.toDate === 'function') ? ts.toDate() : new Date(ts);
+  if(isNaN(d.getTime())) return '';
+  let hours = d.getHours();
+  const minutes = String(d.getMinutes()).padStart(2,'0');
+  const ampm = hours>=12?'PM':'AM';
+  hours = hours%12; if(hours===0) hours=12;
+  const day = String(d.getDate()).padStart(2,'0');
+  const month = String(d.getMonth()+1).padStart(2,'0');
+  const year = d.getFullYear();
+  return day+'/'+month+'/'+year+' - '+hours+':'+minutes+' '+ampm;
+}
+
+function trackStepHTML(label, time, reached, isCancelled){
+  const cls = 'track-step' + (reached?' reached':'') + (isCancelled?' cancelled':'');
+  const timeStr = formatTrackTime(time);
+  return '<div class="'+cls+'"><span class="track-dot"></span><div class="track-label">'+trackEsc(label)+'</div>'+
+    (timeStr ? '<div class="track-time">'+timeStr+'</div>' : '')+'</div>';
+}
+
+function renderTrackTimeline(data, isCounselling){
+  const status = data.deliveryStatus || 'pending';
+  const stages = isCounselling ? [
+    { label:'Counselling Requested', time: data.createdAt },
+    { label:'Schedule Confirmation Received', time: data.scheduleEmailSentAt },
+    { label:'Order Delivered', time: data.deliveredAt }
+  ] : [
+    { label:'Order Placed', time: data.createdAt },
+    { label:'Confirmation & Details Received', time: data.billSentAt },
+    { label:'Payment Confirmation', time: data.paymentRecdAt },
+    { label:'Order Delivered', time: data.deliveredAt }
+  ];
+
+  let html = '';
+  if(status === 'cancelled'){
+    stages.forEach(s=>{
+      if(s.time) html += trackStepHTML(s.label, s.time, true, false);
+    });
+    html += trackStepHTML('Order Cancelled', data.cancelledAt, true, true);
+  } else {
+    stages.forEach(s=>{
+      html += trackStepHTML(s.label, s.time, !!s.time, false);
+    });
+  }
+
+  document.getElementById('trackOrderTimeline').innerHTML = html;
+
+  const cancelBtn = document.getElementById('cancelOrderBtn');
+  const canCancel = status !== 'cancelled' && status !== 'delivered';
+  cancelBtn.style.display = canCancel ? 'block' : 'none';
+}
+
+function openTrackOrder(entry){
+  const items = entry.items || [];
+  const hasPapers = items.some(i => !i._type || i._type === 'classPaper');
+  const isCounselling = !entry.orderId && items.length > 0 && items.every(i => i._type === 'counselling');
+  const collectionName = isCounselling ? (entry.docCollection || 'counsellingRequests') : (hasPapers ? 'orders' : 'testSeriesOrders');
+
+  currentTrackContext = null;
+  document.getElementById('trackOrderTimeline').innerHTML = '<p style="color:var(--gray);font-size:13px;">Loading…</p>';
+  document.getElementById('trackOrderSubtitle').textContent = isCounselling ? 'Counselling Request' : ('Order ID #' + (entry.orderId || ''));
+  document.getElementById('cancelOrderBtn').style.display = 'none';
+  closeOverlay('myOrdersOverlay');
+  openOverlay('trackOrderOverlay');
+
+  const fetchPromise = isCounselling
+    ? (entry.docId ? db.collection(collectionName).doc(entry.docId).get() : Promise.resolve(null))
+    : db.collection(collectionName).where('orderId', '==', entry.orderId).where('uid', '==', auth.currentUser.uid).limit(1).get()
+        .then(snap => snap.empty ? null : snap.docs[0]);
+
+  fetchPromise.then(docSnap=>{
+    if(!docSnap || !docSnap.exists){
+      document.getElementById('trackOrderTimeline').innerHTML = '<p style="color:var(--gray);font-size:13px;">Could not load tracking details right now.</p>';
+      return;
+    }
+    currentTrackContext = { collectionName, docId: docSnap.id, isCounselling };
+    renderTrackTimeline(docSnap.data(), isCounselling);
+  }).catch(()=>{
+    document.getElementById('trackOrderTimeline').innerHTML = '<p style="color:var(--gray);font-size:13px;">Could not load tracking details right now.</p>';
+  });
+}
+
+document.getElementById('cancelOrderBtn').addEventListener('click', ()=>{
+  openOverlay('cancelConfirmOverlay');
+});
+document.getElementById('cancelConfirmNoBtn').addEventListener('click', ()=>{
+  closeOverlay('cancelConfirmOverlay');
+});
+document.getElementById('cancelConfirmYesBtn').addEventListener('click', ()=>{
+  if(!currentTrackContext) return;
+  const { collectionName, docId, isCounselling } = currentTrackContext;
+  db.collection(collectionName).doc(docId).update({
+    deliveryStatus: 'cancelled',
+    cancelledAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(()=>{
+    closeOverlay('cancelConfirmOverlay');
+    showToast('Order cancelled.', 'success');
+    return db.collection(collectionName).doc(docId).get();
+  }).then(doc=>{
+    if(doc) renderTrackTimeline(doc.data(), isCounselling);
+  }).catch(err=>{
+    closeOverlay('cancelConfirmOverlay');
+    showToast('Failed to cancel order: ' + err.message, 'error');
+  });
+});
 
 
 /* ============================================================
