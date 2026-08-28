@@ -503,8 +503,12 @@ document.getElementById('attentionPromiseYesBtn').addEventListener('click', ()=>
 
 document.getElementById('journeyBeginContinueBtn').addEventListener('click', ()=>{
   closeOverlay('journeyBeginOverlay');
-  generateOrderId().then((orderId)=>{
-    finalizeOrder(orderId, pendingOrderItems, pendingTestSeriesItems);
+  const idPromises = [];
+  let lectureOrderId = null, testSeriesOrderId = null;
+  if(pendingOrderItems.length > 0) idPromises.push(generateOrderId().then(id=>{ lectureOrderId = id; }));
+  if(pendingTestSeriesItems.length > 0) idPromises.push(generateOrderId().then(id=>{ testSeriesOrderId = id; }));
+  Promise.all(idPromises).then(()=>{
+    finalizeOrder(lectureOrderId, testSeriesOrderId, pendingOrderItems, pendingTestSeriesItems);
   });
 });
 
@@ -513,13 +517,15 @@ document.getElementById('attentionPromiseNoBtn').addEventListener('click', ()=>{
   openOverlay('noWorriesOverlay');
 });
 
-function finalizeOrder(orderId, paperItems, testSeriesItems){
+function finalizeOrder(lectureOrderId, testSeriesOrderId, paperItems, testSeriesItems){
   const uid = auth.currentUser.uid;
+  const historyEntries = [];
+
   if(paperItems.length > 0){
     const papersForRecord = paperItems.map(p => Object.assign({}, p, { exam: getExamLabel(p.course, p.level) }));
     sendToSheet({
       formType: 'order',
-      orderId: orderId,
+      orderId: lectureOrderId,
       studentId: currentUserProfile.studentId,
       name: currentUserProfile.name,
       email: currentUserProfile.email,
@@ -528,7 +534,7 @@ function finalizeOrder(orderId, paperItems, testSeriesItems){
     });
     db.collection('orders').add({
       uid: uid,
-      orderId: orderId,
+      orderId: lectureOrderId,
       studentId: currentUserProfile.studentId,
       name: currentUserProfile.name,
       email: currentUserProfile.email,
@@ -544,12 +550,17 @@ function finalizeOrder(orderId, paperItems, testSeriesItems){
       cancelledAt: null,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
+    historyEntries.push({
+      orderId: lectureOrderId,
+      date: new Date().toISOString(),
+      items: papersForRecord.map(p => Object.assign({}, p, { _type: 'classPaper' }))
+    });
   }
 
   if(testSeriesItems.length > 0){
     sendToSheet({
       formType: 'testSeries',
-      orderId: orderId,
+      orderId: testSeriesOrderId,
       studentId: currentUserProfile.studentId,
       name: currentUserProfile.name,
       email: currentUserProfile.email,
@@ -557,7 +568,7 @@ function finalizeOrder(orderId, paperItems, testSeriesItems){
     });
     db.collection('testSeriesOrders').add({
       uid: uid,
-      orderId: orderId,
+      orderId: testSeriesOrderId,
       studentId: currentUserProfile.studentId,
       name: currentUserProfile.name,
       email: currentUserProfile.email,
@@ -572,17 +583,15 @@ function finalizeOrder(orderId, paperItems, testSeriesItems){
       cancelledAt: null,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
+    historyEntries.push({
+      orderId: testSeriesOrderId,
+      date: new Date().toISOString(),
+      items: testSeriesItems.map(t => Object.assign({}, t, { _type: 'testSeries' }))
+    });
   }
 
-  const historyItems = paperItems.map(p => Object.assign({}, p, { exam: getExamLabel(p.course, p.level), _type: 'classPaper' }))
-    .concat(testSeriesItems.map(t => Object.assign({}, t, { _type: 'testSeries' })));
-
   db.collection('users').doc(uid).update({
-    orderHistory: firebase.firestore.FieldValue.arrayUnion({
-      orderId: orderId,
-      date: new Date().toISOString(),
-      items: historyItems
-    })
+    orderHistory: firebase.firestore.FieldValue.arrayUnion(...historyEntries)
   });
 
   const removedItems = paperItems.concat(testSeriesItems);
@@ -591,7 +600,10 @@ function finalizeOrder(orderId, paperItems, testSeriesItems){
     updateCartBadge();
     closeOverlay('cartOverlay');
     closeOverlay('orderConfirmOverlay');
-    document.getElementById('orderSuccessOrderId').textContent = orderId;
+    const idLine = (lectureOrderId && testSeriesOrderId)
+      ? ('Lecture Order ID #' + lectureOrderId + '  •  Test Series Order ID #' + testSeriesOrderId)
+      : ('OrderID #' + (lectureOrderId || testSeriesOrderId));
+    document.getElementById('orderSuccessOrderIdLine').textContent = idLine;
     document.getElementById('orderSuccessEmail').textContent = currentUserProfile.email;
     openOverlay('orderSuccessOverlay');
     pendingOrderItems = [];
@@ -1533,6 +1545,7 @@ function refreshProfileUI(user){
     cartItems = d.cart || [];
     updateCartBadge();
     fillHomeCounsellingProfile(currentUserProfile);
+    document.getElementById('authArea').classList.remove('auth-checking');
 
     // Self-healing: if the user verified a "Change Email" since their last visit,
     // Firebase Auth's email is now new but Firestore/Sheet still have the old one — sync them.
@@ -1570,6 +1583,7 @@ auth.onAuthStateChanged((user)=>{
     document.getElementById('signInBtn').classList.remove('hidden');
     document.getElementById('signUpBtn').classList.remove('hidden');
     document.getElementById('profileMenuWrap').classList.add('hidden');
+    document.getElementById('authArea').classList.remove('auth-checking');
     currentUserProfile = null;
     cartItems = [];
     updateCartBadge();
@@ -1586,6 +1600,7 @@ auth.onAuthStateChanged((user)=>{
         prefillCompleteProfile(user);
         openOverlay('completeProfileOverlay');
       }
+      document.getElementById('authArea').classList.remove('auth-checking');
     } else {
       refreshProfileUI(user);
     }
