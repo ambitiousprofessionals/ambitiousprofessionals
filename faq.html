@@ -68,7 +68,7 @@
       </ul>
     </nav>
     
-    <div class="auth-area" id="authArea">
+    <div class="auth-area auth-checking" id="authArea">
       <button class="btn-auth" id="signInBtn">Sign In</button>
       <button class="btn-auth btn-auth-primary" id="signUpBtn">Sign Up</button>
       <div class="profile-menu-wrap hidden" id="profileMenuWrap">
@@ -259,7 +259,7 @@
     <div id="cartCounsellingList" style="margin-bottom:18px;"></div>
     <div id="cartEmptyMsg" style="display:none;color:var(--gray);font-size:14px;text-align:center;padding:20px 0;">Your cart is empty.</div>
     <div id="cartError" style="color:var(--red);font-size:12.5px;margin-bottom:10px;display:none;"></div>
-    <button type="button" class="btn btn-primary" id="placeCartOrderBtn" style="width:100%;justify-content:center;">Place Order</button>
+    <button type="button" class="btn btn-primary" id="placeCartOrderBtn" style="width:100%;justify-content:center;">Checkout</button>
   </div>
 </div>
 
@@ -405,7 +405,7 @@
   <div class="modal success-modal">
     <div class="tick">✓</div>
     <h3>Your order has been placed</h3>
-    <p style="font-family:var(--head);letter-spacing:.04em;color:var(--red);font-size:13px;margin-bottom:10px;">OrderID #<span id="orderSuccessOrderId"></span></p>
+    <p id="orderSuccessOrderIdLine" style="font-family:var(--head);letter-spacing:.04em;color:var(--red);font-size:13px;margin-bottom:10px;"></p>
     <p>A confirmation has been sent to your registered email <strong id="orderSuccessEmail"></strong>. Class availability, payments and other details will follow shortly.</p>
     <button class="btn btn-primary" data-close="orderSuccessOverlay">Close</button>
   </div>
