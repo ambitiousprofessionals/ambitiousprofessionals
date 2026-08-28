@@ -239,6 +239,8 @@ nav > ul > li > a.nav-active{color:var(--red);border-color:var(--red);}
 
 /* ===== AUTH AREA ===== */
 .auth-area{display:flex;align-items:center;gap:10px;margin-left:16px;}
+.auth-area.auth-checking #signInBtn,
+.auth-area.auth-checking #signUpBtn{visibility:hidden;}
 .btn-auth{
   font-family:var(--head);font-size:13px;letter-spacing:.02em;text-transform:none;font-weight:600;
   padding:9px 18px;border-radius:var(--radius);border:1.5px solid var(--line);background:var(--white);color:var(--black);
@@ -684,11 +686,12 @@ nav > ul > li > a.nav-active{color:var(--red);border-color:var(--red);}
 .table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);}
 table.paper-table{width:100%;border-collapse:collapse;min-width:920px;background:var(--white);}
 #myOrdersTable{min-width:0;}
-#myOrdersTable th:nth-child(1), #myOrdersTable td:nth-child(1){width:34%;}
-#myOrdersTable th:nth-child(2), #myOrdersTable td:nth-child(2){width:33%;}
-#myOrdersTable th:nth-child(3), #myOrdersTable td:nth-child(3){width:33%;text-align:right;}
-#myOrdersTable .view-order-btn{padding:6px 12px;font-size:10.5px;border:1.5px solid var(--line);color:var(--black);background:var(--white);border-radius:var(--radius);white-space:nowrap;}
-#myOrdersTable .view-order-btn:hover{border-color:var(--red);color:var(--red);}
+#myOrdersTable th:nth-child(1), #myOrdersTable td:nth-child(1){width:28%;}
+#myOrdersTable th:nth-child(2), #myOrdersTable td:nth-child(2){width:24%;}
+#myOrdersTable th:nth-child(3), #myOrdersTable td:nth-child(3){width:24%;text-align:right;}
+#myOrdersTable th:nth-child(4), #myOrdersTable td:nth-child(4){width:24%;text-align:right;}
+#myOrdersTable .view-order-btn, #myOrdersTable .track-order-btn{padding:6px 12px;font-size:10.5px;border:1.5px solid var(--line);color:var(--black);background:var(--white);border-radius:var(--radius);white-space:nowrap;}
+#myOrdersTable .view-order-btn:hover, #myOrdersTable .track-order-btn:hover{border-color:var(--red);color:var(--red);}
 .paper-table thead th{
   background:var(--red-dark);color:var(--white);
   font-family:var(--head);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;
