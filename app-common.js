@@ -1296,8 +1296,20 @@ document.getElementById('completeProfileForm').addEventListener('submit', (e)=>{
 
   const name = document.getElementById('cpName').value.trim();
   const fathersName = document.getElementById('cpFathersName').value.trim();
-  const address = document.getElementById('cpAddress').value.trim();
+  const dob = document.getElementById('cpDob').value;
+  const houseNo = document.getElementById('cpHouseNo').value.trim();
+  const street = document.getElementById('cpStreet').value.trim();
+  const landmark = document.getElementById('cpLandmark').value.trim();
+  const pincode = document.getElementById('cpPincode').value.trim();
+  const city = document.getElementById('cpCity').value;
+  const district = document.getElementById('cpDistrict').value.trim();
+  const state = document.getElementById('cpState').value.trim();
   const phone = document.getElementById('cpPhoneCode').value + ' ' + document.getElementById('cpPhoneNumber').value.trim();
+
+  if(!/^[1-9][0-9]{5}$/.test(pincode) || !city || !district || !state){
+    showError('completeProfileError', 'Please enter a valid Indian pin code so City, District and State can be filled in.');
+    return;
+  }
 
   // Check phone uniqueness before creating the profile
   db.collection('users').where('phone', '==', phone).limit(1).get().then((snap)=>{
@@ -1310,7 +1322,14 @@ document.getElementById('completeProfileForm').addEventListener('submit', (e)=>{
         studentId: studentId,
         name: name,
         fathersName: fathersName,
-        address: address,
+        dob: dob,
+        houseNo: houseNo,
+        street: street,
+        landmark: landmark,
+        pincode: pincode,
+        city: city,
+        district: district,
+        state: state,
         phone: phone,
         email: user.email,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -1320,7 +1339,14 @@ document.getElementById('completeProfileForm').addEventListener('submit', (e)=>{
           studentId: studentId,
           name: name,
           fathersName: fathersName,
-          address: address,
+          dob: dob,
+          houseNo: houseNo,
+          street: street,
+          landmark: landmark,
+          pincode: pincode,
+          city: city,
+          district: district,
+          state: state,
           phone: phone,
           email: user.email
         }).then(()=>{
@@ -1351,7 +1377,20 @@ document.getElementById('myProfileLink').addEventListener('click', (e)=>{
     document.getElementById('mpStudentId').textContent = d.studentId || '—';
     document.getElementById('mpName').value = d.name || '';
     document.getElementById('mpFathersName').value = d.fathersName || '';
-    document.getElementById('mpAddress').value = d.address || '';
+    document.getElementById('mpDob').value = d.dob || '';
+    document.getElementById('mpDob').max = new Date().toISOString().split('T')[0];
+    document.getElementById('mpHouseNo').value = d.houseNo || '';
+    document.getElementById('mpStreet').value = d.street || '';
+    document.getElementById('mpLandmark').value = d.landmark || '';
+    document.getElementById('mpPincode').value = d.pincode || '';
+    document.getElementById('mpDistrict').value = d.district || '';
+    document.getElementById('mpState').value = d.state || '';
+    if(d.pincode){
+      lookupPincode(d.pincode, 'mp', d.city);
+    } else {
+      document.getElementById('mpCity').innerHTML = '<option value="">Enter pin code first</option>';
+      document.getElementById('mpCity').disabled = true;
+    }
     const phoneParts = (d.phone || '+91 ').split(' ');
     document.getElementById('mpPhoneCode').value = phoneParts[0] || '+91';
     document.getElementById('mpPhoneNumber').value = phoneParts.slice(1).join(' ') || '';
@@ -1367,19 +1406,42 @@ document.getElementById('myProfileForm').addEventListener('submit', (e)=>{
   if(!user) return;
   const name = document.getElementById('mpName').value.trim();
   const fathersName = document.getElementById('mpFathersName').value.trim();
-  const address = document.getElementById('mpAddress').value.trim();
+  const dob = document.getElementById('mpDob').value;
+  const houseNo = document.getElementById('mpHouseNo').value.trim();
+  const street = document.getElementById('mpStreet').value.trim();
+  const landmark = document.getElementById('mpLandmark').value.trim();
+  const pincode = document.getElementById('mpPincode').value.trim();
+  const city = document.getElementById('mpCity').value;
+  const district = document.getElementById('mpDistrict').value.trim();
+  const state = document.getElementById('mpState').value.trim();
   const phone = document.getElementById('mpPhoneCode').value + ' ' + document.getElementById('mpPhoneNumber').value.trim();
 
-  db.collection('users').doc(user.uid).update({ name, fathersName, address, phone }).then(()=>{
+  if(!/^[1-9][0-9]{5}$/.test(pincode) || !city || !district || !state){
+    document.getElementById('myProfileSaved').textContent = 'Please enter a valid Indian pin code so City, District and State can be filled in.';
+    document.getElementById('myProfileSaved').style.color = 'var(--red)';
+    document.getElementById('myProfileSaved').style.display = 'block';
+    return;
+  }
+
+  db.collection('users').doc(user.uid).update({ name, fathersName, dob, houseNo, street, landmark, pincode, city, district, state, phone }).then(()=>{
     sendToSheet({
       formType: 'studentUpdate',
       studentId: document.getElementById('mpStudentId').textContent,
       name: name,
       fathersName: fathersName,
-      address: address,
+      dob: dob,
+      houseNo: houseNo,
+      street: street,
+      landmark: landmark,
+      pincode: pincode,
+      city: city,
+      district: district,
+      state: state,
       phone: phone,
       email: document.getElementById('mpEmail').value
     });
+    document.getElementById('myProfileSaved').textContent = 'Saved.';
+    document.getElementById('myProfileSaved').style.color = '';
     document.getElementById('myProfileSaved').style.display = 'block';
     refreshProfileUI(user);
     setTimeout(()=> document.getElementById('myProfileSaved').style.display = 'none', 2500);
@@ -1565,12 +1627,80 @@ function refreshProfileUI(user){
   });
 }
 
+/* ============================================================
+   PINCODE LOOKUP — auto-fills City/District/State from an Indian
+   PIN code (used by both Complete Profile and My Profile forms).
+   ============================================================ */
+function lookupPincode(pincode, prefix, preselectCity){
+  const cityEl = document.getElementById(prefix + 'City');
+  const districtEl = document.getElementById(prefix + 'District');
+  const stateEl = document.getElementById(prefix + 'State');
+  const errEl = document.getElementById(prefix + 'PincodeError');
+
+  errEl.style.display = 'none';
+  districtEl.value = '';
+  stateEl.value = '';
+  cityEl.innerHTML = '<option value="">Looking up…</option>';
+  cityEl.disabled = true;
+
+  if(!/^[1-9][0-9]{5}$/.test(pincode)){
+    cityEl.innerHTML = '<option value="">Enter pin code first</option>';
+    if(pincode.length === 6){
+      errEl.textContent = 'Please enter a valid Indian pin code.';
+      errEl.style.display = 'block';
+    }
+    return;
+  }
+
+  fetch('https://api.postalpincode.in/pincode/' + pincode)
+    .then(r => r.json())
+    .then(data => {
+      const result = data && data[0];
+      const offices = result && result.Status === 'Success' ? result.PostOffice : null;
+      if(!offices || !offices.length){
+        cityEl.innerHTML = '<option value="">Enter pin code first</option>';
+        errEl.textContent = 'Please enter a valid Indian pin code.';
+        errEl.style.display = 'block';
+        return;
+      }
+      cityEl.innerHTML = offices.map(o => '<option value="' + o.Name.replace(/"/g,'&quot;') + '">' + o.Name + '</option>').join('');
+      cityEl.disabled = false;
+      if(preselectCity && offices.some(o => o.Name === preselectCity)) cityEl.value = preselectCity;
+      districtEl.value = offices[0].District || '';
+      stateEl.value = offices[0].State || '';
+    })
+    .catch(()=>{
+      cityEl.innerHTML = '<option value="">Enter pin code first</option>';
+      errEl.textContent = 'Could not verify this pin code — check your connection and try again.';
+      errEl.style.display = 'block';
+    });
+}
+document.getElementById('cpPincode').addEventListener('input', (e)=>{
+  const v = e.target.value.replace(/\D/g,'').slice(0,6);
+  e.target.value = v;
+  if(v.length === 6) lookupPincode(v, 'cp');
+});
+document.getElementById('mpPincode').addEventListener('input', (e)=>{
+  const v = e.target.value.replace(/\D/g,'').slice(0,6);
+  e.target.value = v;
+  if(v.length === 6) lookupPincode(v, 'mp');
+});
+
 function prefillCompleteProfile(user){
   document.getElementById('cpEmail').value = user.email || '';
   document.getElementById('cpSignedInAs').textContent = user.email || user.phoneNumber || 'this account';
   document.getElementById('cpName').value = user.displayName || '';
   document.getElementById('cpFathersName').value = '';
-  document.getElementById('cpAddress').value = '';
+  document.getElementById('cpDob').value = '';
+  document.getElementById('cpDob').max = new Date().toISOString().split('T')[0];
+  document.getElementById('cpHouseNo').value = '';
+  document.getElementById('cpStreet').value = '';
+  document.getElementById('cpLandmark').value = '';
+  document.getElementById('cpPincode').value = '';
+  document.getElementById('cpCity').innerHTML = '<option value="">Enter pin code first</option>';
+  document.getElementById('cpCity').disabled = true;
+  document.getElementById('cpDistrict').value = '';
+  document.getElementById('cpState').value = '';
   document.getElementById('cpPhoneNumber').value = '';
   document.getElementById('cpPhoneCode').value = '+91';
   hideError('completeProfileError');
