@@ -589,11 +589,15 @@
           <input type="text" id="cpPincode" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" required>
           <div id="cpPincodeError" style="color:var(--red);font-size:12px;margin-top:6px;display:none;"></div>
         </div>
-        <div class="field"><label>City<span class="required-mark">*</span></label><select id="cpCity" required disabled><option value="">Enter pin code first</option></select></div>
+        <div class="field"><label>Post<span class="required-mark">*</span></label><select id="cpPost" required disabled><option value="">Enter pin code first</option></select></div>
       </div>
       <div class="field-grid">
+        <div class="field"><label>City/Town<span class="required-mark">*</span></label><input type="text" id="cpCityTown" readonly required></div>
         <div class="field"><label>District<span class="required-mark">*</span></label><input type="text" id="cpDistrict" readonly required></div>
+      </div>
+      <div class="field-grid">
         <div class="field"><label>State<span class="required-mark">*</span></label><input type="text" id="cpState" readonly required></div>
+        <div class="field"></div>
       </div>
 
       <div class="field">
@@ -617,7 +621,7 @@
             <option value="+94">🇱🇰 +94</option>
             <option value="+977">🇳🇵 +977</option>
           </select>
-          <input type="text" id="cpPhoneNumber" pattern="[0-9]{6,12}" required style="flex:1;">
+          <input type="text" id="cpPhoneNumber" inputmode="numeric" maxlength="10" pattern="[0-9]{10}" required style="flex:1;">
         </div>
         <div id="cpPhoneDupError" style="color:var(--red);font-size:12px;margin-top:6px;display:none;"></div>
       </div>
@@ -654,11 +658,15 @@
           <input type="text" id="mpPincode" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" required>
           <div id="mpPincodeError" style="color:var(--red);font-size:12px;margin-top:6px;display:none;"></div>
         </div>
-        <div class="field"><label>City<span class="required-mark">*</span></label><select id="mpCity" required disabled><option value="">Enter pin code first</option></select></div>
+        <div class="field"><label>Post<span class="required-mark">*</span></label><select id="mpPost" required disabled><option value="">Enter pin code first</option></select></div>
       </div>
       <div class="field-grid">
+        <div class="field"><label>City/Town<span class="required-mark">*</span></label><input type="text" id="mpCityTown" readonly required></div>
         <div class="field"><label>District<span class="required-mark">*</span></label><input type="text" id="mpDistrict" readonly required></div>
+      </div>
+      <div class="field-grid">
         <div class="field"><label>State<span class="required-mark">*</span></label><input type="text" id="mpState" readonly required></div>
+        <div class="field"></div>
       </div>
 
       <div class="field">
@@ -682,7 +690,7 @@
             <option value="+94">🇱🇰 +94</option>
             <option value="+977">🇳🇵 +977</option>
           </select>
-          <input type="text" id="mpPhoneNumber" pattern="[0-9]{6,12}" required style="flex:1;">
+          <input type="text" id="mpPhoneNumber" inputmode="numeric" maxlength="10" pattern="[0-9]{10}" required style="flex:1;">
         </div>
       </div>
       <div class="field">
