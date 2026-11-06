@@ -31,9 +31,9 @@ function getAttemptsFor(course, level){
   return generateAttempts([0,4,8], 4);                                          // Jan, May, Sep
 }
 
-const CLASS_TYPES = ["Regular","Fast-track","Exam Oriented","Revision Classes"];
+const CLASS_TYPES = ["Regular","Fast-track / Exam Oriented"];
 const BOOK_PREFERENCES = ["Hard Copy","Soft Copy"];
-const MODES = ["Offline Face to Face","Online Live","Online Google Drive","Online Pen Drive"];
+const MODES = ["Offline Face to Face","Online Google Drive Live","Online Google Drive Recorded"];
 
 /* ============================================================
    CUSTOM FACULTY NAME DIALOG
@@ -75,14 +75,19 @@ function cancelFacultyOtherDialog(){
   checkOrderReady();
 }
 
-document.getElementById('facultyOtherConfirm').addEventListener('click', confirmFacultyOtherDialog);
-document.getElementById('facultyOtherCancel').addEventListener('click', cancelFacultyOtherDialog);
-document.getElementById('facultyOtherInput').addEventListener('keydown', (e)=>{
-  if(e.key === 'Enter'){
-    e.preventDefault();
-    confirmFacultyOtherDialog();
-  }
-});
+(function(){
+  const confirmBtn = document.getElementById('facultyOtherConfirm');
+  const cancelBtn = document.getElementById('facultyOtherCancel');
+  const otherInput = document.getElementById('facultyOtherInput');
+  if(confirmBtn) confirmBtn.addEventListener('click', confirmFacultyOtherDialog);
+  if(cancelBtn) cancelBtn.addEventListener('click', cancelFacultyOtherDialog);
+  if(otherInput) otherInput.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      confirmFacultyOtherDialog();
+    }
+  });
+})();
 
 const COURSES = {
 CA: {
@@ -164,3 +169,238 @@ CS: {
   ]
 }
 };
+
+
+/* ============================================================
+   LECTURES CATALOG — products, prices, product details
+   ------------------------------------------------------------
+   Every card on the Lectures page is generated automatically from
+   the COURSES list above: one "Regular" card and one
+   "Fast-track / Exam Oriented" card for every paper + faculty pair.
+   So you never add products by hand — you only add PRICES, PRODUCT
+   DETAILS and FACULTY INFO in the three tables further below.
+   ============================================================ */
+
+const BATCH_TYPES = {
+  regular:   { key:'regular',   label:'Regular',                    badge:'Regular Batch' },
+  fasttrack: { key:'fasttrack', label:'Fast-track / Exam Oriented', badge:'Fast-track / Exam Oriented' }
+};
+
+/* Faculty shown first (in this exact order) — then the second list — then everyone else.
+   Names are matched ignoring capital letters and full stops, so "Prof. A. Sourav Patro"
+   and "Prof. A Sourav Patro" are treated as the same person. */
+const FACULTY_ORDER_FIRST = [
+  "Prof. Abanindra Sahu","Prof. Abhishek Mahapatro","Prof. A. Sourav Patro","Prof. Suvraprasad Tripathy",
+  "Prof. Prateek Nanda","Prof. Sai Raj Patro","Prof. SP Praveen K Rao","Prof. Aayush Dash"
+];
+const FACULTY_ORDER_SECOND = [
+  "CA Vijay Sarda","CA Vishal Bhattad","CA Sneha Budhia","CA Pranay Gangan",
+  "CA Shubham Singhal","CA Bhanwar Borana","CA Parveen Sharma","CA Rishabh Jain"
+];
+
+function normName(n){
+  return String(n || '').toLowerCase().replace(/\./g,' ').replace(/\s+/g,' ').trim();
+}
+function slugify(n){
+  return normName(n).replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+}
+/* returns {tier, idx}: tier 0 = first list, 1 = second list, 2 = everyone else */
+function facultyTier(name){
+  const k = normName(name);
+  let i = FACULTY_ORDER_FIRST.findIndex(f => normName(f) === k);
+  if(i > -1) return { tier:0, idx:i };
+  i = FACULTY_ORDER_SECOND.findIndex(f => normName(f) === k);
+  if(i > -1) return { tier:1, idx:i };
+  return { tier:2, idx:0 };
+}
+
+function getShortExamLabel(course, level){
+  if(course === 'CS' && level === 'CSEET') return 'CSEET';
+  const map = { Foundation:'Foundation', Intermediate:'Inter', Final:'Final', Executive:'Executive', Professional:'Professional' };
+  return course + ' ' + (map[level] || level);
+}
+
+/* Builds the full ordered product list for one exam (e.g. CA + Intermediate). */
+function buildCatalog(course, level){
+  const papers = (COURSES[course] && COURSES[course][level]) || [];
+  const entries = [];
+  const firstSeen = {};
+  let seenCounter = 0;
+  papers.forEach((paper, pIdx)=>{
+    paper.faculty.forEach((fac)=>{
+      const k = normName(fac);
+      if(firstSeen[k] === undefined) firstSeen[k] = seenCounter++;
+      const t = facultyTier(fac);
+      entries.push({ paper, pIdx, faculty:fac, tier:t.tier, idx:t.idx, seen:firstSeen[k] });
+    });
+  });
+  const byOrder = (a, b)=>{
+    if(a.idx !== b.idx) return a.idx - b.idx;
+    if(a.seen !== b.seen) return a.seen - b.seen;
+    return a.pIdx - b.pIdx;
+  };
+  const first  = entries.filter(e => e.tier === 0).sort(byOrder);
+  const second = entries.filter(e => e.tier === 1).sort(byOrder);
+  const others = entries.filter(e => e.tier === 2).sort(byOrder);
+
+  const seq = [];
+  first.forEach(e  => seq.push({ e, batch:'regular' }));                                   // 1) regular cards of the first list
+  second.forEach(e => { seq.push({ e, batch:'regular' }); seq.push({ e, batch:'fasttrack' }); }); // 2) regular + fast-track, one by one
+  first.forEach(e  => seq.push({ e, batch:'fasttrack' }));                                 // 3) fast-track cards of the first list
+  others.forEach(e => { seq.push({ e, batch:'regular' }); seq.push({ e, batch:'fasttrack' }); }); // 4) everyone else
+
+  return seq.map((x, rank)=> makeSingleProduct(course, level, x.e.paper, x.e.faculty, x.batch, rank));
+}
+
+function makeSingleProduct(course, level, paper, faculty, batch, rank){
+  const id = slugify([course, level, paper.no, faculty, batch].join(' '));
+  const p = {
+    id, rank,
+    category:'single',
+    course, level,
+    examLabel: getShortExamLabel(course, level),
+    batch,
+    subjects:[ paper.name ],
+    faculties:[ faculty ],
+    items:[ { paperNo:paper.no, paperName:paper.name, faculty } ],
+    paperNo: paper.no
+  };
+  p.title = p.subjects.join(' + ') + ' (' + BATCH_TYPES[batch].label + ')';
+  const pr = getPriceInfo(p);
+  p.mrp = pr.mrp; p.discount = pr.discount; p.price = pr.price;
+  return p;
+}
+
+/* ============================================================
+   TABLE 1 — PRICES   (fill this in when you have the prices)
+   ------------------------------------------------------------
+   One row per price. A row can be as general or as specific as you like:
+     course, level, paperNo, faculty, batch ('regular' / 'fasttrack')
+   Anything you leave out counts as "any". The MOST SPECIFIC matching row wins.
+   mrp = the full price (always ending in 9, e.g. 9999)   discount = % off (e.g. 10)
+
+   Examples (remove the // to switch one on):
+   // {course:'CA', level:'Intermediate', paperNo:'Paper 1', mrp:9999, discount:10},                         // every faculty, both batches
+   // {course:'CA', level:'Intermediate', paperNo:'Paper 1', batch:'fasttrack', mrp:6999, discount:28},       // only the fast-track batch
+   // {course:'CA', level:'Intermediate', paperNo:'Paper 1', faculty:'CA Aakash Kandoi', batch:'regular', mrp:9999, discount:10},
+   ============================================================ */
+const PRICE_TABLE = [
+];
+
+/* The 9s rule: the MRP (e.g. 9999) is treated as the round figure above it (10000),
+   the discount is taken off that (10% -> 9000), the result is rounded DOWN to the nearest
+   50 and written as a 9-ending figure (-> 8999). */
+function computeDiscountedPrice(mrp, discountPct){
+  mrp = Number(mrp);
+  const d = Number(discountPct) || 0;
+  if(!(mrp > 0)) return null;
+  if(d <= 0) return mrp;
+  const whole = mrp + 1;
+  const discountedWhole = whole * (100 - d) / 100;
+  const rounded = Math.floor(discountedWhole / 50) * 50;
+  return Math.max(rounded - 1, 0);
+}
+
+function findBestRow(table, ctx){
+  let best = null, bestScore = -1;
+  table.forEach(r=>{
+    let score = 0, ok = true;
+    if(r.id !== undefined && r.id !== '*'){
+      if(r.id === ctx.id) score += 10; else ok = false;
+    }
+    ['course','level','paperNo','faculty','batch'].forEach(k=>{
+      if(r[k] === undefined || r[k] === '*') return;
+      const a = k === 'faculty' ? normName(r[k]) : String(r[k]).toLowerCase();
+      const b = k === 'faculty' ? normName(ctx[k]) : String(ctx[k]).toLowerCase();
+      if(a === b) score++; else ok = false;
+    });
+    if(ok && score > bestScore){ best = r; bestScore = score; }
+  });
+  return best;
+}
+
+/* returns {mrp, discount, price} — all null while no price has been entered yet */
+function getPriceInfo(product){
+  const ctx = {
+    id: product.id, course: product.course, level: product.level,
+    paperNo: product.paperNo, faculty: product.faculties[0], batch: product.batch
+  };
+  const row = findBestRow(PRICE_TABLE, ctx);
+  if(!row || !(Number(row.mrp) > 0)) return { mrp:null, discount:null, price:null };
+  const discount = Number(row.discount) || 0;
+  return { mrp:Number(row.mrp), discount, price:computeDiscountedPrice(row.mrp, discount) };
+}
+
+function formatRupees(n){
+  if(n === null || n === undefined || isNaN(n)) return '---';
+  return '₹' + Number(n).toLocaleString('en-IN');
+}
+
+/* ============================================================
+   COUPONS (empty for now)
+   Add codes like:   SAVE500: {type:'flat', value:500},   WELCOME5: {type:'percent', value:5},
+   The coupon is taken off the already-discounted price.
+   ============================================================ */
+const COUPONS = {
+};
+
+function applyCouponToPrice(code, price){
+  const key = String(code || '').trim().toUpperCase();
+  const c = COUPONS[key];
+  if(!key) return { ok:false, message:'Please enter a coupon code.' };
+  if(!c) return { ok:false, message:'This coupon code is not valid.' };
+  if(price === null || price === undefined) return { ok:false, message:'Price is not available yet, so a coupon cannot be applied.' };
+  let off = c.type === 'percent' ? Math.round(price * c.value / 100) : Number(c.value);
+  off = Math.min(Math.max(off, 0), price);
+  return { ok:true, code:key, off, finalPrice: price - off, message:'Coupon ' + key + ' applied — you save ' + formatRupees(off) + '.' };
+}
+
+/* ============================================================
+   TABLE 2 — PRODUCT INFO  (the 7-row table on the product page)
+   Same matching rules as the price table. Anything missing shows "---".
+   Example:
+   // {course:'CA', level:'Intermediate', paperNo:'Paper 1', batch:'regular',
+   //  info:{ language:'Hinglish', lectures:'120', duration:'180 Hours', validity:'Till May 2027 attempt',
+   //         view:'2 views (each lecture)', studyMaterial:'Soft copy (PDF)', systemRequirement:'Android / iOS / Windows' }},
+   ============================================================ */
+const PRODUCT_INFO_ROWS = [
+  { key:'language',          label:'Language' },
+  { key:'lectures',          label:'No. of lectures' },
+  { key:'duration',          label:'Duration' },
+  { key:'validity',          label:'Validity' },
+  { key:'view',              label:'View' },
+  { key:'studyMaterial',     label:'Study Material' },
+  { key:'systemRequirement', label:'System Requirement' }
+];
+const PRODUCT_INFO_TABLE = [
+];
+function getProductInfo(product){
+  const ctx = {
+    id: product.id, course: product.course, level: product.level,
+    paperNo: product.paperNo, faculty: product.faculties[0], batch: product.batch
+  };
+  const row = findBestRow(PRODUCT_INFO_TABLE, ctx);
+  return (row && row.info) ? row.info : {};
+}
+
+/* ============================================================
+   TABLE 3 — FACULTY INFO (shown in the "Faculty Info" tab)
+   Example:
+   // "CA Aakash Kandoi": { about:"A few lines about the faculty…", experience:"10+ years", qualification:"CA, B.Com" },
+   ============================================================ */
+const FACULTY_INFO = {
+};
+function getFacultyInfo(name){
+  const k = normName(name);
+  for(const key in FACULTY_INFO){
+    if(normName(key) === k) return FACULTY_INFO[key];
+  }
+  return null;
+}
+
+/* Faculty photos: put a file called  images/faculty/<name>.png  in the GitHub repo, where <name>
+   is the faculty name in small letters with hyphens, e.g. "CA Aakash Kandoi" -> ca-aakash-kandoi.png
+   (a .jpg also works). Until a photo exists, a neutral placeholder is shown. */
+function facultyPhotoPath(name, ext){
+  return 'images/faculty/' + slugify(name) + '.' + (ext || 'png');
+}
