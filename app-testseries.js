@@ -1,112 +1,448 @@
 /* ============================================================
-   TEST SERIES PAGE
+   TEST SERIES PAGE — "AMBITION SERIES"
+   Works with: test-series.html, app-coursedata.js, app-common.js
+   Address format:  test-series.html?course=CA&level=Intermediate            -> the two cards
+                    test-series.html?course=CA&level=Intermediate&type=group -> the product page
    ============================================================ */
-let selectedIndividualPapers = [];
 
-document.getElementById('tsExam').addEventListener('change', ()=>{
-  const val = document.getElementById('tsExam').value;
-  const parts = val.split('|');
-  const course = parts[0];
-  const level = parts[1];
-  const attemptSelect = document.getElementById('tsAttempt');
-  attemptSelect.innerHTML = '<option value="" selected disabled>Select attempt</option>' +
-    getAttemptsFor(course, level).map(a=>`<option value="${a}">${a}</option>`).join('');
-  attemptSelect.disabled = false;
-  resetAttemptingForward();
-});
+let tsCourse = null;
+let tsLevel = null;
+let tsProduct = null;        // the card that is currently open
+let tsChosen = [];           // subjects ticked (Subject Wise)
+let tsCouponCode = '';       // coupon typed in and accepted
+let tsCouponMsgState = null; // 'ok' | 'bad' | null
 
-document.getElementById('tsAttempt').addEventListener('change', ()=>{
-  document.getElementById('tsAttemptingFor').disabled = false;
-  resetAttemptingForward();
-});
+const tsMentor   = document.getElementById('tsMentor');
+const tsPicker   = document.getElementById('tsPicker');
+const tsCards    = document.getElementById('tsCards');
+const tsProductEl = document.getElementById('tsProduct');
 
-document.getElementById('tsAttemptingFor').addEventListener('change', ()=>{
-  const val = document.getElementById('tsAttemptingFor').value;
-  if(val === 'Individual Papers'){
-    openIndividualPapersDialog();
+function esc(s){
+  return String(s === undefined || s === null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function isLoggedIn(){
+  return !!(typeof auth !== 'undefined' && auth.currentUser && currentUserProfile);
+}
+
+/* ============================================================
+   CARD (same look as the Lectures cards, with a test-paper picture instead of a faculty photo)
+   ============================================================ */
+function tsFitSize(text, boxWidth, sizes, maxLines){
+  const words = String(text).toUpperCase().split(/\s+/).filter(Boolean);
+  for(let i = 0; i < sizes.length; i++){
+    const size = sizes[i];
+    const perLine = boxWidth / (size * 0.62);
+    if(words.some(w => w.length > perLine)) continue;
+    let lines = 1, cur = 0;
+    words.forEach(w => {
+      const add = (cur ? 1 : 0) + w.length;
+      if(cur + add > perLine){ lines++; cur = w.length; } else { cur += add; }
+    });
+    if(lines <= maxLines) return size;
+  }
+  return sizes[sizes.length - 1];
+}
+
+const TS_ILLUS =
+  '<svg class="pc-ts-illus" viewBox="0 0 120 150" aria-hidden="true">' +
+    '<rect x="12" y="8" width="96" height="134" rx="10" fill="#fff"/>' +
+    '<g fill="none" stroke="#AE1029" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M26 40 l5 5 9-10"/><path d="M26 72 l5 5 9-10"/><path d="M26 104 l5 5 9-10"/>' +
+    '</g>' +
+    '<g stroke="#2B2823" stroke-width="5" stroke-linecap="round" opacity=".75">' +
+      '<line x1="52" y1="40" x2="94" y2="40"/><line x1="52" y1="72" x2="94" y2="72"/><line x1="52" y1="104" x2="86" y2="104"/>' +
+    '</g>' +
+  '</svg>';
+
+function tsPosterHTML(p){
+  const size = tsFitSize(AMBITION_SERIES_NAME, 50, [10, 8.6, 7.4, 6.4], 3);
+  return '<div class="pc-poster pc-single pc-ts">' +
+    '<div class="pc-panel">' +
+      '<span class="pc-rect"></span>' + TS_ILLUS +
+      '<div class="pc-left">' +
+        '<div class="pc-badge">' + esc(p.examLabel) + '</div>' +
+        '<div class="pc-tagline">TEST SERIES</div>' +
+        '<div class="pc-subject" style="font-size:' + Math.round(size * 3.4) + 'px;font-size:' + size + 'cqw">' + esc(AMBITION_SERIES_NAME) + '</div>' +
+      '</div>' +
+      '<span class="pc-lectag">' + esc(p.typeLabel) + '</span>' +
+    '</div>' +
+  '</div>';
+}
+
+const TS_HINTS = {
+  group:   'Choose your attempt & group',
+  subject: 'Choose attempt, number & subjects',
+  all:     'Choose your attempt'
+};
+
+function tsCardHTML(p){
+  return '<article class="pc ts-card" data-type="' + esc(p.typeKey) + '" tabindex="0" role="link" aria-label="' + esc(p.title) + '">' +
+    tsPosterHTML(p) +
+    '<div class="pc-strip pc-strip-ts">' +
+      '<h3 class="pc-title">' + esc(p.title) + '</h3>' +
+      '<div class="pc-sep"></div>' +
+      '<div class="pc-hint">' + esc(TS_HINTS[p.typeKey] || '') + ' <span aria-hidden="true">→</span></div>' +
+    '</div>' +
+  '</article>';
+}
+
+function renderCards(){
+  tsCards.innerHTML = getTSTypes(tsCourse, tsLevel).map(t => tsCardHTML(makeTSProduct(tsCourse, tsLevel, t.key))).join('');
+}
+
+tsCards.addEventListener('click', onCardActivate);
+tsCards.addEventListener('keydown', onCardActivate);
+function onCardActivate(e){
+  if(e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
+  const card = e.target.closest('.ts-card');
+  if(!card) return;
+  if(e.type === 'keydown') e.preventDefault();
+  openProduct(card.dataset.type, true);
+}
+
+/* ============================================================
+   ROUTING
+   ============================================================ */
+function pageURL(type){
+  const params = new URLSearchParams();
+  params.set('course', tsCourse);
+  params.set('level', tsLevel);
+  if(type) params.set('type', type);
+  return window.location.pathname + '?' + params.toString();
+}
+
+function showCards(){
+  tsProduct = null;
+  tsProductEl.classList.add('hidden');
+  tsProductEl.innerHTML = '';
+  tsMentor.classList.remove('hidden');
+  tsCards.classList.remove('hidden');
+  document.title = getExamLabel(tsCourse, tsLevel) + ' Test Series — Ambitious Professionals';
+}
+
+function openProduct(typeKey, push){
+  const p = makeTSProduct(tsCourse, tsLevel, typeKey);
+  if(!p){ showCards(); return; }
+  tsProduct = p;
+  tsChosen = [];
+  tsCouponCode = '';
+  tsCouponMsgState = null;
+  tsMentor.classList.add('hidden');
+  tsCards.classList.add('hidden');
+  tsProductEl.classList.remove('hidden');
+  renderProduct(p);
+  document.title = p.title + ' — Ambitious Professionals';
+  if(push) history.pushState({ type:typeKey }, '', pageURL(typeKey));
+  window.scrollTo({ top:0, behavior:'instant' });
+}
+
+function closeProduct(){
+  if(history.state && history.state.type){
+    history.back();
   } else {
-    document.getElementById('tsIndividualSummary').classList.add('hidden');
-    selectedIndividualPapers = [];
-    document.getElementById('tsTypeSection').classList.remove('hidden');
+    history.replaceState({}, '', pageURL(null));
+    showCards();
+    window.scrollTo({ top:0, behavior:'instant' });
+  }
+}
+
+window.addEventListener('popstate', ()=>{
+  if(!tsCourse) return;
+  const type = new URLSearchParams(window.location.search).get('type');
+  if(type && getTSTypes(tsCourse, tsLevel).some(t => t.key === type)){
+    openProduct(type, false);
+  } else {
+    showCards();
   }
 });
 
-function resetAttemptingForward(){
-  const attemptingFor = document.getElementById('tsAttemptingFor');
-  attemptingFor.value = '';
-  document.getElementById('tsTypeSection').classList.add('hidden');
-  document.getElementById('tsIndividualSummary').classList.add('hidden');
-  selectedIndividualPapers = [];
-  document.querySelectorAll('.ts-type-card').forEach(c=>c.classList.remove('selected'));
-  updateTsAddToCartState();
+/* ============================================================
+   PRODUCT PAGE
+   ============================================================ */
+function optionsHTML(list, placeholder){
+  return '<option value="" selected disabled>' + esc(placeholder) + '</option>' +
+    list.map(o => '<option value="' + esc(o.value) + '">' + esc(o.label) + '</option>').join('');
 }
 
-function openIndividualPapersDialog(){
-  const parts = document.getElementById('tsExam').value.split('|');
-  const papers = COURSES[parts[0]][parts[1]];
-  const container = document.getElementById('tsPapersChecklist');
-  container.innerHTML = papers.map(p =>
-    `<label style="display:flex;align-items:center;gap:10px;font-size:13.5px;">
-      <input type="checkbox" class="ts-paper-chk" value="${p.no}: ${p.name}">
-      ${p.no}: ${p.name}
-    </label>`
-  ).join('');
-  container.querySelectorAll('.ts-paper-chk').forEach(chk=>{
-    chk.addEventListener('change', ()=>{
-      const any = [...container.querySelectorAll('.ts-paper-chk')].some(c=>c.checked);
-      document.getElementById('tsConfirmPapersBtn').disabled = !any;
+function renderProduct(p){
+  const attempts = getAttemptsFor(p.course, p.level).map(a => ({ value:a, label:a }));
+  const subjects = getTSSubjects(p.course, p.level);
+  let extra = '';
+  if(p.typeKey === 'group'){
+    extra = '<div class="pv-field"><label for="tsGroup">Group</label><select id="tsGroup">' +
+      optionsHTML(['Group 1', 'Group 2', 'Both Groups'].map(g => ({ value:g, label:g })), 'Select group') + '</select></div>';
+  } else if(p.typeKey === 'subject'){
+    const counts = [];
+    for(let i = 1; i < subjects.length; i++) counts.push({ value:String(i), label:'Any ' + i });
+    extra =
+      '<div class="pv-field"><label for="tsCount">Number of Subjects</label><select id="tsCount">' + optionsHTML(counts, 'Select number of subjects') + '</select></div>' +
+      '<div class="pv-field"><label for="tsMsBtn">Subjects</label>' +
+        '<div class="ms" id="tsMs">' +
+          '<button type="button" class="ms-btn" id="tsMsBtn" disabled><span id="tsMsLabel">Select number of subjects first</span></button>' +
+          '<div class="ms-panel hidden" id="tsMsPanel" role="group" aria-label="Subjects"></div>' +
+        '</div>' +
+      '</div>';
+  }
+
+  tsProductEl.innerHTML =
+    '<button type="button" class="pv-back" id="tsBack"><span aria-hidden="true">←</span> Back</button>' +
+    '<div class="pv-top">' +
+      '<div class="pv-visual">' + tsPosterHTML(p) + '</div>' +
+      '<div class="pv-info">' +
+        '<h1 class="pv-title">' + esc(p.title) + '</h1>' +
+        '<div class="pv-selects">' +
+          '<div class="pv-field"><label for="tsAttempt">For the Attempt</label><select id="tsAttempt">' + optionsHTML(attempts, 'Select attempt') + '</select></div>' +
+          extra +
+        '</div>' +
+        '<div class="pv-coupon">' +
+          '<button type="button" class="pv-coupon-link" id="tsCouponToggle">Apply Coupon Code (if any)</button>' +
+          '<div class="pv-coupon-box hidden" id="tsCouponBox">' +
+            '<input type="text" id="tsCouponInput" placeholder="Enter coupon code" autocomplete="off" maxlength="30">' +
+            '<button type="button" class="pv-coupon-apply" id="tsCouponApply">Apply</button>' +
+          '</div>' +
+          '<div class="pv-coupon-msg hidden" id="tsCouponMsg"></div>' +
+        '</div>' +
+        '<div class="pv-price" id="tsPrice"></div>' +
+        '<button type="button" class="btn btn-primary pv-cta" id="tsCta">Login to Proceed</button>' +
+      '</div>' +
+    '</div>';
+
+  wireProduct(p, subjects);
+}
+
+function currentOption(p){
+  if(p.typeKey === 'group'){ const g = document.getElementById('tsGroup'); return g ? g.value : ''; }
+  if(p.typeKey === 'subject'){ const c = document.getElementById('tsCount'); return c ? c.value : ''; }
+  return undefined;
+}
+
+function updatePriceBlock(){
+  const p = tsProduct;
+  const box = document.getElementById('tsPrice');
+  if(!p || !box) return;
+  const info = getTSPriceInfo(p, currentOption(p));
+  let shown = info.price;
+  let couponLine = '';
+  if(tsCouponCode){
+    const res = applyCouponToPrice(tsCouponCode, info.price);
+    if(res.ok){
+      shown = res.finalPrice;
+      couponLine = '<div class="pv-saved">Coupon ' + esc(res.code) + ' applied: −' + esc(formatRupees(res.off)) + '</div>';
+    }
+  }
+  box.innerHTML =
+    '<div class="pv-price-row">' +
+      '<s class="pv-mrp">' + esc(formatRupees(info.mrp)) + '</s>' +
+      '<b class="pv-final">' + esc(formatRupees(shown)) + '</b>' +
+      '<span class="pc-off">' + esc(info.discount ? (info.discount + '% off') : '---% off') + '</span>' +
+    '</div>' + couponLine;
+}
+
+function refreshCTA(){
+  const btn = document.getElementById('tsCta');
+  if(!btn || btn.dataset.flashing) return;
+  const want = isLoggedIn() ? 'Add to Cart' : 'Login to Proceed';
+  if(btn.textContent !== want) btn.textContent = want;
+}
+setInterval(()=>{ if(tsProduct) refreshCTA(); }, 400);
+
+function wireProduct(p, subjects){
+  document.getElementById('tsBack').addEventListener('click', closeProduct);
+  updatePriceBlock();
+  refreshCTA();
+
+  const groupSel = document.getElementById('tsGroup');
+  if(groupSel) groupSel.addEventListener('change', updatePriceBlock);
+
+  /* ----- Subject Wise: number of subjects + tick list ----- */
+  const countSel = document.getElementById('tsCount');
+  if(countSel){
+    const msBtn = document.getElementById('tsMsBtn');
+    const msPanel = document.getElementById('tsMsPanel');
+    const msLabel = document.getElementById('tsMsLabel');
+
+    function wanted(){ return parseInt(countSel.value, 10) || 0; }
+
+    function buildPanel(){
+      let html = '';
+      let lastGroup = null;
+      subjects.forEach((s, i) => {
+        if(s.group && s.group !== lastGroup){
+          lastGroup = s.group;
+          html += '<div class="ms-group">' + esc(s.group) + '</div>';
+        }
+        html += '<label class="fchk"><input type="checkbox" value="' + i + '">' +
+          '<span class="fchk-box" aria-hidden="true"></span><span class="fchk-label">' + esc(s.name) + '</span></label>';
+      });
+      msPanel.innerHTML = html;
+    }
+    function syncPanel(){
+      const n = wanted();
+      const full = n > 0 && tsChosen.length >= n;
+      msPanel.querySelectorAll('input[type=checkbox]').forEach(inp => {
+        const name = subjects[parseInt(inp.value, 10)].name;
+        inp.checked = tsChosen.indexOf(name) > -1;
+        const lock = full && !inp.checked;
+        inp.disabled = lock;
+        inp.closest('.fchk').classList.toggle('is-disabled', lock);
+      });
+      if(!n){
+        msLabel.textContent = 'Select number of subjects first';
+        msBtn.disabled = true;
+      } else {
+        msBtn.disabled = false;
+        msLabel.textContent = tsChosen.length === 0
+          ? ('Select ' + n + ' subject' + (n > 1 ? 's' : ''))
+          : (tsChosen.length + ' of ' + n + ' selected');
+      }
+      msBtn.classList.toggle('ms-done', n > 0 && tsChosen.length === n);
+    }
+    buildPanel();
+    syncPanel();
+
+    countSel.addEventListener('change', ()=>{
+      tsChosen = [];                 // a new number starts the ticking again
+      syncPanel();
+      updatePriceBlock();
+      msPanel.classList.add('hidden');
+    });
+    msBtn.addEventListener('click', ()=>{ msPanel.classList.toggle('hidden'); });
+    msPanel.addEventListener('change', (e)=>{
+      const inp = e.target;
+      if(!(inp instanceof HTMLInputElement)) return;
+      const name = subjects[parseInt(inp.value, 10)].name;
+      const n = wanted();
+      if(inp.checked){
+        if(tsChosen.length >= n){ inp.checked = false; return; }
+        tsChosen.push(name);
+      } else {
+        tsChosen = tsChosen.filter(x => x !== name);
+      }
+      syncPanel();
+    });
+    p._openPanel = ()=>{ msPanel.classList.remove('hidden'); };
+  }
+
+  /* ----- coupon ----- */
+  const couponBox = document.getElementById('tsCouponBox');
+  const couponInput = document.getElementById('tsCouponInput');
+  const couponMsg = document.getElementById('tsCouponMsg');
+  const couponApply = document.getElementById('tsCouponApply');
+  document.getElementById('tsCouponToggle').addEventListener('click', ()=>{
+    couponBox.classList.toggle('hidden');
+    if(!couponBox.classList.contains('hidden')) couponInput.focus();
+  });
+  function applyCoupon(){
+    if(tsCouponCode){                 // second press acts as "Remove"
+      tsCouponCode = '';
+      couponInput.value = '';
+      couponInput.disabled = false;
+      couponApply.textContent = 'Apply';
+      couponMsg.classList.add('hidden');
+      updatePriceBlock();
+      return;
+    }
+    const info = getTSPriceInfo(p, currentOption(p));
+    const res = applyCouponToPrice(couponInput.value, info.price);
+    couponMsg.classList.remove('hidden');
+    couponMsg.classList.toggle('ok', !!res.ok);
+    couponMsg.classList.toggle('bad', !res.ok);
+    couponMsg.textContent = res.message;
+    if(res.ok){
+      tsCouponCode = res.code;
+      couponInput.disabled = true;
+      couponApply.textContent = 'Remove';
+      updatePriceBlock();
+    }
+  }
+  couponApply.addEventListener('click', applyCoupon);
+  couponInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); applyCoupon(); } });
+
+  /* ----- main button ----- */
+  document.getElementById('tsCta').addEventListener('click', ()=>{
+    const btn = document.getElementById('tsCta');
+    if(!isLoggedIn()){ openOverlay('signInOverlay'); return; }
+
+    const attempt = document.getElementById('tsAttempt').value;
+    if(!attempt){ showToast('Please select the attempt first.', 'error'); return; }
+
+    let attemptingFor = '';
+    if(p.typeKey === 'group'){
+      attemptingFor = document.getElementById('tsGroup').value;
+      if(!attemptingFor){ showToast('Please select the group first.', 'error'); return; }
+    } else if(p.typeKey === 'all'){
+      attemptingFor = 'All Subjects';
+    } else {
+      const n = parseInt(document.getElementById('tsCount').value, 10) || 0;
+      if(!n){ showToast('Please select the number of subjects first.', 'error'); return; }
+      if(tsChosen.length !== n){
+        showToast('Please tick exactly ' + n + ' subject' + (n > 1 ? 's' : '') + ' — you have ticked ' + tsChosen.length + '.', 'error');
+        if(p._openPanel) p._openPanel();
+        return;
+      }
+      attemptingFor = 'Any ' + n + ' Subject' + (n > 1 ? 's' : '') + ': ' + tsChosen.join(', ');
+    }
+
+    cartItems.push({
+      kind:'testSeries',
+      examToAppear: getExamLabel(p.course, p.level),
+      attempt: attempt,
+      attemptingFor: attemptingFor,
+      testSeriesType: 'Ambition Series - ' + p.typeLabel
+    });
+    saveCartToFirestore().then(()=>{
+      updateCartBadge();
+      btn.dataset.flashing = '1';
+      btn.textContent = 'Added to Cart ✓';
+      setTimeout(()=>{ delete btn.dataset.flashing; refreshCTA(); }, 1800);
     });
   });
-  document.getElementById('tsConfirmPapersBtn').disabled = true;
-  openOverlay('tsIndividualPapersOverlay');
 }
 
-document.getElementById('tsConfirmPapersBtn').addEventListener('click', ()=>{
-  const checked = [...document.querySelectorAll('.ts-paper-chk')].filter(c=>c.checked).map(c=>c.value);
-  selectedIndividualPapers = checked;
-  closeOverlay('tsIndividualPapersOverlay');
-  const summary = document.getElementById('tsIndividualSummary');
-  summary.textContent = 'Selected papers: ' + checked.join(', ');
-  summary.classList.remove('hidden');
-  document.getElementById('tsTypeSection').classList.remove('hidden');
+/* close the subject list when clicking anywhere else */
+document.addEventListener('click', (e)=>{
+  const ms = document.getElementById('tsMs');
+  if(!ms || ms.contains(e.target)) return;
+  const panel = document.getElementById('tsMsPanel');
+  if(panel) panel.classList.add('hidden');
 });
 
-document.querySelectorAll('.ts-type-card').forEach(card=>{
-  card.addEventListener('click', ()=>{
-    document.querySelectorAll('.ts-type-card').forEach(c=>c.classList.remove('selected'));
-    card.classList.add('selected');
-    updateTsAddToCartState();
-  });
-});
-
-function updateTsAddToCartState(){
-  const selected = document.querySelector('.ts-type-card.selected');
-  document.getElementById('tsAddToCartBtn').disabled = !selected;
+/* ============================================================
+   START-UP
+   ============================================================ */
+function renderPicker(){
+  const levels = ['Foundation', 'Intermediate', 'Final'];
+  tsPicker.innerHTML =
+    '<div class="ts-picker-box">' +
+      '<h2 class="section-title">Choose your exam</h2>' +
+      '<p class="ts-picker-sub">Pick the exam and level you are preparing for to see the Ambition Series.</p>' +
+      ['CA', 'CMA'].map(c =>
+        '<div class="ts-picker-row"><span class="ts-picker-label">' + c + '</span>' +
+          levels.map(l => '<a class="btn btn-outline ts-picker-btn" href="test-series.html?course=' + c + '&level=' + l + '">' + l + '</a>').join('') +
+        '</div>'
+      ).join('') +
+    '</div>';
+  tsPicker.classList.remove('hidden');
 }
 
-document.getElementById('tsAddToCartBtn').addEventListener('click', ()=>{
-  if(!requireAuthOrPrompt()) return;
-  const parts = document.getElementById('tsExam').value.split('|');
-  const examToAppear = getExamLabel(parts[0], parts[1]);
-  const attempt = document.getElementById('tsAttempt').value;
-  const attemptingForRaw = document.getElementById('tsAttemptingFor').value;
-  const attemptingFor = attemptingForRaw === 'Individual Papers' ? selectedIndividualPapers.join(', ') : attemptingForRaw;
-  const selectedCard = document.querySelector('.ts-type-card.selected');
-  if(!selectedCard) return;
-  const testSeriesType = selectedCard.dataset.type;
+function initFromURL(){
+  const params = new URLSearchParams(window.location.search);
+  const course = params.get('course');
+  const level = params.get('level');
+  const type = params.get('type');
 
-  cartItems.push({ kind:'testSeries', examToAppear, attempt, attemptingFor, testSeriesType });
-  saveCartToFirestore().then(()=>{
-    updateCartBadge();
-    flashAddedToCart(document.getElementById('tsAddToCartBtn'));
-    resetTestSeriesForm();
-  });
-});
-
-function resetTestSeriesForm(){
-  document.getElementById('tsExam').value = '';
-  document.getElementById('tsAttempt').innerHTML = '<option value="" selected disabled>Select exam first</option>';
-  document.getElementById('tsAttempt').disabled = true;
-  document.getElementById('tsAttemptingFor').disabled = true;
-  resetAttemptingForward();
+  if(!tsIsValidExam(course, level)){
+    renderPicker();
+    return;
+  }
+  tsCourse = course;
+  tsLevel = level;
+  renderCards();
+  showCards();
+  if(type && getTSTypes(course, level).some(t => t.key === type)){
+    history.replaceState({}, '', pageURL(null));   // so Back goes to the cards
+    openProduct(type, true);
+  }
 }
+initFromURL();
