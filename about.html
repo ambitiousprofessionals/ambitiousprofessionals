@@ -61,7 +61,27 @@
           </ul>
         </li>
         
-        <li><a href="test-series.html">Test Series</a></li>
+        <li class="has-dropdown">
+          <a href="test-series.html" class="dropdown-toggle">Test Series <span class="caret-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></a>
+          <ul class="dropdown-menu">
+            <li class="has-submenu">
+              <a href="#" class="submenu-toggle">CA <span class="caret-icon caret-icon-sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></span></a>
+              <ul class="submenu">
+                <li><a href="test-series.html?course=CA&level=Foundation">CA Foundation</a></li>
+                <li><a href="test-series.html?course=CA&level=Intermediate">CA Intermediate</a></li>
+                <li><a href="test-series.html?course=CA&level=Final">CA Final</a></li>
+              </ul>
+            </li>
+            <li class="has-submenu">
+              <a href="#" class="submenu-toggle">CMA <span class="caret-icon caret-icon-sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></span></a>
+              <ul class="submenu">
+                <li><a href="test-series.html?course=CMA&level=Foundation">CMA Foundation</a></li>
+                <li><a href="test-series.html?course=CMA&level=Intermediate">CMA Intermediate</a></li>
+                <li><a href="test-series.html?course=CMA&level=Final">CMA Final</a></li>
+              </ul>
+            </li>
+          </ul>
+        </li>
         <li><a href="founder.html">Founder</a></li>
         <li><a href="faq.html">FAQ(s)</a></li>
         <li><a href="contact.html">Contact Us</a></li>
@@ -93,21 +113,7 @@
   </div>
 </header>
 
-<section class="page-hero-bar">
-  <div class="container page-hero-bar-inner">
-    <h1 class="page-hero-bar-title">About Us</h1>
-    <svg class="page-hero-bar-illus" viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">
-      <path d="M20 200 V60 Q20 40 40 40 H95 V200 Z" fill="var(--red)" opacity=".9"/>
-      <path d="M105 200 V40 H160 Q180 40 180 60 V200 Z" fill="var(--white)" opacity=".95"/>
-      <line x1="100" y1="40" x2="100" y2="200" stroke="var(--black)" stroke-width="3"/>
-      <line x1="115" y1="70" x2="165" y2="70" stroke="var(--red)" stroke-width="4" stroke-linecap="round"/>
-      <line x1="115" y1="90" x2="165" y2="90" stroke="var(--red)" stroke-width="4" stroke-linecap="round" opacity=".6"/>
-      <line x1="115" y1="110" x2="150" y2="110" stroke="var(--red)" stroke-width="4" stroke-linecap="round" opacity=".6"/>
-      <circle cx="60" cy="90" r="16" fill="var(--white)"/>
-      <path d="M52 92 l6 6 12-14" stroke="var(--red)" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-  </div>
-</section>
+<h1 class="visually-hidden">About Us</h1>
 
 <section class="about no-reveal" id="about">
   <img src="images/rotating-circle.png" class="page-decor-circle" alt="" aria-hidden="true">
