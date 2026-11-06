@@ -20,7 +20,7 @@
 <body>
 <script src="app-motion.js"></script>
 
-<div class="page-scope">
+<div class="page-scope catalog-page">
 <header>
   <div class="top-bar">
     <a href="index.html" class="brand">
@@ -109,17 +109,17 @@
   </div>
 </section>
 
-<section class="finder no-reveal" id="finder">
+<section class="finder catalog-finder no-reveal" id="finder">
   <img src="images/rotating-circle.png" class="page-decor-circle-alt" alt="" aria-hidden="true">
   <img src="images/rotating-circle.png" class="page-decor-circle" alt="" aria-hidden="true">
-  <div class="container">
-    <div class="finder-head" style="margin-bottom:20px;">
+  <div class="cat-wrap">
+    <div class="cat-head" id="catalogHead">
       <h2 class="section-title" id="coursesHeading">Choose 'Lectures' from the menu above</h2>
     </div>
 
     <!-- NO SELECTION MESSAGE -->
     <div id="noSelectionMsg" class="mba-panel" style="text-align:center;">
-      <p>Tap <strong>Lectures</strong> in the menu above, choose CA, CMA, CS or MBA, then pick your level to see the papers available.</p>
+      <p>Tap <strong>Lectures</strong> in the menu above, choose CA, CMA, CS or MBA, then pick your level to see the lectures available.</p>
     </div>
 
     <!-- MBA PANEL -->
@@ -132,31 +132,38 @@
       </div>
     </div>
 
-    <!-- TABLE -->
-    <div id="tableWrap" class="hidden finder-section">
-      <div class="table-wrap">
-        <table class="paper-table" id="paperTable">
-          <thead>
-            <tr>
-              <th class="chk-cell">Select</th>
-              <th>Paper No.</th>
-              <th>Paper Name</th>
-              <th style="width:190px;">Faculty</th>
-              <th style="width:140px;">For the Attempt</th>
-              <th style="width:150px;">Type of Class</th>
-              <th style="width:140px;">Book Preference</th>
-              <th style="width:200px;">Mode of Class</th>
-            </tr>
-          </thead>
-          <tbody id="paperTableBody"></tbody>
-        </table>
-      </div>
-      <div class="order-bar">
-        <button class="btn-order" id="placeOrderBtn" disabled>Add to Cart</button>
+    <!-- CATALOG: filter pane + product cards -->
+    <div id="catalogView" class="cat-layout hidden">
+      <aside class="cat-filter" id="filterPane" aria-label="Filters">
+        <div class="cat-filter-head">
+          <span class="cat-filter-title">Filters</span>
+          <button type="button" id="clearFiltersBtn" class="cat-link hidden">Clear all</button>
+          <button type="button" id="filterCloseBtn" class="cat-filter-close" aria-label="Close filters">&times;</button>
+        </div>
+        <div id="filterBody" class="cat-filter-body"></div>
+      </aside>
+
+      <div class="cat-main">
+        <div class="cat-toolbar">
+          <button type="button" id="filterToggleBtn" class="cat-filter-btn">&#9776; Filters</button>
+          <span id="resultCount" class="cat-count"></span>
+        </div>
+        <div class="cat-grid" id="productGrid"></div>
+        <div id="noProductsMsg" class="cat-empty hidden">
+          <h3>No products available</h3>
+          <p>There are no lectures matching the filters you selected. Try removing a filter to see more.</p>
+        </div>
+        <div id="showMoreWrap" class="cat-more hidden">
+          <button type="button" id="showMoreBtn" class="btn btn-outline">Show more</button>
+        </div>
       </div>
     </div>
+
+    <!-- PRODUCT PAGE (filled in by app-courses.js) -->
+    <div id="productView" class="pv hidden"></div>
   </div>
 </section>
+<div class="cat-backdrop" id="filterBackdrop"></div>
 
 
 </div>
