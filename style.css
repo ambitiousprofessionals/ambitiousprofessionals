@@ -1353,3 +1353,15 @@ body.cat-lock{overflow:hidden;}
 .ms-group{font-size:11.5px;font-weight:800;color:var(--gray);letter-spacing:.06em;text-transform:uppercase;margin:10px 0 2px;}
 .ms-group:first-child{margin-top:2px;}
 .fchk.is-disabled{opacity:.45;cursor:not-allowed;}
+
+/* ---- Fast-track lectures use a GOLD colour scheme (Regular stays red) so the two are easy to tell apart ---- */
+.is-fast .pc-rect{background:linear-gradient(160deg,#F9CB52 0%,#E8A317 55%,#C98308 100%);}
+.is-fast .pc-group{color:#9A6A0B;}
+.is-fast .pc-lectag{background:#E8A317;color:var(--black);}
+.is-fast .pc-cpanel{background:linear-gradient(165deg,#F9CB52 0%,#E8A317 50%,#C98308 100%);color:var(--black);}
+.is-fast .pc-gpill{background:var(--black);color:#F9CB52;}
+.is-fast .pc-ctag{opacity:.85;}
+.is-fast .pc-clectag{background:#E8A317;color:var(--black);}
+.fchk-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-left:6px;vertical-align:middle;}
+.fchk-dot.dot-regular{background:var(--red);}
+.fchk-dot.dot-fast{background:#E8A317;}
