@@ -186,6 +186,31 @@ const BATCH_TYPES = {
   fasttrack: { key:'fasttrack', label:'Fast-track', tag:'Fast-track Lectures' }
 };
 
+/* ============================================================
+   CARD COLOURS — the soft background behind the faculty photo
+   ------------------------------------------------------------
+   Every exam level has its own pair of colours: one for the Regular cards and one for the
+   Fast-track cards. Each colour is [top-left light shade, bottom-right slightly deeper shade].
+   They are kept very light on purpose, so both dark and light clothes look good in front of them.
+   To change a colour, just replace the two hex codes.
+   (The red "Regular Lectures / Fast-track Lectures" tag is always red — it is not set here.)
+   ============================================================ */
+const CARD_TONES = {
+  'CA|Foundation':  { regular:['#E4EEFB','#C9DBF3'], fasttrack:['#FDE9DC','#F7D1B8'] },   // light blue   / peach
+  'CA|Intermediate':{ regular:['#E0F5E9','#BFE6CF'], fasttrack:['#FBE4EA','#F4C3D1'] },   // mint green   / light pink
+  'CA|Final':       { regular:['#ECE7F9','#D3C9EF'], fasttrack:['#FBF3D2','#F2E39F'] },   // lavender     / butter
+  'CMA|Foundation': { regular:['#DDF1F5','#B9E1EA'], fasttrack:['#FCE0C9','#F5BF93'] },   // sky          / apricot
+  'CMA|Intermediate':{regular:['#E7EFD9','#CADDB0'], fasttrack:['#F3E3F5','#E2BFE8'] },   // sage         / orchid
+  'CMA|Final':      { regular:['#E3E7FA','#C4CCF1'], fasttrack:['#FBDDD8','#F4B8AF'] },   // periwinkle   / coral
+  'CS|CSEET':       { regular:['#EAE8E4','#D2CFC8'], fasttrack:['#D9F0EC','#AEDDD5'] },   // warm grey    / teal
+  'CS|Executive':   { regular:['#E1E7EE','#BFCBD8'], fasttrack:['#F2EAD9','#E2D1AE'] },   // slate        / sand
+  'CS|Professional':{ regular:['#EBF3CE','#D2E39B'], fasttrack:['#F5E2DD','#E8C2B9'] }    // lime         / rose
+};
+function getCardTone(course, level, batch){
+  const t = CARD_TONES[course + '|' + level];
+  return (t && t[batch]) || ['#EAE8E4','#D2CFC8'];
+}
+
 /* the small line shown under the exam name on every card — set to '' to hide it */
 const CARD_TAGLINE = 'NEW RECORDED';
 
