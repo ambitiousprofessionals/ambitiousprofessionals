@@ -28,21 +28,30 @@ function isLoggedIn(){
 /* ============================================================
    CARD (same look as the Lectures cards, with a test-paper picture instead of a faculty photo)
    ============================================================ */
-function tsFitSize(text, boxWidth, sizes, maxLines){
-  const words = String(text).toUpperCase().split(/\s+/).filter(Boolean);
-  for(let i = 0; i < sizes.length; i++){
-    const size = sizes[i];
-    const perLine = boxWidth / (size * 0.62);
-    if(words.some(w => w.length > perLine)) continue;
-    let lines = 1, cur = 0;
-    words.forEach(w => {
-      const add = (cur ? 1 : 0) + w.length;
-      if(cur + add > perLine){ lines++; cur = w.length; } else { cur += add; }
-    });
-    if(lines <= maxLines) return size;
-  }
-  return sizes[sizes.length - 1];
+/* ============================================================
+   FITS THE BIG TEXT ON EVERY POSTER — measures the real text and shrinks it until it fits its box
+   ============================================================ */
+function fitPosterText(root){
+  const SINGLE = [10, 8.6, 7.4, 6.4, 5.6, 4.8, 4.2, 3.6];
+  const COMBO  = [6.6, 5.8, 5, 4.4, 3.8, 3.4, 3];
+  root.querySelectorAll('.pc-subject, .pc-csubject').forEach(el => {
+    if(el.dataset.fit === '1') return;
+    if(!el.offsetWidth) return;                       // not on screen yet
+    const sizes = el.classList.contains('pc-csubject') ? COMBO : SINGLE;
+    for(let i = 0; i < sizes.length; i++){
+      el.style.fontSize = sizes[i] + 'cqw';
+      if(el.scrollWidth <= el.clientWidth + 1 && el.scrollHeight <= el.clientHeight + 1) break;
+    }
+    el.dataset.fit = '1';
+  });
 }
+function refitAllPosters(){
+  document.querySelectorAll('.pc-subject[data-fit], .pc-csubject[data-fit]').forEach(el => { delete el.dataset.fit; });
+  fitPosterText(document);
+}
+if(document.fonts && document.fonts.ready){ document.fonts.ready.then(refitAllPosters); }
+window.addEventListener('load', refitAllPosters);
+
 
 const TS_ILLUS =
   '<svg class="pc-ts-illus" viewBox="0 0 120 150" aria-hidden="true">' +
@@ -56,14 +65,13 @@ const TS_ILLUS =
   '</svg>';
 
 function tsPosterHTML(p){
-  const size = tsFitSize(AMBITION_SERIES_NAME, 50, [10, 8.6, 7.4, 6.4], 3);
   return '<div class="pc-poster pc-single pc-ts">' +
     '<div class="pc-panel">' +
       '<span class="pc-rect"></span>' + TS_ILLUS +
       '<div class="pc-left">' +
         '<div class="pc-badge">' + esc(p.examLabel) + '</div>' +
         '<div class="pc-tagline">TEST SERIES</div>' +
-        '<div class="pc-subject" style="font-size:' + Math.round(size * 3.4) + 'px;font-size:' + size + 'cqw">' + esc(AMBITION_SERIES_NAME) + '</div>' +
+        '<div class="pc-subject">' + esc(AMBITION_SERIES_NAME) + '</div>' +
       '</div>' +
       '<span class="pc-lectag">' + esc(p.typeLabel) + '</span>' +
     '</div>' +
@@ -89,6 +97,7 @@ function tsCardHTML(p){
 
 function renderCards(){
   tsCards.innerHTML = getTSTypes(tsCourse, tsLevel).map(t => tsCardHTML(makeTSProduct(tsCourse, tsLevel, t.key))).join('');
+  fitPosterText(tsCards);
 }
 
 tsCards.addEventListener('click', onCardActivate);
@@ -118,6 +127,7 @@ function showCards(){
   tsProductEl.innerHTML = '';
   tsMentor.classList.remove('hidden');
   tsCards.classList.remove('hidden');
+  fitPosterText(tsCards);
   document.title = getExamLabel(tsCourse, tsLevel) + ' Test Series — Ambitious Professionals';
 }
 
@@ -208,6 +218,7 @@ function renderProduct(p){
       '</div>' +
     '</div>';
 
+  fitPosterText(tsProductEl);
   wireProduct(p, subjects);
 }
 
@@ -233,7 +244,7 @@ function updatePriceBlock(){
   }
   box.innerHTML =
     '<div class="pv-price-row">' +
-      '<s class="pv-mrp">' + esc(formatRupees(info.mrp)) + '</s>' +
+      '<s class="pv-mrp' + (info.mrp ? '' : ' pc-na') + '">' + esc(formatRupees(info.mrp)) + '</s>' +
       '<b class="pv-final">' + esc(formatRupees(shown)) + '</b>' +
       '<span class="pc-off">' + esc(info.discount ? (info.discount + '% off') : '---% off') + '</span>' +
     '</div>' + couponLine;
