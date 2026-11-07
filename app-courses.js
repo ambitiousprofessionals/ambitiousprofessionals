@@ -100,10 +100,22 @@ function refitAllPosters(){
 if(document.fonts && document.fonts.ready){ document.fonts.ready.then(refitAllPosters); }
 window.addEventListener('load', refitAllPosters);
 
+function toneStyle(p){
+  const t = getCardTone(p.course, p.level, p.batch);
+  return '--ta:' + t[0] + ';--tb:' + t[1];
+}
+
+function lectureTagHTML(p){
+  // "Fast-track Lectures" is written on two rows so it never stretches towards the faculty photo
+  return p.batch === 'fasttrack'
+    ? '<span class="pc-lectag pc-lectag-2">Fast-track<br>Lectures</span>'
+    : '<span class="pc-lectag">' + esc(BATCH_TYPES[p.batch].tag) + '</span>';
+}
+
 function posterSingleHTML(p){
   const subject = p.subjects[0];
   const fac = p.faculties[0];
-  return '<div class="pc-poster pc-single' + (p.batch === 'fasttrack' ? ' is-fast' : '') + '">' +
+  return '<div class="pc-poster pc-single pc-tone" style="' + toneStyle(p) + '">' +
     '<div class="pc-panel">' +
       '<span class="pc-rect"></span>' +
       faceImg(fac, 'pc-face-main') +
@@ -114,7 +126,7 @@ function posterSingleHTML(p){
         '<div class="pc-subject">' + esc(subject) + '</div>' +
         '<div class="pc-facname">' + esc(fac) + '</div>' +
       '</div>' +
-      '<span class="pc-lectag">' + esc(BATCH_TYPES[p.batch].tag) + '</span>' +
+      lectureTagHTML(p) +
     '</div>' +
   '</div>';
 }
@@ -122,7 +134,7 @@ function posterSingleHTML(p){
 function posterComboHTML(p){
   const short = p.subjects.map(getSubjectShort).join(' + ');
   const tiles = p.faculties.slice(0, 5).map(f => '<div class="pc-tile">' + faceImg(f, 'pc-face-tile') + '</div>').join('');
-  return '<div class="pc-poster pc-combo' + (p.batch === 'fasttrack' ? ' is-fast' : '') + '">' +
+  return '<div class="pc-poster pc-combo pc-tone" style="' + toneStyle(p) + '">' +
     '<div class="pc-cpanel">' +
       '<div class="pc-ctitle">' + esc(p.examFull) + '</div>' +
       '<span class="pc-gpill">' + esc(p.group ? (p.group + ' COMBO') : 'COMBO') + '</span>' +
@@ -168,10 +180,10 @@ function miniCardHTML(p){
 /* ============================================================
    FILTERS
    ============================================================ */
-function chkHTML(group, value, label, checked, dotClass){
+function chkHTML(group, value, label, checked, dotColor){
   return '<label class="fchk"><input type="checkbox" data-group="' + group + '" value="' + esc(value) + '"' + (checked ? ' checked' : '') + '>' +
     '<span class="fchk-box" aria-hidden="true"></span><span class="fchk-label">' + esc(label) +
-    (dotClass ? ' <i class="fchk-dot ' + dotClass + '" aria-hidden="true"></i>' : '') + '</span></label>';
+    (dotColor ? ' <i class="fchk-dot" style="background:' + dotColor + '" aria-hidden="true"></i>' : '') + '</span></label>';
 }
 
 function renderFilterPane(){
@@ -189,8 +201,8 @@ function renderFilterPane(){
   '</div>';
 
   html += '<div class="cat-filter-sec"><h4>Sub Category</h4>' +
-    chkHTML('batches', 'regular', BATCH_TYPES.regular.label, filters.batches.has('regular'), 'dot-regular') +
-    chkHTML('batches', 'fasttrack', BATCH_TYPES.fasttrack.label, filters.batches.has('fasttrack'), 'dot-fast') +
+    chkHTML('batches', 'regular', BATCH_TYPES.regular.label, filters.batches.has('regular'), getCardTone(currentCourse, currentLevel, 'regular')[1]) +
+    chkHTML('batches', 'fasttrack', BATCH_TYPES.fasttrack.label, filters.batches.has('fasttrack'), getCardTone(currentCourse, currentLevel, 'fasttrack')[1]) +
   '</div>';
 
   html += '<div class="cat-filter-sec"><h4>Faculties</h4>' +
