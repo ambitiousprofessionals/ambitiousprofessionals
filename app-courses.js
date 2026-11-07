@@ -103,7 +103,7 @@ window.addEventListener('load', refitAllPosters);
 function posterSingleHTML(p){
   const subject = p.subjects[0];
   const fac = p.faculties[0];
-  return '<div class="pc-poster pc-single">' +
+  return '<div class="pc-poster pc-single' + (p.batch === 'fasttrack' ? ' is-fast' : '') + '">' +
     '<div class="pc-panel">' +
       '<span class="pc-rect"></span>' +
       faceImg(fac, 'pc-face-main') +
@@ -122,7 +122,7 @@ function posterSingleHTML(p){
 function posterComboHTML(p){
   const short = p.subjects.map(getSubjectShort).join(' + ');
   const tiles = p.faculties.slice(0, 5).map(f => '<div class="pc-tile">' + faceImg(f, 'pc-face-tile') + '</div>').join('');
-  return '<div class="pc-poster pc-combo">' +
+  return '<div class="pc-poster pc-combo' + (p.batch === 'fasttrack' ? ' is-fast' : '') + '">' +
     '<div class="pc-cpanel">' +
       '<div class="pc-ctitle">' + esc(p.examFull) + '</div>' +
       '<span class="pc-gpill">' + esc(p.group ? (p.group + ' COMBO') : 'COMBO') + '</span>' +
@@ -168,9 +168,10 @@ function miniCardHTML(p){
 /* ============================================================
    FILTERS
    ============================================================ */
-function chkHTML(group, value, label, checked){
+function chkHTML(group, value, label, checked, dotClass){
   return '<label class="fchk"><input type="checkbox" data-group="' + group + '" value="' + esc(value) + '"' + (checked ? ' checked' : '') + '>' +
-    '<span class="fchk-box" aria-hidden="true"></span><span class="fchk-label">' + esc(label) + '</span></label>';
+    '<span class="fchk-box" aria-hidden="true"></span><span class="fchk-label">' + esc(label) +
+    (dotClass ? ' <i class="fchk-dot ' + dotClass + '" aria-hidden="true"></i>' : '') + '</span></label>';
 }
 
 function renderFilterPane(){
@@ -188,8 +189,8 @@ function renderFilterPane(){
   '</div>';
 
   html += '<div class="cat-filter-sec"><h4>Sub Category</h4>' +
-    chkHTML('batches', 'regular', BATCH_TYPES.regular.label, filters.batches.has('regular')) +
-    chkHTML('batches', 'fasttrack', BATCH_TYPES.fasttrack.label, filters.batches.has('fasttrack')) +
+    chkHTML('batches', 'regular', BATCH_TYPES.regular.label, filters.batches.has('regular'), 'dot-regular') +
+    chkHTML('batches', 'fasttrack', BATCH_TYPES.fasttrack.label, filters.batches.has('fasttrack'), 'dot-fast') +
   '</div>';
 
   html += '<div class="cat-filter-sec"><h4>Faculties</h4>' +
@@ -245,6 +246,7 @@ function applyFilters(){
   appendCards(0, shownCount);
   clearFiltersBtn.classList.toggle('hidden', !anyFilterActive());
   updateGridChrome();
+  fitPosterText(productGrid);      // the grid is visible again now, so the text can be measured
 }
 
 function appendCards(from, to){
@@ -295,6 +297,7 @@ showMoreBtn.addEventListener('click', ()=>{
   shownCount = Math.min(shownCount + PAGE_SIZE, filtered.length);
   appendCards(from, shownCount);
   updateGridChrome();
+  fitPosterText(productGrid);
 });
 
 /* mobile / narrow screens: filter pane becomes a slide-in drawer */
