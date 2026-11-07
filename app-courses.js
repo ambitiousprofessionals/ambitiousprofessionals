@@ -53,12 +53,8 @@ function isLoggedIn(){
 }
 
 /* ============================================================
-   FACULTY PHOTOS (with a neutral placeholder until real photos are added)
+   FACULTY PHOTOS — until a photo exists the photo area simply stays blank
    ============================================================ */
-const FACE_PLACEHOLDER = 'data:image/svg+xml;utf8,' + encodeURIComponent(
-  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#E9E2D3"/>' +
-  '<circle cx="60" cy="46" r="20" fill="#B9AE9A"/><path d="M18 120c0-26 19-44 42-44s42 18 42 44z" fill="#B9AE9A"/></svg>'
-);
 document.addEventListener('error', (e)=>{
   const img = e.target;
   if(!(img instanceof HTMLImageElement) || !img.classList.contains('pc-face')) return;
@@ -66,54 +62,105 @@ document.addEventListener('error', (e)=>{
   if(step === 'png'){
     img.dataset.ext = 'jpg';
     img.src = facultyPhotoPath(img.dataset.fac, 'jpg');
-  } else if(step === 'jpg'){
+  } else {
     img.dataset.ext = 'none';
-    img.classList.add('pc-face-ph');
-    img.src = FACE_PLACEHOLDER;
+    img.classList.add('pc-face-off');
   }
 }, true);
 
-/* ============================================================
-   CARD HTML
-   ============================================================ */
-function facesHTML(p){
-  const n = Math.min(p.faculties.length, 4);
-  let html = '<div class="pc-faces pc-faces-' + n + '">';
-  for(let i = 0; i < n; i++){
-    html += '<img class="pc-face" data-fac="' + esc(p.faculties[i]) + '" data-ext="png" src="' + esc(facultyPhotoPath(p.faculties[i], 'png')) + '" alt="' + esc(p.faculties[i]) + '" loading="lazy" decoding="async">';
-  }
-  return html + '</div>';
+function faceImg(name, cls){
+  return '<img class="pc-face ' + cls + '" data-fac="' + esc(name) + '" data-ext="png" src="' + esc(facultyPhotoPath(name, 'png')) +
+    '" alt="" loading="lazy" decoding="async">';
 }
 
-function cardTopHTML(p){
-  return '<div class="pc-top">' +
-    '<img class="pc-wm" src="images/logo.png" alt="" aria-hidden="true">' +
-    '<span class="pc-arc" aria-hidden="true"></span>' +
-    '<span class="pc-exam">' + esc(p.examLabel) + '</span>' +
-    facesHTML(p) +
-    '<div class="pc-subject">' + esc(p.subjects.join(' + ')) + '</div>' +
-    '<div class="pc-meta">' +
-      '<span class="pc-batch pc-batch-' + p.batch + '">' + esc(BATCH_TYPES[p.batch].badge) + '</span>' +
-      '<span class="pc-fac">' + esc(p.faculties.join(', ')) + '</span>' +
+/* ============================================================
+   CARD HTML  (poster on top, dark title + price strip below)
+   ============================================================ */
+/* picks the biggest text size (in % of the card width) at which the text still fits its box */
+function fitSize(text, boxWidth, sizes, maxLines){
+  const words = String(text).toUpperCase().split(/\s+/).filter(Boolean);
+  for(let i = 0; i < sizes.length; i++){
+    const size = sizes[i];
+    const perLine = boxWidth / (size * 0.62);
+    if(words.some(w => w.length > perLine)) continue;
+    let lines = 1, cur = 0;
+    words.forEach(w => {
+      const add = (cur ? 1 : 0) + w.length;
+      if(cur + add > perLine){ lines++; cur = w.length; } else { cur += add; }
+    });
+    if(lines <= maxLines) return size;
+  }
+  return sizes[sizes.length - 1];
+}
+function sizeStyle(size){
+  return 'font-size:' + Math.round(size * 3.4) + 'px;font-size:' + size + 'cqw';
+}
+
+function posterSingleHTML(p){
+  const subject = p.subjects[0];
+  const size = fitSize(subject, 50, [10, 8.6, 7.4, 6.4, 5.6, 4.8, 4.2], 5);
+  const fac = p.faculties[0];
+  return '<div class="pc-poster pc-single">' +
+    '<div class="pc-panel">' +
+      '<span class="pc-rect"></span>' +
+      faceImg(fac, 'pc-face-main') +
+      '<div class="pc-left">' +
+        '<div class="pc-badge">' + esc(p.examLabel) + '</div>' +
+        (CARD_TAGLINE ? '<div class="pc-tagline">' + esc(CARD_TAGLINE) + '</div>' : '') +
+        (p.group ? '<div class="pc-group">' + esc(p.group) + '</div>' : '') +
+        '<div class="pc-subject" style="' + sizeStyle(size) + '">' + esc(subject) + '</div>' +
+        '<div class="pc-facname">' + esc(fac) + '</div>' +
+      '</div>' +
+      '<span class="pc-lectag">' + esc(BATCH_TYPES[p.batch].tag) + '</span>' +
     '</div>' +
   '</div>';
 }
 
-function priceRowHTML(p){
+function posterComboHTML(p){
+  const short = p.subjects.map(getSubjectShort).join(' + ');
+  const size = fitSize(short, 84, [6.6, 5.8, 5, 4.4, 3.8], 2);
+  const tiles = p.faculties.slice(0, 5).map(f => '<div class="pc-tile">' + faceImg(f, 'pc-face-tile') + '</div>').join('');
+  return '<div class="pc-poster pc-combo">' +
+    '<div class="pc-cpanel">' +
+      '<div class="pc-ctitle">' + esc(p.examFull) + '</div>' +
+      '<span class="pc-gpill">' + esc(p.group ? (p.group + ' COMBO') : 'COMBO') + '</span>' +
+      (CARD_TAGLINE ? '<div class="pc-ctag">' + esc(CARD_TAGLINE) + '</div>' : '') +
+    '</div>' +
+    '<div class="pc-cinner">' +
+      '<div class="pc-tiles pc-tiles-' + Math.min(p.faculties.length, 5) + '">' + tiles + '</div>' +
+      '<div class="pc-csubject" style="' + sizeStyle(size) + '">' + esc(short) + '</div>' +
+      '<span class="pc-clectag">' + esc(BATCH_TYPES[p.batch].tag) + '</span>' +
+    '</div>' +
+  '</div>';
+}
+
+function posterHTML(p){
+  return p.category === 'combo' ? posterComboHTML(p) : posterSingleHTML(p);
+}
+
+function stripHTML(p){
   const off = p.discount ? (p.discount + '% off') : '---% off';
-  return '<span class="pc-off">' + esc(off) + '</span>' +
-    '<div class="pc-price"><s class="pc-mrp">' + esc(formatRupees(p.mrp)) + '</s><b class="pc-final">' + esc(formatRupees(p.price)) + '</b></div>';
+  const price = (p.price === null || p.price === undefined) ? '---' : (formatRupees(p.price) + '/-');
+  return '<div class="pc-strip">' +
+    '<h3 class="pc-title">' + esc(p.title) + '</h3>' +
+    '<div class="pc-sep"></div>' +
+    '<div class="pc-row">' +
+      '<span class="pc-coin" aria-hidden="true">₹</span>' +
+      '<s class="pc-mrp">' + esc(formatRupees(p.mrp)) + '</s>' +
+      '<b class="pc-final">' + esc(price) + '</b>' +
+      '<span class="pc-off">' + esc(off) + '</span>' +
+    '</div>' +
+  '</div>';
 }
 
 function cardHTML(p, i){
   return '<article class="pc" data-id="' + esc(p.id) + '" tabindex="0" role="link" aria-label="' + esc(p.title) + '" style="animation-delay:' + ((i % 6) * 45) + 'ms">' +
-    cardTopHTML(p) +
-    '<div class="pc-body"><h3 class="pc-title">' + esc(p.title) + '</h3>' + priceRowHTML(p) + '</div>' +
+    posterHTML(p) + stripHTML(p) +
   '</article>';
 }
 
 function miniCardHTML(p){
-  return '<article class="pc pc-mini" data-id="' + esc(p.id) + '" tabindex="0" role="link" aria-label="' + esc(p.title) + '">' + cardTopHTML(p) + '</article>';
+  return '<article class="pc pc-mini" data-id="' + esc(p.id) + '" tabindex="0" role="link" aria-label="' + esc(p.title) + '">' + posterHTML(p) + '</article>';
 }
 
 /* ============================================================
@@ -289,10 +336,9 @@ function showCatalogView(){
   stopRelatedCarousel();
   productView.classList.add('hidden');
   productView.innerHTML = '';
-  catalogHead.classList.remove('hidden');
   catalogView.classList.remove('hidden');
   currentProduct = null;
-  document.title = 'Lectures — Ambitious Professionals';
+  document.title = getExamLabel(currentCourse, currentLevel) + ' Lectures — Ambitious Professionals';
 }
 
 function openProduct(id, push){
@@ -307,7 +353,6 @@ function openProduct(id, push){
   currentProduct = p;
   couponState = null;
   catalogView.classList.add('hidden');
-  catalogHead.classList.add('hidden');
   productView.classList.remove('hidden');
   renderProduct(p);
   document.title = p.title + ' — Ambitious Professionals';
@@ -358,7 +403,7 @@ function facultyInfoHTML(p){
     if(info && info.qualification) extra.push('<div><b>Qualification:</b> ' + esc(info.qualification) + '</div>');
     if(info && info.experience) extra.push('<div><b>Experience:</b> ' + esc(info.experience) + '</div>');
     return '<div class="pv-fac">' +
-      '<img class="pc-face pv-fac-img" data-fac="' + esc(name) + '" data-ext="png" src="' + esc(facultyPhotoPath(name, 'png')) + '" alt="' + esc(name) + '" loading="lazy">' +
+      '<div class="pv-fac-ph">' + faceImg(name, 'pv-fac-img') + '</div>' +
       '<div class="pv-fac-text"><h4>' + esc(name) + '</h4>' +
       '<p>' + esc((info && info.about) ? info.about : 'Faculty information will be updated soon.') + '</p>' + extra.join('') + '</div>' +
     '</div>';
@@ -389,16 +434,20 @@ function relatedProducts(p){
 function renderProduct(p){
   const attempts = getAttemptsFor(p.course, p.level);
   const related = relatedProducts(p);
+  const rules = getProductRules(p);
+  const bookHTML = rules.bookDisabled
+    ? '<select id="pvBook" disabled><option value="Not Applicable" selected>Not applicable</option></select>'
+    : '<select id="pvBook">' + optionsHTML(BOOK_PREFERENCES, 'Select preference') + '</select>';
   productView.innerHTML =
     '<button type="button" class="pv-back" id="pvBack"><span aria-hidden="true">←</span> Back to all lectures</button>' +
     '<div class="pv-top">' +
-      '<div class="pv-visual">' + cardTopHTML(p) + '</div>' +
+      '<div class="pv-visual">' + posterHTML(p) + '</div>' +
       '<div class="pv-info">' +
         '<h1 class="pv-title">' + esc(p.title) + '</h1>' +
         '<div class="pv-selects">' +
           '<div class="pv-field"><label for="pvAttempt">For the Attempt</label><select id="pvAttempt">' + optionsHTML(attempts, 'Select attempt') + '</select></div>' +
-          '<div class="pv-field"><label for="pvBook">Book Preference</label><select id="pvBook">' + optionsHTML(BOOK_PREFERENCES, 'Select preference') + '</select></div>' +
-          '<div class="pv-field"><label for="pvMode">Mode of Class</label><select id="pvMode">' + optionsHTML(MODES, 'Select mode') + '</select></div>' +
+          '<div class="pv-field"><label for="pvBook">Book Preference</label>' + bookHTML + '</div>' +
+          '<div class="pv-field"><label for="pvMode">Mode of Class</label><select id="pvMode">' + optionsHTML(rules.modes, 'Select mode') + '</select></div>' +
         '</div>' +
         '<div class="pv-coupon">' +
           '<button type="button" class="pv-coupon-link" id="pvCouponToggle">Apply Coupon Code (if any)</button>' +
@@ -467,6 +516,7 @@ function wireProductPage(p){
   document.getElementById('pvBack').addEventListener('click', closeProduct);
   updatePriceBlock();
   refreshCTA();
+  if(getProductRules(p).modes.length === 1) document.getElementById('pvMode').selectedIndex = 1;   // only one choice: pre-select it
 
   /* tabs */
   productView.querySelectorAll('.pv-tab').forEach(tab => {
@@ -690,7 +740,8 @@ function initCoursesFromURL(){
   catalogView.classList.remove('hidden');
   applyFilters();
 
-  catalogHead.classList.add('cat-head-left');
+  catalogHead.classList.add('hidden');   // the filter pane already shows the exam name, so cards start right under the menu
+  document.title = getExamLabel(currentCourse, currentLevel) + ' Lectures — Ambitious Professionals';
 
   if(urlProduct && catalog.some(x => x.id === urlProduct)){
     // opened straight from a shared link: make the catalog the "previous page" so Back works
