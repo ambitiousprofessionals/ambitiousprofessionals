@@ -401,6 +401,7 @@ function renderCart(){
 }
 
 function openCart(){
+  if(typeof openCartPage === 'function'){ openCartPage(); return; }   // the full-page cart (app-cart.js)
   renderCart();
   openOverlay('cartOverlay');
 }
@@ -1596,6 +1597,7 @@ document.getElementById('cpSignOutLink').addEventListener('click', (e)=>{
 document.getElementById('myOrdersLink').addEventListener('click', (e)=>{
   e.preventDefault();
   document.getElementById('profileDropdown').classList.add('pd-closed');
+  if(typeof openMyOrdersPage === 'function'){ openMyOrdersPage(); return; }   // the full-page My Orders (app-cart.js)
   renderMyOrders();
   openOverlay('myOrdersOverlay');
 });
