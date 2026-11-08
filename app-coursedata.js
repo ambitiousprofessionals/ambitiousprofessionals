@@ -21,7 +21,8 @@ function generateAttempts(cycleMonths, count){
   return upcoming.slice(0, count).map(d => MONTH_NAMES[d.getMonth()] + ' ' + d.getFullYear());
 }
 
-function getAttemptsFor(course, level){
+/* the full list of upcoming attempts for an exam level (as before) */
+function allAttemptsFor(course, level){
   if(course === 'CA' && level === 'Final') return generateAttempts([10,4], 6);   // Nov, May
   if(course === 'CMA' && level === 'Final') return generateAttempts([5,11], 5);  // Jun, Dec — 5 attempts
   if(course === 'CMA') return generateAttempts([5,11], 3);                       // Jun, Dec — 3 attempts (Foundation/Inter)
@@ -29,6 +30,18 @@ function getAttemptsFor(course, level){
   if(course === 'CS' && level === 'Executive') return generateAttempts([5,11], 3); // Jun, Dec — 3 attempts
   if(course === 'CS' && level === 'Professional') return generateAttempts([5,11], 5); // Jun, Dec — 5 attempts
   return generateAttempts([0,4,8], 4);                                          // Jan, May, Sep
+}
+
+/* How many upcoming attempts the LECTURES list shows for these levels (everything else keeps its full list) */
+const LECTURE_ATTEMPT_COUNT = { 'CA|Foundation':3, 'CMA|Foundation':2, 'CS|CSEET':3 };
+/* The TEST SERIES list always shows only the next 2 attempts */
+const TEST_SERIES_ATTEMPT_COUNT = 2;
+
+function getAttemptsFor(course, level, forTestSeries){
+  const list = allAttemptsFor(course, level);
+  if(forTestSeries) return list.slice(0, TEST_SERIES_ATTEMPT_COUNT);
+  const n = LECTURE_ATTEMPT_COUNT[course + '|' + level];
+  return n ? list.slice(0, n) : list;
 }
 
 const CLASS_TYPES = ["Regular","Fast-track"];
@@ -242,15 +255,28 @@ function facultyTier(name){
   return { tier:2, idx:0 };
 }
 
-/* Rule that depends on who teaches the product: for first-list faculty the Mode of Class is only "Offline Face to Face".
-   (Book Preference is the same for everyone: Hard Copy / Soft Copy / Without Books.) */
+/* The one faculty from the first list who still offers hard-copy books */
+const FACULTY_WITH_BOOK_CHOICE = "Prof. Abanindra Sahu";
+
+/* Rules that depend on who teaches the product (first-list faculty):
+   - Mode of Class is only "Offline Face to Face"
+   - Book Preference is only "Without Books" (Prof. Abanindra Sahu: "Hard Copy" or "Without Books")
+   Everyone else: Hard Copy / Soft Copy / Without Books, and all three modes. */
 function getProductRules(product){
   const facs = product.faculties || [];
   const allFirst = facs.length > 0 && facs.every(f => facultyTier(f).tier === 0);
+  const hasBookFaculty = facs.some(f => normName(f) === normName(FACULTY_WITH_BOOK_CHOICE));
+  let books = BOOK_PREFERENCES.slice();
+  if(allFirst) books = hasBookFaculty ? ["Hard Copy","Without Books"] : ["Without Books"];
   return {
+    books: books,
     modes: allFirst ? ["Offline Face to Face"] : MODES.slice()
   };
 }
+
+/* paper numbers: "Paper 3A" -> "Paper-3A" (cards) and "P3A" (filters, lists) */
+function paperLabel(no){ return String(no || '').replace(/^Paper\s*/i, 'Paper-'); }
+function paperShort(no){ return 'P' + String(no || '').replace(/^Paper\s*/i, ''); }
 
 function getShortExamLabel(course, level){
   if(course === 'CS' && level === 'CSEET') return 'CSEET';
@@ -555,35 +581,35 @@ const AMBITION_SERIES_NAME = 'AMBITION SERIES';
    (Papers that are two halves of one subject are shown as one subject, e.g. Taxation.) */
 const TS_SUBJECTS = {
   'CA|Foundation': [
-    {name:'Principles and Practice of Accounting'}, {name:'Business Laws'},
-    {name:'Quantitative Aptitude'}, {name:'Business Economics'}
+    {name:'P1: Principles and Practice of Accounting'}, {name:'P2: Business Laws'},
+    {name:'P3: Quantitative Aptitude'}, {name:'P4: Business Economics'}
   ],
   'CA|Intermediate': [
-    {name:'Advanced Accounting', group:'Group 1'}, {name:'Corporate & Other Laws', group:'Group 1'},
-    {name:'Taxation (Income Tax Law & Goods and Service Tax)', group:'Group 1'},
-    {name:'Cost and Management Accounting', group:'Group 2'}, {name:'Auditing and Ethics', group:'Group 2'},
-    {name:'Financial Management & Strategic Management', group:'Group 2'}
+    {name:'P1: Advanced Accounting', group:'Group 1'}, {name:'P2: Corporate & Other Laws', group:'Group 1'},
+    {name:'P3: Taxation (3A: Income Tax Law, 3B: Goods and Service Tax)', group:'Group 1'},
+    {name:'P4: Cost and Management Accounting', group:'Group 2'}, {name:'P5: Auditing and Ethics', group:'Group 2'},
+    {name:'P6: Financial Management & Strategic Management (6A: Financial Management, 6B: Strategic Management)', group:'Group 2'}
   ],
   'CA|Final': [
-    {name:'Financial Reporting', group:'Group 1'}, {name:'Advanced Financial Management', group:'Group 1'},
-    {name:'Advanced Auditing, Assurance & Professional Ethics', group:'Group 1'},
-    {name:'Direct Tax Laws & International Taxation', group:'Group 2'}, {name:'Indirect Tax Laws', group:'Group 2'}
+    {name:'P1: Financial Reporting', group:'Group 1'}, {name:'P2: Advanced Financial Management', group:'Group 1'},
+    {name:'P3: Advanced Auditing, Assurance & Professional Ethics', group:'Group 1'},
+    {name:'P4: Direct Tax Laws & International Taxation', group:'Group 2'}, {name:'P5: Indirect Tax Laws', group:'Group 2'}
   ],
   'CMA|Foundation': [
-    {name:'Fundamentals of Business Laws and Business Communication'}, {name:'Fundamentals of Financial and Cost Accounting'},
-    {name:'Fundamentals of Business Mathematics and Statistics'}, {name:'Fundamentals of Business Economics and Management'}
+    {name:'P1: Fundamentals of Business Laws and Business Communication'}, {name:'P2: Fundamentals of Financial and Cost Accounting'},
+    {name:'P3: Fundamentals of Business Mathematics and Statistics'}, {name:'P4: Fundamentals of Business Economics and Management'}
   ],
   'CMA|Intermediate': [
-    {name:'Business Laws and Ethics', group:'Group 1'}, {name:'Financial Accounting', group:'Group 1'},
-    {name:'Taxation (Direct & Indirect)', group:'Group 1'}, {name:'Cost Accounting', group:'Group 1'},
-    {name:'Operations Management and Strategic Management', group:'Group 2'}, {name:'Corporate Accounting and Auditing', group:'Group 2'},
-    {name:'Financial Management and Business Data Analytics', group:'Group 2'}, {name:'Management Accounting', group:'Group 2'}
+    {name:'P5: Business Laws and Ethics', group:'Group 1'}, {name:'P6: Financial Accounting', group:'Group 1'},
+    {name:'P7: Taxation (7A: Direct Taxation, 7B: Indirect Taxation)', group:'Group 1'}, {name:'P8: Cost Accounting', group:'Group 1'},
+    {name:'P9: Operations Management and Strategic Management', group:'Group 2'}, {name:'P10: Corporate Accounting and Auditing', group:'Group 2'},
+    {name:'P11: Financial Management and Business Data Analytics', group:'Group 2'}, {name:'P12: Management Accounting', group:'Group 2'}
   ],
   'CMA|Final': [
-    {name:'Corporate and Economic Laws', group:'Group 1'}, {name:'Strategic Financial Management', group:'Group 1'},
-    {name:'Direct Tax Laws and International Taxation', group:'Group 1'}, {name:'Strategic Cost Management', group:'Group 1'},
-    {name:'Cost and Management Audit', group:'Group 2'}, {name:'Corporate Financial Reporting', group:'Group 2'},
-    {name:'Indirect Tax Laws and Practice', group:'Group 2'}, {name:'Strategic Performance Management and Business Valuation', group:'Group 2'}
+    {name:'P13: Corporate and Economic Laws', group:'Group 1'}, {name:'P14: Strategic Financial Management', group:'Group 1'},
+    {name:'P15: Direct Tax Laws and International Taxation', group:'Group 1'}, {name:'P16: Strategic Cost Management', group:'Group 1'},
+    {name:'P17: Cost and Management Audit', group:'Group 2'}, {name:'P18: Corporate Financial Reporting', group:'Group 2'},
+    {name:'P19: Indirect Tax Laws and Practice', group:'Group 2'}, {name:'P20A: Strategic Performance Management and Business Valuation', group:'Group 2'}
   ]
 };
 function getTSSubjects(course, level){ return TS_SUBJECTS[course + '|' + level] || []; }
