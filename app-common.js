@@ -453,6 +453,12 @@ document.getElementById('placeCartOrderBtn').addEventListener('click', ()=>{
   pendingOrderItems = classPaperItems;
   pendingTestSeriesItems = testSeriesItems;
 
+  if(counsellingItems.length > 0 && (classPaperItems.length > 0 || testSeriesItems.length > 0)){
+    // the counselling request has just been sent, so it must not stay in the cart and be sent again
+    cartItems = cartItems.filter(i => counsellingItems.indexOf(i) === -1);
+    saveCartToFirestore();
+  }
+
   if(classPaperItems.length === 0 && testSeriesItems.length === 0){
     // Pure counselling request — nothing left to confirm.
     cartItems = cartItems.filter(i => counsellingItems.indexOf(i) === -1);
@@ -465,23 +471,21 @@ document.getElementById('placeCartOrderBtn').addEventListener('click', ()=>{
     return;
   }
 
-  document.getElementById('orderConfirmTableWrap').classList.toggle('hidden', classPaperItems.length === 0);
-  document.getElementById('orderConfirmTableBody').innerHTML =
-    classPaperItems.map(p => buildPaperRowHTML(p, false)).join('');
-  document.getElementById('orderConfirmTestSeriesWrap').classList.toggle('hidden', testSeriesItems.length === 0);
-  document.getElementById('orderConfirmTestSeriesTableBody').innerHTML =
-    testSeriesItems.map(t => buildTestSeriesRowHTML(t, false)).join('');
   closeOverlay('cartOverlay');
-  openOverlay('orderConfirmOverlay');
+  openAttentionPromise();       // the Yes / No question was already asked on the My Cart page
 });
 
-document.getElementById('confirmOrderBtn').addEventListener('click', ()=>{
-  if(!currentUserProfile) return;
-  closeOverlay('orderConfirmOverlay');
+function openAttentionPromise(){
   const hasLectures = pendingOrderItems.length > 0;
   const hasTestSeries = pendingTestSeriesItems.length > 0;
   document.getElementById('attentionPromiseMessage').textContent = buildAttentionMessage(hasLectures, hasTestSeries);
   openOverlay('attentionPromiseOverlay');
+}
+
+document.getElementById('confirmOrderBtn').addEventListener('click', ()=>{
+  if(!currentUserProfile) return;
+  closeOverlay('orderConfirmOverlay');
+  openAttentionPromise();
 });
 
 function buildAttentionMessage(hasLectures, hasTestSeries){
