@@ -318,9 +318,7 @@ function renderProduct(p){
   const attempts = getAttemptsFor(p.course, p.level);
   const related = relatedProducts(p);
   const rules = getProductRules(p);
-  const bookHTML = rules.bookDisabled
-    ? '<select id="pvBook" disabled><option value="Not Applicable" selected>Not applicable</option></select>'
-    : '<select id="pvBook">' + optionsHTML(BOOK_PREFERENCES, 'Select preference') + '</select>';
+  const bookHTML = '<select id="pvBook">' + optionsHTML(BOOK_PREFERENCES, 'Select preference') + '</select>';
   productView.innerHTML =
     '<button type="button" class="pv-back" id="pvBack"><span aria-hidden="true">←</span> Back to all lectures</button>' +
     '<div class="pv-top">' +
