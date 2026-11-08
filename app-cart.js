@@ -96,6 +96,13 @@ function cpPoster(g){
   return counsellingPosterHTML(it);
 }
 
+/* "2026-01-05T..." -> "05-Jan-2026" */
+function cpDate(iso){
+  const d = new Date(iso);
+  if(isNaN(d.getTime())) return '';
+  return String(d.getDate()).padStart(2, '0') + '-' + MONTH_NAMES[d.getMonth()] + '-' + d.getFullYear();
+}
+
 /* the sentence shown in the 3rd column of the cart */
 function cpDescribe(g){
   const it = g.items[0];
@@ -134,7 +141,7 @@ function cpGetLayer(id, label){
   el.setAttribute('aria-label', label);
   el.innerHTML =
     '<div class="cp-top">' +
-      '<button type="button" class="cp-back hidden" aria-label="Back">←</button>' +
+      '<button type="button" class="cp-back hidden" aria-label="Back">' + ICON_BACK + '</button>' +
       '<h2 class="cp-title"></h2>' +
       '<button type="button" class="cp-close" aria-label="Close">✕</button>' +
     '</div>' +
@@ -321,11 +328,40 @@ function renderCartPage(){
     '<div class="cp-total"><span class="cp-total-label">Total Amount</span><b class="cp-total-val">' +
       esc(total === 0 ? 'Free' : cpMoney(total)) + '</b></div>' +
     '<button type="button" class="btn btn-primary cp-checkout">Checkout</button>';
-  bottom.querySelector('.cp-checkout').addEventListener('click', ()=>{
-    cpHide(layer);
-    const old = document.getElementById('placeCartOrderBtn');      // the existing checkout steps (confirm, promise, order ID…) carry on from here
-    if(old) old.click();
-  });
+  bottom.querySelector('.cp-checkout').addEventListener('click', ()=>{ cpAskToPlaceOrder(layer); });
+}
+
+/* "Are you sure you want to place this order?"  Yes -> the Attention! pop-up,  No -> straight back to My Cart */
+function cpAskToPlaceOrder(layer){
+  let ov = document.getElementById('orderAskOverlay');
+  if(!ov){
+    ov = document.createElement('div');
+    ov.className = 'overlay hidden-overlay';
+    ov.id = 'orderAskOverlay';
+    ov.innerHTML =
+      '<div class="modal ask-modal">' +
+        '<h3 id="orderAskTitle">Place this order?</h3>' +
+        '<div class="sub" id="orderAskText"></div>' +
+        '<div class="ask-btns">' +
+          '<button type="button" class="btn btn-outline" id="orderAskNo">No</button>' +
+          '<button type="button" class="btn btn-primary" id="orderAskYes">Yes</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(ov);
+    ov.querySelector('#orderAskNo').addEventListener('click', ()=>{ closeOverlay('orderAskOverlay'); });   // the cart page is still right behind it
+    ov.querySelector('#orderAskYes').addEventListener('click', ()=>{
+      closeOverlay('orderAskOverlay');
+      cpHide(document.getElementById('cartPage'));
+      const old = document.getElementById('placeCartOrderBtn');       // the existing steps carry on from here
+      if(old) old.click();
+    });
+  }
+  const onlyCounselling = cartItems.length > 0 && cartItems.every(it => cpKind(it) === 'counselling');
+  ov.querySelector('#orderAskTitle').textContent = onlyCounselling ? 'Submit this request?' : 'Place this order?';
+  ov.querySelector('#orderAskText').textContent = onlyCounselling
+    ? 'Are you sure you want to submit your counselling request?'
+    : 'Are you sure you want to place this order?';
+  openOverlay('orderAskOverlay');
 }
 
 /* ============================================================
@@ -397,7 +433,8 @@ function renderOrdersList(layer, history, status){
         (st.cancelled ? '<span class="cp-ocancel">Cancelled</span>' : '');
     }
     return '<div class="cp-row cp-orow" data-i="' + r.realIdx + '">' +
-      '<div class="cp-oid"><span class="cp-oid-label">' + (isCounselling ? 'Request' : 'Order ID') + '</span><b>' + (isCounselling ? 'Counselling' : ('#' + esc(entry.orderId || '—'))) + '</b></div>' +
+      '<div class="cp-oid"><span class="cp-oid-label">' + (isCounselling ? 'Request' : 'Order ID') + '</span><b>' + (isCounselling ? 'Counselling' : ('#' + esc(entry.orderId || '—'))) + '</b>' +
+        (cpDate(entry.date) ? '<span class="cp-odate">' + esc(cpDate(entry.date)) + '</span>' : '') + '</div>' +
       '<div class="cp-ostack">' + cpOrderStack(groups) + '</div>' +
       '<div class="cp-obtns">' +
         '<button type="button" class="btn btn-outline cp-view-btn">View Details</button>' +
@@ -428,6 +465,7 @@ function renderOrderDetail(layer, entry, history, status){
     '<div class="cp-row cp-drow" data-g="' + i + '">' +
       '<div class="cp-sl">' + (i + 1) + '</div>' +
       '<div class="cp-thumb">' + cpPoster(g) + '</div>' +
+      '<div class="cp-name">' + esc(cpDescribe(g)) + '</div>' +
       '<div class="cp-mid"><button type="button" class="btn btn-outline cp-detail-btn">Product Details</button></div>' +
     '</div>'
   ).join('') + '</div>';
