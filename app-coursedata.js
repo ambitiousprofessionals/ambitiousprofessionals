@@ -32,7 +32,7 @@ function getAttemptsFor(course, level){
 }
 
 const CLASS_TYPES = ["Regular","Fast-track"];
-const BOOK_PREFERENCES = ["Hard Copy","Soft Copy"];
+const BOOK_PREFERENCES = ["Hard Copy","Soft Copy","Without Books"];
 const MODES = ["Offline Face to Face","Online Google Drive Live","Online Google Drive Recorded"];
 
 /* ============================================================
@@ -225,8 +225,6 @@ const FACULTY_ORDER_SECOND = [
   "CA Vijay Sarda","CA Vishal Bhattad","CA Sneha Budhia","CA Pranay Gangan",
   "CA Shubham Singhal","CA Bhanwar Borana","CA Parveen Sharma","CA Rishabh Jain"
 ];
-/* The one faculty from the first list who still offers book preference choices */
-const FACULTY_WITH_BOOK_CHOICE = "Prof. Abanindra Sahu";
 
 function normName(n){
   return String(n || '').toLowerCase().replace(/\./g,' ').replace(/\s+/g,' ').trim();
@@ -244,15 +242,12 @@ function facultyTier(name){
   return { tier:2, idx:0 };
 }
 
-/* Rules that depend on who teaches the product (first-list faculty):
-   - Book Preference is switched off (except for Prof. Abanindra Sahu)
-   - Mode of Class is only "Offline Face to Face" */
+/* Rule that depends on who teaches the product: for first-list faculty the Mode of Class is only "Offline Face to Face".
+   (Book Preference is the same for everyone: Hard Copy / Soft Copy / Without Books.) */
 function getProductRules(product){
   const facs = product.faculties || [];
   const allFirst = facs.length > 0 && facs.every(f => facultyTier(f).tier === 0);
-  const hasBookFaculty = facs.some(f => normName(f) === normName(FACULTY_WITH_BOOK_CHOICE));
   return {
-    bookDisabled: allFirst && !hasBookFaculty,
     modes: allFirst ? ["Offline Face to Face"] : MODES.slice()
   };
 }
