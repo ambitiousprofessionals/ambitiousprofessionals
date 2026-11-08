@@ -9,6 +9,9 @@ function esc(s){
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
+/* the "<" back icon used on every back button */
+const ICON_BACK = '<svg class="ic-back" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>';
+
 function isLoggedIn(){
   return !!(typeof auth !== 'undefined' && auth.currentUser && currentUserProfile);
 }
@@ -85,6 +88,7 @@ function posterSingleHTML(p){
         '<div class="pc-badge">' + esc(p.examLabel) + '</div>' +
         (CARD_TAGLINE ? '<div class="pc-tagline">' + esc(CARD_TAGLINE) + '</div>' : '') +
         (p.group ? '<div class="pc-group">' + esc(p.group) + '</div>' : '') +
+        '<div class="pc-paperno">' + esc(paperLabel(p.paperNo)) + '</div>' +
         '<div class="pc-subject">' + esc(subject) + '</div>' +
         '<div class="pc-facname">' + esc(fac) + '</div>' +
       '</div>' +
@@ -250,7 +254,7 @@ function buildExamChooser(container, opts){
         ).join('') +
       '</div>' +
       '<div class="xc-levels" id="xcLevels"></div>' +
-      '<button type="button" class="xc-back hidden" id="xcBack">← Choose a different option</button>' +
+      '<button type="button" class="xc-back hidden" id="xcBack">' + ICON_BACK + ' Choose a different option</button>' +
     '</div>';
 
   const optionsEl = container.querySelector('#xcOptions');
