@@ -117,7 +117,7 @@ function optionsHTML(list, placeholder){
 }
 
 function renderProduct(p){
-  const attempts = getAttemptsFor(p.course, p.level).map(a => ({ value:a, label:a }));
+  const attempts = getAttemptsFor(p.course, p.level, true).map(a => ({ value:a, label:a }));
   const subjects = getTSSubjects(p.course, p.level);
   let extra = '';
   if(p.typeKey === 'group'){
@@ -137,7 +137,7 @@ function renderProduct(p){
   }
 
   tsProductEl.innerHTML =
-    '<button type="button" class="pv-back" id="tsBack"><span aria-hidden="true">←</span> Back</button>' +
+    '<button type="button" class="pv-back" id="tsBack">' + ICON_BACK + ' Back</button>' +
     '<div class="pv-top">' +
       '<div class="pv-visual">' + tsPosterHTML(p) + '</div>' +
       '<div class="pv-info">' +
