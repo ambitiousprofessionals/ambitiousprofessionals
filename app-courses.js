@@ -87,7 +87,7 @@ function renderFilterPane(){
   html += '<div class="cat-filter-exam">' + esc(examLabel) + '</div>';
 
   html += '<div class="cat-filter-sec"><h4>Subject</h4>';
-  subjectList.forEach(s => { html += chkHTML('subjects', s, s, filters.subjects.has(s)); });
+  subjectList.forEach(s => { html += chkHTML('subjects', s.name, s.label, filters.subjects.has(s.name)); });
   html += '</div>';
 
   html += '<div class="cat-filter-sec"><h4>Category</h4>' +
@@ -318,9 +318,9 @@ function renderProduct(p){
   const attempts = getAttemptsFor(p.course, p.level);
   const related = relatedProducts(p);
   const rules = getProductRules(p);
-  const bookHTML = '<select id="pvBook">' + optionsHTML(BOOK_PREFERENCES, 'Select preference') + '</select>';
+  const bookHTML = '<select id="pvBook">' + optionsHTML(rules.books, 'Select preference') + '</select>';
   productView.innerHTML =
-    '<button type="button" class="pv-back" id="pvBack"><span aria-hidden="true">←</span> Back to all lectures</button>' +
+    '<button type="button" class="pv-back" id="pvBack">' + ICON_BACK + ' Back to all lectures</button>' +
     '<div class="pv-top">' +
       '<div class="pv-visual">' + posterHTML(p) + '</div>' +
       '<div class="pv-info">' +
@@ -389,7 +389,9 @@ function wireProductPage(p){
   document.getElementById('pvBack').addEventListener('click', closeProduct);
   updatePriceBlock();
   refreshCTA();
-  if(getProductRules(p).modes.length === 1) document.getElementById('pvMode').selectedIndex = 1;   // only one choice: pre-select it
+  const rulesNow = getProductRules(p);
+  if(rulesNow.modes.length === 1) document.getElementById('pvMode').selectedIndex = 1;   // only one choice: pre-select it
+  if(rulesNow.books.length === 1) document.getElementById('pvBook').selectedIndex = 1;
 
   /* tabs */
   wireProductTabs(productView);
@@ -594,7 +596,7 @@ function initCoursesFromURL(){
   noSelectionMsg.classList.add('hidden');
 
   catalog = buildCatalog(currentCourse, currentLevel);
-  subjectList = (COURSES[currentCourse][currentLevel] || []).map(pp => pp.name);
+  subjectList = (COURSES[currentCourse][currentLevel] || []).map(pp => ({ name:pp.name, label:paperShort(pp.no) + ': ' + pp.name }));
   const seen = {};
   facultyList = [];
   catalog.forEach(pr => pr.faculties.forEach(f => { if(!seen[f]){ seen[f] = 1; facultyList.push(f); } }));
