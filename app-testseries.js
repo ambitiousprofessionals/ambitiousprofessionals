@@ -17,66 +17,7 @@ const tsPicker   = document.getElementById('tsPicker');
 const tsCards    = document.getElementById('tsCards');
 const tsProductEl = document.getElementById('tsProduct');
 
-function esc(s){
-  return String(s === undefined || s === null ? '' : s)
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-}
-function isLoggedIn(){
-  return !!(typeof auth !== 'undefined' && auth.currentUser && currentUserProfile);
-}
-
-/* ============================================================
-   CARD (same look as the Lectures cards, with a test-paper picture instead of a faculty photo)
-   ============================================================ */
-/* ============================================================
-   FITS THE BIG TEXT ON EVERY POSTER — measures the real text and shrinks it until it fits its box
-   ============================================================ */
-function fitPosterText(root){
-  const SINGLE = [10, 8.6, 7.4, 6.4, 5.6, 4.8, 4.2, 3.6];
-  const COMBO  = [6.6, 5.8, 5, 4.4, 3.8, 3.4, 3];
-  root.querySelectorAll('.pc-subject, .pc-csubject').forEach(el => {
-    if(el.dataset.fit === '1') return;
-    if(!el.offsetWidth) return;                       // not on screen yet
-    const sizes = el.classList.contains('pc-csubject') ? COMBO : SINGLE;
-    for(let i = 0; i < sizes.length; i++){
-      el.style.fontSize = sizes[i] + 'cqw';
-      if(el.scrollWidth <= el.clientWidth + 1 && el.scrollHeight <= el.clientHeight + 1) break;
-    }
-    el.dataset.fit = '1';
-  });
-}
-function refitAllPosters(){
-  document.querySelectorAll('.pc-subject[data-fit], .pc-csubject[data-fit]').forEach(el => { delete el.dataset.fit; });
-  fitPosterText(document);
-}
-if(document.fonts && document.fonts.ready){ document.fonts.ready.then(refitAllPosters); }
-window.addEventListener('load', refitAllPosters);
-
-
-const TS_ILLUS =
-  '<svg class="pc-ts-illus" viewBox="0 0 120 150" aria-hidden="true">' +
-    '<rect x="12" y="8" width="96" height="134" rx="10" fill="#fff"/>' +
-    '<g fill="none" stroke="#AE1029" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">' +
-      '<path d="M26 40 l5 5 9-10"/><path d="M26 72 l5 5 9-10"/><path d="M26 104 l5 5 9-10"/>' +
-    '</g>' +
-    '<g stroke="#2B2823" stroke-width="5" stroke-linecap="round" opacity=".75">' +
-      '<line x1="52" y1="40" x2="94" y2="40"/><line x1="52" y1="72" x2="94" y2="72"/><line x1="52" y1="104" x2="86" y2="104"/>' +
-    '</g>' +
-  '</svg>';
-
-function tsPosterHTML(p){
-  return '<div class="pc-poster pc-single pc-ts">' +
-    '<div class="pc-panel">' +
-      '<span class="pc-rect"></span>' + TS_ILLUS +
-      '<div class="pc-left">' +
-        '<div class="pc-badge">' + esc(p.examLabel) + '</div>' +
-        '<div class="pc-tagline">TEST SERIES</div>' +
-        '<div class="pc-subject">' + esc(AMBITION_SERIES_NAME) + '</div>' +
-      '</div>' +
-      '<span class="pc-lectag">' + esc(p.typeLabel) + '</span>' +
-    '</div>' +
-  '</div>';
-}
+/* (esc, isLoggedIn, poster pieces, text fitting and the exam chooser live in app-cards.js) */
 
 const TS_HINTS = {
   group:   'Choose your attempt & group',
@@ -395,12 +336,22 @@ function wireProduct(p, subjects){
       attemptingFor = 'Any ' + n + ' Subject' + (n > 1 ? 's' : '') + ': ' + tsChosen.join(', ');
     }
 
+    const info = getTSPriceInfo(p, currentOption(p));
+    const couponRes = tsCouponCode ? applyCouponToPrice(tsCouponCode, info.price) : null;
+    const finalPrice = (couponRes && couponRes.ok) ? couponRes.finalPrice : info.price;
     cartItems.push({
       kind:'testSeries',
       examToAppear: getExamLabel(p.course, p.level),
       attempt: attempt,
       attemptingFor: attemptingFor,
-      testSeriesType: 'Ambition Series - ' + p.typeLabel
+      testSeriesType: 'Ambition Series - ' + p.typeLabel,
+      productId: p.id,
+      groupId: 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      course: p.course, level: p.level, typeKey: p.typeKey,
+      subjects: p.typeKey === 'subject' ? tsChosen.slice() : [],
+      mrp: info.mrp, discount: info.discount, price: (finalPrice === undefined ? null : finalPrice),
+      coupon: (couponRes && couponRes.ok) ? couponRes.code : '',
+      couponOff: (couponRes && couponRes.ok) ? couponRes.off : 0
     });
     saveCartToFirestore().then(()=>{
       updateCartBadge();
@@ -423,17 +374,7 @@ document.addEventListener('click', (e)=>{
    START-UP
    ============================================================ */
 function renderPicker(){
-  const levels = ['Foundation', 'Intermediate', 'Final'];
-  tsPicker.innerHTML =
-    '<div class="ts-picker-box">' +
-      '<h2 class="section-title">Choose your exam</h2>' +
-      '<p class="ts-picker-sub">Pick the exam and level you are preparing for to see the Ambition Series.</p>' +
-      ['CA', 'CMA'].map(c =>
-        '<div class="ts-picker-row"><span class="ts-picker-label">' + c + '</span>' +
-          levels.map(l => '<a class="btn btn-outline ts-picker-btn" href="test-series.html?course=' + c + '&level=' + l + '">' + l + '</a>').join('') +
-        '</div>'
-      ).join('') +
-    '</div>';
+  buildExamChooser(tsPicker, { target:'test-series.html', courses:['CA','CMA'], title:'Choose your requirement' });
   tsPicker.classList.remove('hidden');
 }
 
