@@ -7,8 +7,17 @@
   var nums = document.querySelectorAll('.stat-num');
   if (nums.length === 0) return;
 
+  /* "Years of Excellence": full years since October of the start year — ticks over every 1st October (same rule as elsewhere on the site) */
+  function yearsSince(startYear) {
+    var now = new Date();
+    var years = now.getFullYear() - startYear;
+    if (now < new Date(now.getFullYear(), 9, 1)) years -= 1;
+    return years;
+  }
+
   function animateCount(el) {
     var target = parseInt(el.getAttribute('data-target'), 10) || 0;
+    if (el.hasAttribute('data-oct-years')) target = yearsSince(parseInt(el.getAttribute('data-oct-years'), 10));
     var duration = 1600;
     var start = null;
     function step(ts) {
