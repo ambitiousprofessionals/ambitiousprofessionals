@@ -42,116 +42,11 @@ const clearFiltersBtn  = document.getElementById('clearFiltersBtn');
 const filterToggleBtn  = document.getElementById('filterToggleBtn');
 const filterCloseBtn   = document.getElementById('filterCloseBtn');
 
-/* ---------- small helpers ---------- */
-function esc(s){
-  return String(s === undefined || s === null ? '' : s)
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-}
-
-function isLoggedIn(){
-  return !!(typeof auth !== 'undefined' && auth.currentUser && currentUserProfile);
-}
-
-/* ============================================================
-   FACULTY PHOTOS — until a photo exists the photo area simply stays blank
-   ============================================================ */
-document.addEventListener('error', (e)=>{
-  const img = e.target;
-  if(!(img instanceof HTMLImageElement) || !img.classList.contains('pc-face')) return;
-  const step = img.dataset.ext || 'png';
-  if(step === 'png'){
-    img.dataset.ext = 'jpg';
-    img.src = facultyPhotoPath(img.dataset.fac, 'jpg');
-  } else {
-    img.dataset.ext = 'none';
-    img.classList.add('pc-face-off');
-  }
-}, true);
-
-function faceImg(name, cls){
-  return '<img class="pc-face ' + cls + '" data-fac="' + esc(name) + '" data-ext="png" src="' + esc(facultyPhotoPath(name, 'png')) +
-    '" alt="" loading="lazy" decoding="async">';
-}
+/* (esc, isLoggedIn, faculty photos, poster pieces, product tabs and the exam chooser live in app-cards.js) */
 
 /* ============================================================
    CARD HTML  (poster on top, dark title + price strip below)
    ============================================================ */
-/* ============================================================
-   FITS THE BIG TEXT ON EVERY POSTER — measures the real text and shrinks it until it fits its box
-   ============================================================ */
-function fitPosterText(root){
-  const SINGLE = [10, 8.6, 7.4, 6.4, 5.6, 4.8, 4.2, 3.6];
-  const COMBO  = [6.6, 5.8, 5, 4.4, 3.8, 3.4, 3];
-  root.querySelectorAll('.pc-subject, .pc-csubject').forEach(el => {
-    if(el.dataset.fit === '1') return;
-    if(!el.offsetWidth) return;                       // not on screen yet
-    const sizes = el.classList.contains('pc-csubject') ? COMBO : SINGLE;
-    for(let i = 0; i < sizes.length; i++){
-      el.style.fontSize = sizes[i] + 'cqw';
-      if(el.scrollWidth <= el.clientWidth + 1 && el.scrollHeight <= el.clientHeight + 1) break;
-    }
-    el.dataset.fit = '1';
-  });
-}
-function refitAllPosters(){
-  document.querySelectorAll('.pc-subject[data-fit], .pc-csubject[data-fit]').forEach(el => { delete el.dataset.fit; });
-  fitPosterText(document);
-}
-if(document.fonts && document.fonts.ready){ document.fonts.ready.then(refitAllPosters); }
-window.addEventListener('load', refitAllPosters);
-
-function toneStyle(p){
-  const t = getCardTone(p.course, p.level, p.batch);
-  return '--ta:' + t[0] + ';--tb:' + t[1];
-}
-
-function lectureTagHTML(p){
-  // "Fast-track Lectures" is written on two rows so it never stretches towards the faculty photo
-  return p.batch === 'fasttrack'
-    ? '<span class="pc-lectag pc-lectag-2">Fast-track<br>Lectures</span>'
-    : '<span class="pc-lectag">' + esc(BATCH_TYPES[p.batch].tag) + '</span>';
-}
-
-function posterSingleHTML(p){
-  const subject = p.subjects[0];
-  const fac = p.faculties[0];
-  return '<div class="pc-poster pc-single pc-tone" style="' + toneStyle(p) + '">' +
-    '<div class="pc-panel">' +
-      '<span class="pc-rect"></span>' +
-      faceImg(fac, 'pc-face-main') +
-      '<div class="pc-left">' +
-        '<div class="pc-badge">' + esc(p.examLabel) + '</div>' +
-        (CARD_TAGLINE ? '<div class="pc-tagline">' + esc(CARD_TAGLINE) + '</div>' : '') +
-        (p.group ? '<div class="pc-group">' + esc(p.group) + '</div>' : '') +
-        '<div class="pc-subject">' + esc(subject) + '</div>' +
-        '<div class="pc-facname">' + esc(fac) + '</div>' +
-      '</div>' +
-      lectureTagHTML(p) +
-    '</div>' +
-  '</div>';
-}
-
-function posterComboHTML(p){
-  const short = p.subjects.map(getSubjectShort).join(' + ');
-  const tiles = p.faculties.slice(0, 5).map(f => '<div class="pc-tile">' + faceImg(f, 'pc-face-tile') + '</div>').join('');
-  return '<div class="pc-poster pc-combo pc-tone" style="' + toneStyle(p) + '">' +
-    '<div class="pc-cpanel">' +
-      '<div class="pc-ctitle">' + esc(p.examFull) + '</div>' +
-      '<span class="pc-gpill">' + esc(p.group ? (p.group + ' COMBO') : 'COMBO') + '</span>' +
-      (CARD_TAGLINE ? '<div class="pc-ctag">' + esc(CARD_TAGLINE) + '</div>' : '') +
-    '</div>' +
-    '<div class="pc-cinner">' +
-      '<div class="pc-tiles pc-tiles-' + Math.min(p.faculties.length, 5) + '">' + tiles + '</div>' +
-      '<div class="pc-csubject">' + esc(short) + '</div>' +
-      '<span class="pc-clectag">' + esc(BATCH_TYPES[p.batch].tag) + '</span>' +
-    '</div>' +
-  '</div>';
-}
-
-function posterHTML(p){
-  return p.category === 'combo' ? posterComboHTML(p) : posterSingleHTML(p);
-}
-
 function stripHTML(p){
   const off = p.discount ? (p.discount + '% off') : '---% off';
   const price = (p.price === null || p.price === undefined) ? '---' : (formatRupees(p.price) + '/-');
@@ -407,36 +302,6 @@ function optionsHTML(list, placeholder){
     list.map(v => '<option value="' + esc(v) + '">' + esc(v) + '</option>').join('');
 }
 
-function productInfoTableHTML(p){
-  const info = getProductInfo(p);
-  return '<table class="pv-table"><tbody>' +
-    PRODUCT_INFO_ROWS.map(r => '<tr><th scope="row">' + esc(r.label) + '</th><td>' + esc(info[r.key] || '---') + '</td></tr>').join('') +
-  '</tbody></table>';
-}
-
-function facultyInfoHTML(p){
-  return p.faculties.map(name => {
-    const info = getFacultyInfo(name);
-    const extra = [];
-    if(info && info.qualification) extra.push('<div><b>Qualification:</b> ' + esc(info.qualification) + '</div>');
-    if(info && info.experience) extra.push('<div><b>Experience:</b> ' + esc(info.experience) + '</div>');
-    return '<div class="pv-fac">' +
-      '<div class="pv-fac-ph">' + faceImg(name, 'pv-fac-img') + '</div>' +
-      '<div class="pv-fac-text"><h4>' + esc(name) + '</h4>' +
-      '<p>' + esc((info && info.about) ? info.about : 'Faculty information will be updated soon.') + '</p>' + extra.join('') + '</div>' +
-    '</div>';
-  }).join('');
-}
-
-function termsHTML(){
-  return '<h4 class="pv-terms-h">Cancellation/ Refund Policy</h4>' +
-    '<ul class="pv-terms">' +
-      '<li>Course once purchased cannot be cancelled &amp; fees are non-refundable.</li>' +
-      '<li>Subscribed Courses cannot be changed with another course.</li>' +
-      '<li>The course is non-transferable.</li>' +
-    '</ul>';
-}
-
 function relatedProducts(p){
   const out = [];
   const used = new Set([p.id]);
@@ -480,16 +345,7 @@ function renderProduct(p){
       '</div>' +
     '</div>' +
 
-    '<div class="pv-tabs-wrap">' +
-      '<div class="pv-tabs" role="tablist">' +
-        '<button type="button" role="tab" class="pv-tab active" data-tab="info" aria-selected="true">Product Info</button>' +
-        '<button type="button" role="tab" class="pv-tab" data-tab="faculty" aria-selected="false">Faculty Info</button>' +
-        '<button type="button" role="tab" class="pv-tab" data-tab="terms" aria-selected="false">Terms &amp; Conditions</button>' +
-      '</div>' +
-      '<div class="pv-panel" data-panel="info">' + productInfoTableHTML(p) + '</div>' +
-      '<div class="pv-panel hidden" data-panel="faculty">' + facultyInfoHTML(p) + '</div>' +
-      '<div class="pv-panel hidden" data-panel="terms">' + termsHTML() + '</div>' +
-    '</div>' +
+    productTabsHTML(p) +
 
     (related.length ? (
       '<div class="pv-related">' +
@@ -538,18 +394,7 @@ function wireProductPage(p){
   if(getProductRules(p).modes.length === 1) document.getElementById('pvMode').selectedIndex = 1;   // only one choice: pre-select it
 
   /* tabs */
-  productView.querySelectorAll('.pv-tab').forEach(tab => {
-    tab.addEventListener('click', ()=>{
-      productView.querySelectorAll('.pv-tab').forEach(t => {
-        const on = t === tab;
-        t.classList.toggle('active', on);
-        t.setAttribute('aria-selected', on ? 'true' : 'false');
-      });
-      productView.querySelectorAll('.pv-panel').forEach(panel => {
-        panel.classList.toggle('hidden', panel.dataset.panel !== tab.dataset.tab);
-      });
-    });
-  });
+  wireProductTabs(productView);
 
   /* coupon */
   const couponBox = document.getElementById('pvCouponBox');
@@ -598,13 +443,21 @@ function wireProductPage(p){
       showToast('Please select the attempt, book preference and mode of class first.', 'error');
       return;
     }
-    p.items.forEach(it => {
-      cartItems.push({
+    const groupId = 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    const finalPrice = couponState ? couponState.finalPrice : p.price;
+    p.items.forEach((it, i) => {
+      const line = {
         kind:'classPaper', course:p.course, level:p.level,
         paperNo:it.paperNo, paperName:it.paperName, faculty:it.faculty,
         attempt:attempt, typeOfClass:BATCH_TYPES[p.batch].label,
-        bookPreference:book, modeOfClass:mode
-      });
+        bookPreference:book, modeOfClass:mode,
+        productId:p.id, groupId:groupId
+      };
+      if(i === 0){      // the price belongs to the whole product, so it is saved once (on its first line)
+        line.mrp = p.mrp; line.discount = p.discount; line.price = (finalPrice === undefined ? null : finalPrice);
+        line.coupon = couponState ? couponState.code : ''; line.couponOff = couponState ? couponState.off : 0;
+      }
+      cartItems.push(line);
     });
     saveCartToFirestore().then(()=>{
       updateCartBadge();
@@ -729,9 +582,11 @@ function initCoursesFromURL(){
   const validCSLevel = urlCourse === 'CS' && (urlLevel === 'CSEET' || urlLevel === 'Executive' || urlLevel === 'Professional');
 
   if(!(validCourse && (validCALevel || validCSLevel))){
+    catalogHead.classList.add('hidden');
     noSelectionMsg.classList.remove('hidden');
     catalogView.classList.add('hidden');
     productView.classList.add('hidden');
+    buildExamChooser(document.getElementById('examChooser'), { target:'courses.html', courses:['CA','CMA','CS','MBA'], title:'Choose your requirement' });
     return;
   }
 
