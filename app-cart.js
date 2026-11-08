@@ -96,6 +96,27 @@ function cpPoster(g){
   return counsellingPosterHTML(it);
 }
 
+/* the sentence shown in the 3rd column of the cart */
+function cpDescribe(g){
+  const it = g.items[0];
+  if(g.kind === 'lecture'){
+    const title = cpLectureProduct(it).title;
+    const noBooks = /without|not applicable/i.test(it.bookPreference || '');
+    return title + ' for the attempt ' + (it.attempt || '') +
+      (noBooks ? ' without books' : (' with ' + (it.bookPreference || '') + ' books')) +
+      ' in the mode ' + (it.modeOfClass || '');
+  }
+  if(g.kind === 'ts'){
+    const p = cpTSProduct(it);
+    const title = p ? p.title : ((it.examToAppear || '') + ' – ' + (it.testSeriesType || 'Test Series'));
+    let text = title + ' for the attempt ' + (it.attempt || '');
+    if(p && p.typeKey === 'group') text += ' (' + (it.attemptingFor || '') + ')';
+    else if(p && p.typeKey === 'subject') text += ' (' + (it.attemptingFor || '') + ')';
+    return text;
+  }
+  return 'Free Counselling Request' + (it.examOrCourse ? (' – ' + it.examOrCourse) : '');
+}
+
 const CP_TRASH = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
   '<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>';
 
@@ -273,6 +294,7 @@ function renderCartPage(){
     '<div class="cp-row cp-crow" data-g="' + i + '">' +
       '<div class="cp-sl">' + (i + 1) + '</div>' +
       '<div class="cp-thumb">' + cpPoster(g) + '</div>' +
+      '<div class="cp-name">' + esc(cpDescribe(g)) + '</div>' +
       '<div class="cp-mid"><button type="button" class="btn btn-outline cp-detail-btn">Product Details</button></div>' +
       '<button type="button" class="cp-del" aria-label="Remove from cart" title="Remove">' + CP_TRASH + '</button>' +
     '</div>'
