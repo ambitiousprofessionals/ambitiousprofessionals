@@ -453,6 +453,11 @@ function wireProductPage(p){
         bookPreference:book, modeOfClass:mode,
         productId:p.id, groupId:groupId
       };
+      if(p.category === 'combo'){      // each lecture's own (stand-alone) price, so the admin can split the combo price fairly
+        const paperObj = (COURSES[p.course][p.level] || []).find(pp => pp.no === it.paperNo);
+        const single = paperObj ? makeSingleProduct(p.course, p.level, paperObj, it.faculty, p.batch) : null;
+        line.unitPrice = (single && typeof single.price === 'number') ? single.price : null;
+      }
       if(i === 0){      // the price belongs to the whole product, so it is saved once (on its first line)
         line.mrp = p.mrp; line.discount = p.discount; line.price = (finalPrice === undefined ? null : finalPrice);
         line.coupon = couponState ? couponState.code : ''; line.couponOff = couponState ? couponState.off : 0;
