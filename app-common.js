@@ -293,8 +293,17 @@ function generateOrderId(){
   const yearCode = String(now.getFullYear()).slice(-2);
   const monthCode = String(now.getMonth() + 1).padStart(2, '0');
   const counterRef = db.collection('counters').doc('ORD' + yearCode + monthCode);
+  const freedRef = db.collection('counters').doc('freeOrderIds');   // IDs of orders the admin deleted: handed out again first
   return db.runTransaction((tx)=>{
-    return tx.get(counterRef).then((doc)=>{
+    return Promise.all([tx.get(counterRef), tx.get(freedRef)]).then((snaps)=>{
+      const doc = snaps[0];
+      const freedDoc = snaps[1];
+      const freed = (freedDoc.exists && Array.isArray(freedDoc.data().ids)) ? freedDoc.data().ids.slice().sort() : [];
+      if(freed.length > 0){
+        const reused = freed.shift();
+        tx.set(freedRef, { ids: freed });
+        return reused;
+      }
       let next = 1;
       if(doc.exists){
         next = (doc.data().lastNumber || 0) + 1;
@@ -303,6 +312,18 @@ function generateOrderId(){
       return yearCode + monthCode + String(next).padStart(4, '0');
     });
   });
+}
+
+/* total of an order = the prices saved with its products (null while any price is still unknown), plus the lines for the e-mail */
+function summariseOrderItems(items){
+  const groups = (typeof cpGroup === 'function') ? cpGroup(items) : items.map(it => ({ kind:'lecture', items:[it], idxs:[0] }));
+  let sum = 0, missing = false;
+  const lines = groups.map(g => {
+    const pr = (typeof g.items[0].price === 'number') ? g.items[0].price : null;
+    if(pr === null) missing = true; else sum += pr;
+    return { text: (typeof cpDescribe === 'function') ? cpDescribe(g) : '', price: pr };
+  });
+  return { total: missing ? null : sum, lines: lines };
 }
 
 function buildPaperRowHTML(p, withRemove, idx){
@@ -528,6 +549,7 @@ function finalizeOrder(lectureOrderId, testSeriesOrderId, paperItems, testSeries
 
   if(paperItems.length > 0){
     const papersForRecord = paperItems.map(p => Object.assign({}, p, { exam: getExamLabel(p.course, p.level) }));
+    const lectureSummary = summariseOrderItems(papersForRecord);
     sendToSheet({
       formType: 'order',
       orderId: lectureOrderId,
@@ -535,7 +557,9 @@ function finalizeOrder(lectureOrderId, testSeriesOrderId, paperItems, testSeries
       name: currentUserProfile.name,
       email: currentUserProfile.email,
       extraInfo: '',
-      papers: papersForRecord
+      papers: papersForRecord,
+      totalAmount: lectureSummary.total,
+      lines: lectureSummary.lines
     });
     db.collection('orders').add({
       uid: uid,
@@ -545,9 +569,10 @@ function finalizeOrder(lectureOrderId, testSeriesOrderId, paperItems, testSeries
       email: currentUserProfile.email,
       extraInfo: '',
       papers: papersForRecord,
+      totalAmount: lectureSummary.total,
       remarks: '',
-      confirmationSent: false,
-      billSentAt: null,
+      confirmationSent: true,                                          // the order + payment e-mail goes out automatically
+      billSentAt: firebase.firestore.FieldValue.serverTimestamp(),
       paymentRecd: 'no',
       paymentRecdAt: null,
       deliveryStatus: 'pending',
@@ -563,13 +588,16 @@ function finalizeOrder(lectureOrderId, testSeriesOrderId, paperItems, testSeries
   }
 
   if(testSeriesItems.length > 0){
+    const tsSummary = summariseOrderItems(testSeriesItems);
     sendToSheet({
       formType: 'testSeries',
       orderId: testSeriesOrderId,
       studentId: currentUserProfile.studentId,
       name: currentUserProfile.name,
       email: currentUserProfile.email,
-      series: testSeriesItems
+      series: testSeriesItems,
+      totalAmount: tsSummary.total,
+      lines: tsSummary.lines
     });
     db.collection('testSeriesOrders').add({
       uid: uid,
@@ -578,9 +606,10 @@ function finalizeOrder(lectureOrderId, testSeriesOrderId, paperItems, testSeries
       name: currentUserProfile.name,
       email: currentUserProfile.email,
       series: testSeriesItems,
+      totalAmount: tsSummary.total,
       remarks: '',
-      confirmationSent: false,
-      billSentAt: null,
+      confirmationSent: true,                                          // the order + payment e-mail goes out automatically
+      billSentAt: firebase.firestore.FieldValue.serverTimestamp(),
       paymentRecd: 'no',
       paymentRecdAt: null,
       deliveryStatus: 'pending',
