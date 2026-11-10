@@ -744,7 +744,6 @@ function renderTrackTimeline(data, isCounselling){
     { label:'Order Delivered', time: data.deliveredAt }
   ] : [
     { label:'Order Placed', time: data.createdAt },
-    { label:'Confirmation & Details Received', time: data.billSentAt },
     { label:'Payment Confirmation', time: data.paymentRecdAt },
     { label:'Order Delivered', time: data.deliveredAt }
   ];
