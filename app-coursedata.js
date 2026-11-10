@@ -46,7 +46,7 @@ function getAttemptsFor(course, level, forTestSeries){
 
 const CLASS_TYPES = ["Regular","Fast-track"];
 const BOOK_PREFERENCES = ["Hard Copy","Soft Copy","Without Books"];
-const MODES = ["Offline Face to Face","Online Google Drive Live","Online Google Drive Recorded"];
+const MODES = ["Offline Face to Face","Online Google Drive Live + Recorded","Online Google Drive Recorded","Online Pen Drive Recorded"];
 
 /* ============================================================
    CUSTOM FACULTY NAME DIALOG
@@ -105,7 +105,7 @@ function cancelFacultyOtherDialog(){
 const COURSES = {
 CA: {
   Foundation: [
-    {no:"Paper 1", name:"Principles and Practice of Accounting", faculty:["Prof. Suvraprasad Tripathy","CA Hardik Manchanda","CA Anshul Agrawal","CA Parag Gupta","CA Anand Bhangariya","CA Tejas Suchak","CA Avinash Sancheti","CA Manish Mahajan","CA Parveen Sharma","CA Rishabh Rohra"]},
+    {no:"Paper 1", name:"Principles and Practice of Accounting", faculty:["Prof. Suvraprasad Tripathy","CA Hardik Manchanda","CA Anshul Agrawal","CA Parag Gupta","CA Anand Bhangariya","CA Tejas Suchak","CA Avinash Sancheti","CA Manish Mahajan","CA Rishabh Rohra"]},
     {no:"Paper 2", name:"Business Laws", faculty:["Prof. Abanindra Sahu","CA Ankita Patni","CA Indresh Gandhi","CS Arjun Chhabra","CA Gurpreet Singh","CA Shivangi Agrawal"]},
     {no:"Paper 3", name:"Quantitative Aptitude", faculty:["Prof. SP Praveen K Rao","CA Pranav Popat","CA Nishant Kumar","CA Vinod Reddy","CA Aman Khedia","Prof. Akash Agrawal","CS Vaibhav Chitlangia","CA Navneet Mundhra","Prof. Raj Awate","Prof. Mayank Maheshwari","Anurag Chauhan"]},
     {no:"Paper 4", name:"Business Economics", faculty:["Prof. Prateek Nanda","Prof. Akhilesh Daga","CA Harshad Jaju","CA Mohnish Vora","CA Hardik Manchanda","CA Sanchit Grover","CA Parag Gupta","CA Aakansha Arora","CA Divya Agarwal","CA Vijay Sarda","Prof. Love Kaushik"]}
@@ -131,7 +131,7 @@ CA: {
 CMA: {
   Foundation: [
     {no:"Paper 1", name:"Fundamentals of Business Laws and Business Communication", faculty:["Prof. Abanindra Sahu","CA Shivangi Agrawal","CA Amit Bachhawat","CS Arjun Chhabra","CA Raghav Goel","CA Ruchika Saboo","CA Siddharth Agarwal","CA CS Jaspreet Singh Johar"]},
-    {no:"Paper 2", name:"Fundamentals of Financial and Cost Accounting", faculty:["Prof. Suvraprasad Tripathy","CA CMA Santosh Kumar","CA CMA Abhimanyu Agarwal","CA Avinash Sancheti","CA Ranjan Periwal","CA Yashvardhan Saboo","CA Sudarshan Agrawal","CA Parveen Sharma","CA Raj K Agrawal","CA Sarthak Jain","Prof. Navneet Mundhra"]},
+    {no:"Paper 2", name:"Fundamentals of Financial and Cost Accounting", faculty:["Prof. Suvraprasad Tripathy","CA CMA Santosh Kumar","CA CMA Abhimanyu Agarwal","CA Avinash Sancheti","CA Ranjan Periwal","CA Yashvardhan Saboo","CA Sudarshan Agrawal","CA Raj K Agrawal","CA Sarthak Jain","Prof. Navneet Mundhra"]},
     {no:"Paper 3", name:"Fundamentals of Business Mathematics and Statistics", faculty:["Prof. SP Praveen K Rao","Prof. Mayank Agarwal","CA Pranav Chandak","CA Ashish Kedia","CA Raj K Agrawal","Prof. Deepack Sir","Prof. Navneet Mundhra","Prof. Sandeep Giri","CA Nitin Guru","Prof. Vinit Kumar","CA Sanjay Khemka"]},
     {no:"Paper 4", name:"Fundamentals of Business Economics and Management", faculty:["Prof. Prateek Nanda","CA Harshad Jaju","CA Priyanka Saxena","Prof. Sandeep Giri","Prof. Vinit Kumar","CA Yashvardhan Saboo","Prof. Kundu Sir","CA Amit Tated","Prof. Archana Khetan","CA Sarthak Jain"]}
   ],
