@@ -137,13 +137,13 @@ CMA: {
   ],
   Intermediate: [
     {no:"Paper 5", name:"Business Laws and Ethics", group:"Group 1", faculty:["Prof. Abanindra Sahu","CS Arjun Chhabra","CA Shivangi Agrawal","CA CS Divya Agarwal","CA Sudhir Sachdeva","CA Amit Bachhawat","Prof. Hemangi Kothari","CA Abhishek Bansal"]},
-    {no:"Paper 6", name:"Financial Accounting", group:"Group 1", faculty:["Prof. Abhisek Mahaptro","CA Sneha Budhia","CA CMA Santosh Kumar","CA CS Avinash Sancheti","CA Bishnu Kedia","CA CMA Abhimanyu Agarwal","CA Ranjan Periwal","CA Raj K Agrawal","CA Avinash Lala","CA Ayush Tibrewal","CA Sudarshan Agrawal","CA Parveen Sharma"]},
+    {no:"Paper 6", name:"Financial Accounting", group:"Group 1", faculty:["Prof. Abhisek Mahapatro","CA Sneha Budhia","CA CMA Santosh Kumar","CA CS Avinash Sancheti","CA Bishnu Kedia","CA CMA Abhimanyu Agarwal","CA Ranjan Periwal","CA Raj K Agrawal","CA Avinash Lala","CA Ayush Tibrewal","CA Sudarshan Agrawal","CA Parveen Sharma"]},
     {no:"Paper 7A", name:"Direct Taxation", group:"Group 1", faculty:["Prof. Aayush Dash","CA Bhanwar Borana","CA Vijay Sarda","CA Yash Khandelwal","CA Jaspreet Singh Johar","CA Vinod Gupta","CA Sahil Jain","CA Pranav Chandak","CA Vivek Gaba","Prof. Vivek Soni"]},
     {no:"Paper 7B", name:"Indirect Taxation", group:"Group 1", faculty:["Prof. Aayush Dash","CA Vishal Bhattad","CA Raj Kumar","CA Ramesh Soni","CA Yashvant Mangal","CA Nikunj Goenka","CA Akshansh Garg","CA Riddhi Baghmar","CA Amit Jain","CA Brindavan Giri"]},
     {no:"Paper 8", name:"Cost Accounting", group:"Group 1", faculty:["CA Pranay Gangan","Prof. A. Sourav Patro","CA Satish Jalan","CA Ranjan Periwal","CA Purushottam Aggarwal","CMA Sumit Rastogi","CA Nitin Guru","CA Sankalp Kanstiya","CA Raj K Agrawal","CA Namit Arora","CA Sachin Gupta","CA Dani Khandelwal"]},
     {no:"Paper 9", name:"Operations Management and Strategic Management", group:"Group 2", faculty:["Prof. A. Sourav Patro","CA Mayank Saraf","CA CS Divya Agarwal","CA Amit Tated","CMA Akshay Sen","Prof. Sandeep Giri","CA Sanjay Khemka","CA Nitin Guru","Prof. J.S. Malhotra","Prof. Vinit Kumar","CA Harshad Jaju"]},
     {no:"Paper 10", name:"Corporate Accounting and Auditing", group:"Group 2", faculty:["Prof. Abanindra Sahu","CA CS Avinash Sancheti","CA Bishnu Kedia","CA CMA Abhimanyu Agarwal","CA Satish Sureka","CA Raghav Goel","CA Karthik Iyer","CA Sarthak Jain","Prof. Hemangi Kothari","CA Pankaj Garg"]},
-    {no:"Paper 11", name:"Financial Management and Business Data Analytics", group:"Group 2", faculty:["Prof. Abhisek Mahaptro","CA Ranjan Periwal","CA Satish Jalan","CA Satish Sureka","CA Gourav Kabra","CA Sanjay Khemka","CA Aditya Jain","Prof. Raj Awate","CA Nitin Guru","CFA Sanjay Saraf","CA Mayank Kothari"]},
+    {no:"Paper 11", name:"Financial Management and Business Data Analytics", group:"Group 2", faculty:["Prof. Abhisek Mahapatro","CA Ranjan Periwal","CA Satish Jalan","CA Satish Sureka","CA Gourav Kabra","CA Sanjay Khemka","CA Aditya Jain","Prof. Raj Awate","CA Nitin Guru","CFA Sanjay Saraf","CA Mayank Kothari"]},
     {no:"Paper 12", name:"Management Accounting", group:"Group 2", faculty:["Prof. A. Sourav Patro","CA Ranjan Periwal","CA Satish Jalan","CA Namit Arora","CMA Sumit Rastogi","CA Purushottam Aggarwal","CA Sankalp Kanstiya","CA Sachin Gupta","CA Raj K Agrawal","CA Dani Khandelwal","CA Ashish Kalra"]}
   ],
   Final: [
@@ -231,7 +231,7 @@ const CARD_TAGLINE = 'NEW RECORDED';
    Names are matched ignoring capital letters and full stops, so "Prof. A. Sourav Patro"
    and "Prof. A Sourav Patro" are treated as the same person. */
 const FACULTY_ORDER_FIRST = [
-  "Prof. Abanindra Sahu","Prof. Abhishek Mahapatro","Prof. A. Sourav Patro","Prof. Suvraprasad Tripathy",
+  "Prof. Abanindra Sahu","Prof. Abhisek Mahapatro","Prof. A. Sourav Patro","Prof. Suvraprasad Tripathy",
   "Prof. Prateek Nanda","Prof. SP Praveen K Rao","Prof. Aayush Dash"
 ];
 const FACULTY_ORDER_SECOND = [
