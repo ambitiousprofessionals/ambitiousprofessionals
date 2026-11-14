@@ -44,13 +44,14 @@ function faceImg(name, cls){
    FITS THE TEXT ON EVERY POSTER — measures the real text and shrinks it until it fits its box
    ============================================================ */
 function fitPosterText(root){
-  const SINGLE = [10, 8.6, 7.4, 6.4, 5.6, 4.8, 4.2, 3.6];
+  const SINGLE = [14, 12.4, 11, 9.8, 8.8, 7.9, 7.1, 6.4, 5.7, 5.1, 4.5, 4];     // compact font: the subject name takes the largest size that fits
+  const NAME2  = [10, 9, 8.1, 7.3, 6.6, 6, 5.4, 4.9, 4.4, 4];            // subject of a card with several faculties
   const COMBO  = [6.6, 5.8, 5, 4.4, 3.8, 3.4, 3];
   const BADGE  = [6.2, 5.8, 5.4, 5, 4.6, 4.2, 3.8, 3.4, 3.1, 2.8, 2.5];     // the exam name at the top-left must stay on ONE row
   root.querySelectorAll('.pc-subject, .pc-csubject, .pc-badge').forEach(el => {
     if(el.dataset.fit === '1') return;
     if(!el.offsetWidth) return;                           // not on screen yet
-    const sizes = el.classList.contains('pc-badge') ? BADGE : (el.classList.contains('pc-csubject') ? COMBO : SINGLE);
+    const sizes = el.classList.contains('pc-badge') ? BADGE : (el.classList.contains('pc-csubject-name') ? NAME2 : (el.classList.contains('pc-csubject') ? COMBO : SINGLE));
     for(let i = 0; i < sizes.length; i++){
       el.style.fontSize = sizes[i] + 'cqw';
       if(el.scrollWidth <= el.clientWidth + 1 && el.scrollHeight <= el.clientHeight + 1) break;
@@ -63,6 +64,7 @@ function refitAllPosters(){
   fitPosterText(document);
 }
 if(document.fonts && document.fonts.ready){ document.fonts.ready.then(refitAllPosters); }
+if(document.fonts && document.fonts.load){ document.fonts.load('800 16px "Barlow Condensed"').then(refitAllPosters).catch(()=>{}); }   // measure again once the compact font has arrived
 window.addEventListener('load', refitAllPosters);
 
 /* ============================================================
@@ -119,7 +121,7 @@ function posterComboHTML(p){
     '</div>' +
     '<div class="pc-cinner' + (many ? ' pc-cinner-many' : '') + '">' +
       '<div class="pc-tiles pc-tiles-' + Math.min(faces.length, 5) + (many ? ' pc-tiles-many' : '') + '">' + tiles + '</div>' +
-      '<div class="pc-csubject">' + esc(short) + '</div>' +
+      '<div class="pc-csubject' + (isCombo ? '' : ' pc-csubject-name') + '">' + esc(short) + '</div>' +
       '<span class="pc-clectag">' + esc(BATCH_TYPES[p.batch].tag) + '</span>' +
     '</div>' +
   '</div>';
