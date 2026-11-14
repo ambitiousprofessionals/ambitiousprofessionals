@@ -33,7 +33,7 @@ function allAttemptsFor(course, level){
 }
 
 /* How many upcoming attempts the LECTURES list shows for these levels (everything else keeps its full list) */
-const LECTURE_ATTEMPT_COUNT = { 'CA|Foundation':3, 'CMA|Foundation':2, 'CS|CSEET':3 };
+const LECTURE_ATTEMPT_COUNT = { 'CA|Foundation':2, 'CMA|Foundation':2, 'CS|CSEET':3 };
 /* The TEST SERIES list always shows only the next 2 attempts */
 const TEST_SERIES_ATTEMPT_COUNT = 2;
 
@@ -45,8 +45,11 @@ function getAttemptsFor(course, level, forTestSeries){
 }
 
 const CLASS_TYPES = ["Regular","Fast-track"];
-const BOOK_PREFERENCES = ["Hard Copy","Soft Copy","Without Books"];
-const MODES = ["Offline Face to Face","Online Google Drive Live + Recorded","Online Google Drive Recorded","Online Pen Drive Recorded"];
+const BOOK_PREFERENCES = ["Hard Copy","E-Book","Without Books"];
+const MODES = ["Offline Face to Face","Online Google Drive Live + Recorded","Online Google Drive Recorded"];
+/* Fast-track batches have exactly ONE mode */
+const FASTTRACK_MODES = ["Online Google Drive Recorded"];
+const OFFLINE_MODE = "Offline Face to Face";
 
 /* ============================================================
    CUSTOM FACULTY NAME DIALOG
@@ -105,10 +108,10 @@ function cancelFacultyOtherDialog(){
 const COURSES = {
 CA: {
   Foundation: [
-    {no:"Paper 1", name:"Principles and Practice of Accounting", faculty:["Prof. Suvraprasad Tripathy","CA Hardik Manchanda","CA Anshul Agrawal","CA Parag Gupta","CA Anand Bhangariya","CA Tejas Suchak","CA Avinash Sancheti","CA Manish Mahajan","CA Rishabh Rohra"]},
-    {no:"Paper 2", name:"Business Laws", faculty:["Prof. Abanindra Sahu","CA Ankita Patni","CA Indresh Gandhi","CS Arjun Chhabra","CA Gurpreet Singh","CA Shivangi Agrawal"]},
-    {no:"Paper 3", name:"Quantitative Aptitude", faculty:["Prof. SP Praveen K Rao","CA Pranav Popat","CA Nishant Kumar","CA Vinod Reddy","CA Aman Khedia","Prof. Akash Agrawal","CS Vaibhav Chitlangia","CA Navneet Mundhra","Prof. Raj Awate","Prof. Mayank Maheshwari","Anurag Chauhan"]},
-    {no:"Paper 4", name:"Business Economics", faculty:["Prof. Prateek Nanda","Prof. Akhilesh Daga","CA Harshad Jaju","CA Mohnish Vora","CA Hardik Manchanda","CA Sanchit Grover","CA Parag Gupta","CA Aakansha Arora","CA Divya Agarwal","CA Vijay Sarda","Prof. Love Kaushik"]}
+    {no:"Paper 1", name:"Principles and Practice of Accounting", faculty:["Prof. Suvraprasad Tripathy"]},
+    {no:"Paper 2", name:"Business Laws", faculty:["Prof. Abanindra Sahu"]},
+    {no:"Paper 3", name:"Quantitative Aptitude", faculty:["Prof. SP Praveen K Rao"]},
+    {no:"Paper 4", name:"Business Economics", faculty:["Prof. Prateek Nanda"]}
   ],
   Intermediate: [
     {no:"Paper 1", name:"Advanced Accounting", group:"Group 1", faculty:["CA Parveen Sharma","CA Rohit Sethi","CA Anand Bhangariya","CA Jai Chawla","CA Chiranjeev Jain","CA Abhishek Zaware","CA Aakash Kandoi","CA Parveen Jindal","CA Tejas Suchak"]},
@@ -130,21 +133,22 @@ CA: {
 },
 CMA: {
   Foundation: [
-    {no:"Paper 1", name:"Fundamentals of Business Laws and Business Communication", faculty:["Prof. Abanindra Sahu","CA Shivangi Agrawal","CA Amit Bachhawat","CS Arjun Chhabra","CA Raghav Goel","CA Ruchika Saboo","CA Siddharth Agarwal","CA CS Jaspreet Singh Johar"]},
-    {no:"Paper 2", name:"Fundamentals of Financial and Cost Accounting", faculty:["Prof. Suvraprasad Tripathy","CA CMA Santosh Kumar","CA CMA Abhimanyu Agarwal","CA Avinash Sancheti","CA Ranjan Periwal","CA Yashvardhan Saboo","CA Sudarshan Agrawal","CA Raj K Agrawal","CA Sarthak Jain","Prof. Navneet Mundhra"]},
-    {no:"Paper 3", name:"Fundamentals of Business Mathematics and Statistics", faculty:["Prof. SP Praveen K Rao","Prof. Mayank Agarwal","CA Pranav Chandak","CA Ashish Kedia","CA Raj K Agrawal","Prof. Deepack Sir","Prof. Navneet Mundhra","Prof. Sandeep Giri","CA Nitin Guru","Prof. Vinit Kumar","CA Sanjay Khemka"]},
-    {no:"Paper 4", name:"Fundamentals of Business Economics and Management", faculty:["Prof. Prateek Nanda","CA Harshad Jaju","CA Priyanka Saxena","Prof. Sandeep Giri","Prof. Vinit Kumar","CA Yashvardhan Saboo","Prof. Kundu Sir","CA Amit Tated","Prof. Archana Khetan","CA Sarthak Jain"]}
+    {no:"Paper 1", name:"Fundamentals of Business Laws and Business Communication", faculty:["Prof. Abanindra Sahu"]},
+    {no:"Paper 2", name:"Fundamentals of Financial and Cost Accounting", faculty:["Prof. Suvraprasad Tripathy"]},
+    {no:"Paper 3", name:"Fundamentals of Business Mathematics and Statistics", faculty:["Prof. SP Praveen K Rao"]},
+    {no:"Paper 4", name:"Fundamentals of Business Economics and Management", faculty:["Prof. Prateek Nanda"]}
   ],
   Intermediate: [
-    {no:"Paper 5", name:"Business Laws and Ethics", group:"Group 1", faculty:["Prof. Abanindra Sahu","CS Arjun Chhabra","CA Shivangi Agrawal","CA CS Divya Agarwal","CA Sudhir Sachdeva","CA Amit Bachhawat","Prof. Hemangi Kothari","CA Abhishek Bansal"]},
-    {no:"Paper 6", name:"Financial Accounting", group:"Group 1", faculty:["Prof. Abhisek Mahapatro","CA Sneha Budhia","CA CMA Santosh Kumar","CA CS Avinash Sancheti","CA Bishnu Kedia","CA CMA Abhimanyu Agarwal","CA Ranjan Periwal","CA Raj K Agrawal","CA Avinash Lala","CA Ayush Tibrewal","CA Sudarshan Agrawal","CA Parveen Sharma"]},
-    {no:"Paper 7A", name:"Direct Taxation", group:"Group 1", faculty:["Prof. Aayush Dash","CA Bhanwar Borana","CA Vijay Sarda","CA Yash Khandelwal","CA Jaspreet Singh Johar","CA Vinod Gupta","CA Sahil Jain","CA Pranav Chandak","CA Vivek Gaba","Prof. Vivek Soni"]},
-    {no:"Paper 7B", name:"Indirect Taxation", group:"Group 1", faculty:["Prof. Aayush Dash","CA Vishal Bhattad","CA Raj Kumar","CA Ramesh Soni","CA Yashvant Mangal","CA Nikunj Goenka","CA Akshansh Garg","CA Riddhi Baghmar","CA Amit Jain","CA Brindavan Giri"]},
-    {no:"Paper 8", name:"Cost Accounting", group:"Group 1", faculty:["CA Pranay Gangan","Prof. A. Sourav Patro","CA Satish Jalan","CA Ranjan Periwal","CA Purushottam Aggarwal","CMA Sumit Rastogi","CA Nitin Guru","CA Sankalp Kanstiya","CA Raj K Agrawal","CA Namit Arora","CA Sachin Gupta","CA Dani Khandelwal"]},
-    {no:"Paper 9", name:"Operations Management and Strategic Management", group:"Group 2", faculty:["Prof. A. Sourav Patro","CA Mayank Saraf","CA CS Divya Agarwal","CA Amit Tated","CMA Akshay Sen","Prof. Sandeep Giri","CA Sanjay Khemka","CA Nitin Guru","Prof. J.S. Malhotra","Prof. Vinit Kumar","CA Harshad Jaju"]},
-    {no:"Paper 10", name:"Corporate Accounting and Auditing", group:"Group 2", faculty:["Prof. Abanindra Sahu","CA CS Avinash Sancheti","CA Bishnu Kedia","CA CMA Abhimanyu Agarwal","CA Satish Sureka","CA Raghav Goel","CA Karthik Iyer","CA Sarthak Jain","Prof. Hemangi Kothari","CA Pankaj Garg"]},
-    {no:"Paper 11", name:"Financial Management and Business Data Analytics", group:"Group 2", faculty:["Prof. Abhisek Mahapatro","CA Ranjan Periwal","CA Satish Jalan","CA Satish Sureka","CA Gourav Kabra","CA Sanjay Khemka","CA Aditya Jain","Prof. Raj Awate","CA Nitin Guru","CFA Sanjay Saraf","CA Mayank Kothari"]},
-    {no:"Paper 12", name:"Management Accounting", group:"Group 2", faculty:["Prof. A. Sourav Patro","CA Ranjan Periwal","CA Satish Jalan","CA Namit Arora","CMA Sumit Rastogi","CA Purushottam Aggarwal","CA Sankalp Kanstiya","CA Sachin Gupta","CA Raj K Agrawal","CA Dani Khandelwal","CA Ashish Kalra"]}
+    {no:"Paper 5", name:"Business Laws and Ethics", group:"Group 1", faculty:["Prof. Abanindra Sahu"]},
+    {no:"Paper 6", name:"Financial Accounting", group:"Group 1", faculty:["Prof. Abhisek Mahapatro"]},
+    {no:"Paper 7A", name:"Direct Taxation", group:"Group 1", faculty:["Prof. Aayush Dash"]},
+    {no:"Paper 7B", name:"Indirect Taxation", group:"Group 1", faculty:["Prof. Aayush Dash"]},
+    {no:"Paper 8", name:"Cost Accounting", group:"Group 1", faculty:["Prof. A. Sourav Patro"]},
+    {no:"Paper 9A", name:"Operations Management", group:"Group 2", faculty:["Prof. A. Sourav Patro"]},
+    {no:"Paper 9B", name:"Strategic Management", group:"Group 2", faculty:["Prof. A. Sourav Patro"]},
+    {no:"Paper 10", name:"Corporate Accounting and Auditing", group:"Group 2", faculty:["Prof. Abanindra Sahu"]},
+    {no:"Paper 11", name:"Financial Management and Business Data Analytics", group:"Group 2", faculty:["Prof. Abhisek Mahapatro"]},
+    {no:"Paper 12", name:"Management Accounting", group:"Group 2", faculty:["Prof. A. Sourav Patro"]}
   ],
   Final: [
     {no:"Paper 13", name:"Corporate and Economic Laws", group:"Group 1", faculty:["Prof. Abanindra Sahu","CS Arjun Chhabra","CA Shivangi Agrawal","CA Amit Popli","CA Amit Bachhawat","CA CS Jaspreet Singh Johar","CA Abhishek Bansal","CA Siddharth Agarwal"]},
@@ -195,8 +199,9 @@ CS: {
    ============================================================ */
 
 const BATCH_TYPES = {
-  regular:   { key:'regular',   label:'Regular',    tag:'Regular Lectures' },
-  fasttrack: { key:'fasttrack', label:'Fast-track', tag:'Fast-track Lectures' }
+  regular:   { key:'regular',   label:'Regular',          tag:'Regular Lectures' },
+  fasttrack: { key:'fasttrack', label:'Fast-track',       tag:'Fast-track Lectures' },
+  writing:   { key:'writing',   label:'Writing Practice', tag:'Writing Practice Lectures' }
 };
 
 /* ============================================================
@@ -221,6 +226,7 @@ const CARD_TONES = {
 };
 function getCardTone(course, level, batch){
   const t = CARD_TONES[course + '|' + level];
+  if(batch === 'writing') return (t && t.writing) || ['#FFF3C4','#FBE08A'];     // Writing Practice cards: soft lemon
   return (t && t[batch]) || ['#EAE8E4','#D2CFC8'];
 }
 
@@ -255,25 +261,6 @@ function facultyTier(name){
   return { tier:2, idx:0 };
 }
 
-/* The one faculty from the first list who still offers hard-copy books */
-const FACULTY_WITH_BOOK_CHOICE = "Prof. Abanindra Sahu";
-
-/* Rules that depend on who teaches the product (first-list faculty):
-   - Mode of Class is only "Offline Face to Face"
-   - Book Preference is only "Without Books" (Prof. Abanindra Sahu: "Hard Copy" or "Without Books")
-   Everyone else: Hard Copy / Soft Copy / Without Books, and all three modes. */
-function getProductRules(product){
-  const facs = product.faculties || [];
-  const allFirst = facs.length > 0 && facs.every(f => facultyTier(f).tier === 0);
-  const hasBookFaculty = facs.some(f => normName(f) === normName(FACULTY_WITH_BOOK_CHOICE));
-  let books = BOOK_PREFERENCES.slice();
-  if(allFirst) books = hasBookFaculty ? ["Hard Copy","Without Books"] : ["Without Books"];
-  return {
-    books: books,
-    modes: allFirst ? ["Offline Face to Face"] : MODES.slice()
-  };
-}
-
 /* paper numbers: "Paper 3A" -> "Paper-3A" (cards) and "P3A" (filters, lists) */
 function paperLabel(no){ return String(no || '').replace(/^Paper\s*/i, 'Paper-'); }
 function paperShort(no){ return 'P' + String(no || '').replace(/^Paper\s*/i, ''); }
@@ -295,7 +282,7 @@ const SUBJECT_SHORT = {
   "Fundamentals of Business Laws and Business Communication":"LAW & COMM", "Fundamentals of Financial and Cost Accounting":"FCA",
   "Fundamentals of Business Mathematics and Statistics":"BMS", "Fundamentals of Business Economics and Management":"BEM",
   "Business Laws and Ethics":"LAW", "Financial Accounting":"FA", "Direct Taxation":"DT", "Indirect Taxation":"IDT", "Cost Accounting":"COST",
-  "Operations Management and Strategic Management":"OM & SM", "Corporate Accounting and Auditing":"CAA",
+  "Operations Management and Strategic Management":"OM & SM", "Operations Management":"OM", "Corporate Accounting and Auditing":"CAA",
   "Financial Management and Business Data Analytics":"FM & BDA", "Management Accounting":"MA",
   "Corporate and Economic Laws":"CEL", "Strategic Financial Management":"SFM", "Direct Tax Laws and International Taxation":"DT",
   "Strategic Cost Management":"SCM", "Cost and Management Audit":"AUDIT", "Corporate Financial Reporting":"CFR",
@@ -323,6 +310,7 @@ function facultyInitials(name){
 
 /* Builds the full ordered product list for one exam (e.g. CA + Intermediate). */
 function buildCatalog(course, level){
+  if(isCurated(course, level)) return buildCuratedCatalog(course, level);
   const papers = (COURSES[course] && COURSES[course][level]) || [];
   const entries = [];
   const firstSeen = {};
@@ -345,10 +333,9 @@ function buildCatalog(course, level){
   const others = entries.filter(e => e.tier === 2).sort(byOrder);
 
   const seq = [];
-  first.forEach(e  => seq.push({ e, batch:'regular' }));                                          // 1) regular cards of the first list
+  first.forEach(e  => seq.push({ e, batch:'regular' }));                                          // 1) our own faculties: REGULAR lectures only (never fast-track)
   second.forEach(e => { seq.push({ e, batch:'regular' }); seq.push({ e, batch:'fasttrack' }); }); // 2) regular + fast-track, one by one
-  first.forEach(e  => seq.push({ e, batch:'fasttrack' }));                                        // 3) fast-track cards of the first list
-  others.forEach(e => { seq.push({ e, batch:'regular' }); seq.push({ e, batch:'fasttrack' }); }); // 4) everyone else
+  others.forEach(e => { seq.push({ e, batch:'regular' }); seq.push({ e, batch:'fasttrack' }); }); // 3) everyone else
 
   const list = seq.map(x => makeSingleProduct(course, level, x.e.paper, x.e.faculty, x.batch));
   const combos = buildCombos(course, level);                                                       // 5) combos (when you add them)
@@ -374,12 +361,743 @@ function makeSingleProduct(course, level, paper, faculty, batch){
   };
   p.title = p.examLabel + ' ' + paper.name + ' ' + BATCH_TYPES[batch].label + ' Lectures by ' + faculty;
   const pr = getPriceInfo(p);
-  p.mrp = pr.mrp; p.discount = pr.discount; p.price = pr.price;
+  p.pricing = (pr.price > 0) ? { fixed:{ price:pr.price, mrp:pr.mrp || null, disc:pr.discount || 0 } } : null;
+  applyCardPrice(p);
   return p;
 }
 
 function getExamLabelSafe(course, level){
   return (course === 'CS' && level === 'CSEET') ? 'CSEET' : (course + ' ' + level);
+}
+
+/* ============================================================
+   INSTITUTES — internal bookkeeping only (the website NEVER shows these names).
+   Our own faculties are "AP"; every other code is an associate institute.
+   The order below is the order the cards are shown in (after our own faculties).
+   ============================================================ */
+const INSTITUTES = {
+  AP:  'Ambitious Professionals',
+  BB:  'BB Virtuals',
+  VS:  'Vsmart Academy',
+  EK:  'Ekatvam Academy',
+  AL:  'Aldine CA',
+  SPC: 'Swapnil Patni Classes (SPC)'
+};
+const INSTITUTE_ORDER = {
+  CA:  ['AP','BB','VS','EK','AL','SPC'],
+  CMA: ['AP','EK','VS','BB']
+};
+function instituteRank(course, code){
+  const order = INSTITUTE_ORDER[course] || INSTITUTE_ORDER.CA;
+  const i = order.indexOf(code);
+  return i < 0 ? 99 : i;
+}
+
+/* ============================================================
+   FEATURES (Swapnil Patni Classes — Regular lectures)
+   ============================================================ */
+const FEATURE_NAMES = ['Silver','Gold','Platinum'];
+const FEATURE_VIEWS = { Silver:'1 Live + 2 Recorded', Gold:'1 Live + 3 Recorded', Platinum:'1 Live + Unlimited' };
+
+/* What the Product Info tab shows when "Offline Face to Face" is chosen (left column | right column) */
+const OFFLINE_INFO_ROWS = [
+  ['Stay Upto',       'Stay upto Batch end (If you have opted for IPP Batch, stay is valid till your Attempt)'],
+  ['Tests',           '4 Class tests for each Subject'],
+  ['Food',            'Included (Breakfast, Lunch & Dinner)'],
+  ['Transport',       'Included in Fees'],
+  ['Laundry',         'Included in Fees'],
+  ['Library',         'Multiple Library Access (24×7)'],
+  ['Only CA Students','Yes, From Across India'],
+  ['Application',     'Live Stream Access (with Backup)'],
+  ['Security',        '24×7 CCTV Surveillance'],
+  ['Cafeteria',       'Yes, In The Premises'],
+  ['Parent Reporting','Test Marks & Attendance via Parents Login']
+];
+
+/* ============================================================
+   SYSTEM REQUIREMENTS (copied from the product sheets)
+   ============================================================ */
+const SYS = {
+  BB: 'Windows\nSupports both laptop and desktop\nMinimum processor: 64-bit\nMinimum RAM: 4 GB\nWindows 10 or above\n\nAndroid\nMinimum RAM: 2 GB (Recommended: 4 GB)\nMinimum Android version: 11 or above\nMinimum free space required: 2 GB or more\n\niOS\niOS (Apple) devices are supported\nDevice should have good performance\niOS version 17 or above\n\nmacOS\nmacOS 14 or above\nApple Silicon (M1 chip or above)\n(Intel-based Macs are not supported.)',
+  VS: 'Laptop, Tablet & Mobile Devices (Lectures would be played on any one device, either Windows or Android.)',
+  EK: 'Windows\nLaptop & Desktop both supported\nMinimum Processor: Pentium D\nMinimum RAM: 4 GB\nSupported OS: Windows 7, 8, 10\nNote: Windows 7 Home Basic version is not supported\n\nAndroid\nMinimum RAM: 4 GB\nMinimum Android Version: 7.0 and above\nDevice should offer good performance\n\niOS\niPhone: Requires iOS 12.1 or later\niPad: Requires iPadOS 12.1 or later\nMac Laptops are not supported',
+  SPC: 'Android Devices\nAndroid 10 or above\nMinimum 4 GB RAM\nAll processors except MediaTek supported\n\niOS Devices\niOS 17 or above\n\nWindows Laptop\nFor i3 laptops, minimum 10th generation processor required\nFor i5 and above, minimum 6th generation processor required\nMinimum clock speed: 2.0 GHz\nLectures will not play on a PC\nOS: Windows 10 or higher (10 N not supported)\nRAM: Minimum 4 GB\n\nmacOS Devices\nMacBook Pro and MacBook Air 2016 or later\nmacOS 13 Ventura or newer\n\nInternet Requirement\nMinimum 10 Mbps speed\nStable internet connection required',
+  CMAF: 'A stable internet connection and compatible device are recommended for best experience.',
+  ALLDEV: 'Windows Laptop, Android, Mac Book, IOS Devices',
+  BBV: 'Video Runs On Windows Based Computer , Laptop, Mobile Operating',
+  JAL: 'Android Mobile: Android 10 | 4 GB Ram | (This application is not supported in iPhone/iPad/MacBook)\nLaptop: Windows 10 & above | System type (64-bit) | Processor (3.30Ghz) | RAM (4GB & Above)',
+  SHIV: 'Video Runs on Either Windows/Android\nRequirements for Windows:\n• Windows 7 & Above'
+};
+
+/* price helper:  fx(price, mrp, discount%)   — no mrp means "show the price only" */
+function fx(price, mrp, disc){ return { price:price, mrp:(mrp && mrp > 0) ? mrp : null, disc:disc || 0 }; }
+
+/* all ways of picking n items out of a list, and all ways of picking one item from each list */
+function combinations(arr, n){
+  const out = [];
+  (function rec(start, cur){
+    if(cur.length === n){ out.push(cur.slice()); return; }
+    for(let i = start; i < arr.length; i++){ cur.push(arr[i]); rec(i + 1, cur); cur.pop(); }
+  })(0, []);
+  return out;
+}
+function crossPick(groups){
+  let out = [[]];
+  groups.forEach(g => {
+    const next = [];
+    out.forEach(o => g.forEach(x => next.push(o.concat([x]))));
+    out = next;
+  });
+  return out;
+}
+/* turns a list of part keys into combo rows sharing one price/format */
+function comboRows(prefix, inst, batch, partLists, pricing, extra){
+  return partLists.map(parts => Object.assign({ k: prefix + '-' + parts.join('-'), inst:inst, batch:batch, parts:parts, pricing:pricing }, extra || {}));
+}
+/* a Swapnil Patni Classes (SPC) product: 3 features, each with its own price */
+function spcPricing(silver, gold, platinum){ return { feature:{ Silver:silver, Gold:gold, Platinum:platinum } }; }
+const SPC_SINGLE = spcPricing(fx(4999, 6999, 29), fx(5999, 6999, 14), fx(6999, 6999, 0));
+const SPC_COMBO_PRICES = spcPricing(fx(15000, 18000, 17), fx(18000, 18000, 0), fx(21000, 18000, -17));
+const SPC_GURUKUL = {
+  'SPC Gurukul':                  fx(140000, 155000, 10),
+  'SPC Gurukul with IPP till Exam': fx(165000, 185000, 11)
+};
+const BB_FT_SUBJECTS = ['bb2','bb4','bb7','bb9'];
+
+/* ============================================================
+   THE PRODUCT SHEETS  (CA Foundation, CMA Foundation, CMA Intermediate)
+   ------------------------------------------------------------
+   k       = short name of the product (used inside combos)       inst  = institute code
+   paper   = which paper                                          fac   = faculty / faculties teaching it
+   batch   = 'regular' / 'fasttrack' / 'writing'                  pricing = see the helpers above
+   info    = the Product Info rows:  lectures, duration, validity, views, mat (study material), sys
+             duration: a number means hours, "1.5m" means months.  validity: "10m" = 10 months, "1y" = 1 year
+             "6m/12m" means the buyer picks one (the price list then has an axis).
+   Our own (Ambitious Professionals) faculties are NOT listed here — they come from the COURSES list
+   (Regular lectures only, prices left blank).
+   ============================================================ */
+const CURATED = {
+
+'CA|Foundation': {
+  singles: [
+    /* ---------- BB Virtuals ---------- */
+    {k:'bb1',  inst:'BB', paper:'Paper 1', fac:['CA Hardik Manchanda'], batch:'regular',
+      pricing:{fixed:fx(4000, 4500, 11)},
+      info:{lectures:'100', duration:'220', validity:'10m', views:'2', mat:'2 Books (Question Bank - Module 1 & Module 2)', sys:SYS.BB}},
+    {k:'bb2',  inst:'BB', paper:'Paper 1', fac:['CA Hardik Manchanda'], batch:'fasttrack',
+      pricing:{fixed:fx(3500)},
+      info:{lectures:'55-60', duration:'150', validity:'10m', views:'2', mat:'1. Handwritten Notes\n2. 2 Question Bank (Covering All Study Material Questions and Important PYQs, RTPs Questions)', sys:SYS.BB}},
+    {k:'bb3',  inst:'BB', paper:'Paper 2', fac:['CS Arjun Chhabra'], batch:'regular',
+      pricing:{fixed:fx(5500, 6000, 8)},
+      info:{lectures:'70-75', duration:'150', validity:'10m', views:'2', mat:'Total 3 (1 Concept Book | Question Bank | Chart Book)', sys:SYS.BB}},
+    {k:'bb4',  inst:'BB', paper:'Paper 2', fac:['CS Arjun Chhabra'], batch:'fasttrack',
+      pricing:{fixed:fx(3500)},
+      info:{lectures:'40', duration:'80', validity:'10m', views:'2', mat:"1. Concept Book\n2. Chart Book\n3. Bull's Eye Latest Edition. (Question Bank)\nNote: All past exam questions, MTPs, RTPs and self-drafted questions by Arjun Sir include answers of the same", sys:SYS.BB}},
+    {k:'bb5',  inst:'BB', paper:'Paper 2', fac:['CS Arjun Chhabra'], batch:'writing',
+      pricing:{fixed:fx(699, 899, 22)},
+      info:{lectures:'5', duration:'25', validity:'1y', views:'1.5', mat:'NA', sys:SYS.BB}},
+    {k:'bb6',  inst:'BB', paper:'Paper 3', fac:['Prof. Akash Agrawal'], batch:'regular',
+      pricing:{fixed:fx(5000, 5500, 9)},
+      info:{lectures:'80', duration:'180', validity:'10m', views:'2', mat:'3 Coloured Printed Books\nSuper Chart PRO\nMCQ Compiler PRO\nPocket Book', sys:SYS.BB}},
+    {k:'bb7',  inst:'BB', paper:'Paper 3', fac:['Prof. Akash Agrawal'], batch:'fasttrack',
+      pricing:{fixed:fx(3500)},
+      info:{lectures:'50-55', duration:'150', validity:'10m', views:'2', mat:'1. Super Chart - EO Version\n2. Mcq\'s Compiler - EO Version\n3. Pocket Book', sys:SYS.BB}},
+    {k:'bb8',  inst:'BB', paper:'Paper 4', fac:['CA Mohnish Vora'], batch:'regular',
+      pricing:{fixed:fx(4499, 5499, 18)},
+      info:{lectures:'90', duration:'180', validity:'10m', views:'2', mat:'3 Books (Concept Book - Micro & Macro & MCQ Book)', sys:SYS.BB}},
+    {k:'bb9',  inst:'BB', paper:'Paper 4', fac:['CA Mohnish Vora'], batch:'fasttrack',
+      pricing:{fixed:fx(3500)},
+      info:{lectures:'60', duration:'120', validity:'10m', views:'2', mat:'', sys:SYS.BB}},
+    {k:'bb10', inst:'BB', paper:'Paper 4', fac:['CA Hardik Manchanda'], batch:'regular',
+      pricing:{fixed:fx(4000, 4500, 11)},
+      info:{lectures:'90', duration:'180', validity:'10m', views:'2', mat:'3 Books (Maths Stats Notes, Question Bank, PYQs)', sys:SYS.BB}},
+
+    /* ---------- Vsmart Academy (upcoming attempt = first price, later attempts = second price) ---------- */
+    {k:'vs23', inst:'VS', paper:'Paper 1', fac:['CA Parag Gupta'], batch:'regular',
+      pricing:{attempt:[fx(5999), fx(6124)]},
+      info:{lectures:'---', duration:'150', validity:'Till Exam', views:'5', mat:'Printed Books', sys:SYS.VS}},
+    {k:'vs24', inst:'VS', paper:'Paper 4', fac:['CA Parag Gupta'], batch:'regular',
+      pricing:{attempt:[fx(3999), fx(4124)]},
+      info:{lectures:'---', duration:'100', validity:'Till Exam', views:'5', mat:'Printed Books', sys:SYS.VS}},
+    {k:'vs26', inst:'VS', paper:'Paper 2', fac:['CA Amol Jain'], batch:'fasttrack',
+      pricing:{fixed:fx(1999)},
+      info:{lectures:'---', duration:'---', validity:'Till Exam', views:'5', mat:'Printed Books', sys:SYS.VS}},
+    {k:'vs27', inst:'VS', paper:'Paper 2', fac:['CA Amol Jain'], batch:'regular',
+      pricing:{attempt:[fx(4999), fx(5124)]},
+      info:{lectures:'---', duration:'120', validity:'Till Exam', views:'5', mat:'Printed Books', sys:SYS.VS}},
+    {k:'vs28', inst:'VS', paper:'Paper 3', fac:['CA Aman Kedia'], batch:'regular',
+      pricing:{attempt:[fx(5999), fx(6124)]},
+      info:{lectures:'---', duration:'150', validity:'Till Exam', views:'5', mat:'Printed Books', sys:SYS.VS}},
+    {k:'vs29', inst:'VS', paper:'Paper 3', fac:['CA Aman Kedia'], batch:'fasttrack',
+      pricing:{fixed:fx(3999)},
+      info:{lectures:'---', duration:'---', validity:'Till Exam', views:'5', mat:'Printed Books', sys:SYS.VS}},
+
+    /* ---------- Ekatvam Academy ---------- */
+    {k:'ek33', inst:'EK', paper:'Paper 1', fac:['CA Manish Tardeja'], batch:'fasttrack',
+      pricing:{fixed:fx(4000)},
+      info:{lectures:'---', duration:'1.5m', validity:'12m', views:'1', mat:'Hard Copy Notes', sys:SYS.EK}},
+    {k:'ek34', inst:'EK', paper:'Paper 1', fac:['CA Abhishek Zaware','CA Manish Tardeja'], batch:'regular',
+      pricing:{fixed:fx(8000)},
+      info:{lectures:'100', duration:'200', validity:'12m', views:'2', mat:'Hard Copy Notes', sys:SYS.EK}},
+    {k:'ek35', inst:'EK', paper:'Paper 3', fac:['Prof. G. B. Joshi'], batch:'regular',
+      pricing:{fixed:fx(8000)},
+      info:{lectures:'100', duration:'200', validity:'12m', views:'2', mat:'Hard Copy Notes', sys:SYS.EK}},
+    {k:'ek36', inst:'EK', paper:'Paper 3', fac:['Prof. G. B. Joshi'], batch:'fasttrack',
+      pricing:{fixed:fx(4000)},
+      info:{lectures:'---', duration:'1.5m', validity:'12m', views:'1', mat:'Hard Copy Notes', sys:SYS.EK}},
+    {k:'ek37', inst:'EK', paper:'Paper 4', fac:['CA Vijay Sarda','CA Manish Tardeja'], batch:'fasttrack',
+      pricing:{fixed:fx(4000)},
+      info:{lectures:'---', duration:'1.5m', validity:'12m', views:'1', mat:'Hard Copy Notes', sys:SYS.EK}},
+    {k:'ek38', inst:'EK', paper:'Paper 4', fac:['CA Vijay Sarda','CA Manish Tardeja'], batch:'regular',
+      pricing:{fixed:fx(6299, 6999, 10)},
+      info:{lectures:'---', duration:'200', validity:'12m', views:'2', mat:'Hard Copy Notes', sys:SYS.EK}},
+
+    /* ---------- Swapnil Patni Classes (SPC): Regular = Silver / Gold / Platinum ---------- */
+    {k:'spc39', inst:'SPC', paper:'Paper 1', fac:['CA Anand Bhangariya'], batch:'regular', pricing:SPC_SINGLE, freeFT:'spc46',
+      info:{lectures:'96', duration:'152', validity:'12m', views:'FEATURE', mat:'4 Books', sys:SYS.SPC}},
+    {k:'spc40', inst:'SPC', paper:'Paper 1', fac:['CA Tejas Suchak'], batch:'regular', pricing:SPC_SINGLE, freeFT:'spc47',
+      info:{lectures:'99', duration:'152', validity:'12m', views:'FEATURE', mat:'2 Books', sys:SYS.SPC}},
+    {k:'spc41', inst:'SPC', paper:'Paper 2', fac:['CA Ankita Patni'], batch:'regular', pricing:SPC_SINGLE, freeFT:'spc48',
+      info:{lectures:'95', duration:'150', validity:'12m', views:'FEATURE', mat:'2 Books', sys:SYS.SPC}},
+    {k:'spc42', inst:'SPC', paper:'Paper 2', fac:['CA Indresh Gandhi'], batch:'regular', pricing:SPC_SINGLE, freeFT:'spc49',
+      info:{lectures:'93', duration:'130', validity:'12m', views:'FEATURE', mat:'4 Books', sys:SYS.SPC}},
+    {k:'spc43', inst:'SPC', paper:'Paper 3', fac:['CA Vinod Reddy'], batch:'regular', pricing:SPC_SINGLE, freeFT:'spc50',
+      info:{lectures:'100', duration:'200', validity:'12m', views:'FEATURE', mat:'3 Books', sys:SYS.SPC}},
+    {k:'spc44', inst:'SPC', paper:'Paper 3', fac:['CA Pranav Popat'], batch:'regular', pricing:SPC_SINGLE, freeFT:'spc51',
+      info:{lectures:'84', duration:'152', validity:'12m', views:'FEATURE', mat:'3 Books', sys:SYS.SPC}},
+    {k:'spc45', inst:'SPC', paper:'Paper 4', fac:['CA Swapnil Patni','CA Adarsh Joshi'], batch:'regular', pricing:SPC_SINGLE,
+      info:{lectures:'84', duration:'150', validity:'12m', views:'FEATURE', mat:'3 Books', sys:SYS.SPC}},
+    {k:'spc46', inst:'SPC', paper:'Paper 1', fac:['CA Anand Bhangariya'], batch:'fasttrack', pricing:{fixed:fx(2999, 4999, 40)},
+      info:{lectures:'74', duration:'109', validity:'6m', views:'Unlimited', mat:'3 Books', sys:SYS.SPC}},
+    {k:'spc47', inst:'SPC', paper:'Paper 1', fac:['CA Tejas Suchak'], batch:'fasttrack', pricing:{fixed:fx(2999, 4999, 40)},
+      info:{lectures:'60', duration:'130', validity:'6m', views:'Unlimited', mat:'2 Books', sys:SYS.SPC}},
+    {k:'spc48', inst:'SPC', paper:'Paper 2', fac:['CA Ankita Patni'], batch:'fasttrack', pricing:{fixed:fx(2999, 4999, 40)},
+      info:{lectures:'76', duration:'102', validity:'6m', views:'Unlimited', mat:'3 Books', sys:SYS.SPC}},
+    {k:'spc49', inst:'SPC', paper:'Paper 2', fac:['CA Indresh Gandhi'], batch:'fasttrack', pricing:{fixed:fx(2999, 4999, 40)},
+      info:{lectures:'50', duration:'85', validity:'6m', views:'Unlimited', mat:'2 Books', sys:SYS.SPC}},
+    {k:'spc50', inst:'SPC', paper:'Paper 3', fac:['CA Vinod Reddy'], batch:'fasttrack', pricing:{fixed:fx(2999, 4999, 40)},
+      info:{lectures:'50', duration:'100', validity:'6m', views:'Unlimited', mat:'NA', sys:SYS.SPC}},
+    {k:'spc51', inst:'SPC', paper:'Paper 3', fac:['CA Pranav Popat'], batch:'fasttrack', pricing:{fixed:fx(2999, 4999, 40)},
+      info:{lectures:'42', duration:'95', validity:'6m', views:'Unlimited', mat:'3 Books', sys:SYS.SPC}},
+    {k:'spc52', inst:'SPC', paper:'Paper 2', fac:['CA Ankita Patni'], batch:'writing', pricing:{fixed:fx(599, 2599, 77)},
+      info:{lectures:'---', duration:'---', validity:'3m', views:'2', mat:'NA', sys:SYS.SPC}}
+  ],
+  combos: [].concat(
+    /* ---------- BB Virtuals: Fast-track combos ---------- */
+    comboRows('bbft2', 'BB', 'fasttrack', combinations(BB_FT_SUBJECTS, 2), {fixed:fx(6300, 7000, 10)}),
+    comboRows('bbft3', 'BB', 'fasttrack', combinations(BB_FT_SUBJECTS, 3), {fixed:fx(8925, 10500, 15)}),
+    comboRows('bbft4', 'BB', 'fasttrack', combinations(BB_FT_SUBJECTS, 4), {fixed:fx(9999, 12999, 23)}),
+    /* ---------- BB Virtuals: Regular combos ---------- */
+    comboRows('bbc14', 'BB', 'regular', [['bb3','bb6','bb8']],        {fixed:fx(13500, 15000, 10)}),
+    comboRows('bbc15', 'BB', 'regular', [['bb3','bb6','bb10']],       {fixed:fx(13050, 14500, 10)}),
+    comboRows('bbc16', 'BB', 'regular', [['bb3','bb10']],             {fixed:fx(8500, 9500, 11)}),
+    comboRows('bbc17', 'BB', 'regular', [['bb1','bb3','bb6']],        {fixed:fx(13050, 14500, 10)}),
+    comboRows('bbc18', 'BB', 'regular', [['bb1','bb3','bb10']],       {fixed:fx(12150, 13500, 10)}),
+    comboRows('bbc19', 'BB', 'regular', [['bb1','bb3','bb8']],        {fixed:fx(12600, 14000, 10)}),
+    comboRows('bbc20', 'BB', 'regular', [['bb1','bb10']],             {fixed:fx(7000, 8000, 13)}),
+    comboRows('bbc21', 'BB', 'regular', [['bb1','bb3','bb6','bb8']],  {fixed:fx(16499, 18999, 13)}),
+    comboRows('bbc22', 'BB', 'regular', [['bb1','bb3','bb6','bb10']], {fixed:fx(15999, 18499, 14)}),
+    /* ---------- Vsmart Academy ---------- */
+    comboRows('vsc25', 'VS', 'regular',   [['vs23','vs24']],                     {attempt:[fx(8999), fx(9249)]}),
+    comboRows('vsc30', 'VS', 'fasttrack', [['vs26','vs29']],                     {attempt:[fx(4999), fx(5499)]}),
+    comboRows('vsc31', 'VS', 'regular',   [['vs23','vs27','vs28','vs24']],       {attempt:[fx(17999), fx(18499)]}),
+    comboRows('vsc32', 'VS', 'regular',   [['vs27','vs28']],                     {attempt:[fx(9999), fx(10249)]}),
+    /* ---------- SPC: one from each subject (every possible mix) ---------- */
+    comboRows('spcc', 'SPC', 'regular',
+      crossPick([['spc39','spc40'], ['spc41','spc42'], ['spc43','spc44'], ['spc45']]),
+      SPC_COMBO_PRICES)
+  )
+},
+
+'CMA|Foundation': {
+  singles: [
+    {k:'ekf1', inst:'EK', paper:'Paper 1', fac:['CS Satish Baheti'],  batch:'regular', pricing:{fixed:fx(3500)},
+      info:{lectures:'---', duration:'---', validity:'6m', views:'Unlimited', mat:'Included', sys:SYS.CMAF}},
+    {k:'ekf2', inst:'EK', paper:'Paper 2', fac:['CA Sneha Budhia'],   batch:'regular', pricing:{fixed:fx(3500)},
+      info:{lectures:'---', duration:'---', validity:'6m', views:'Unlimited', mat:'Included', sys:SYS.CMAF}},
+    {k:'ekf3', inst:'EK', paper:'Paper 3', fac:['CA Pranay Gangan'],  batch:'regular', pricing:{fixed:fx(3500)},
+      info:{lectures:'---', duration:'---', validity:'6m', views:'Unlimited', mat:'Included', sys:SYS.CMAF}},
+    {k:'ekf4', inst:'EK', paper:'Paper 4', fac:['CA Simran Rajani'],  batch:'regular', pricing:{fixed:fx(3500)},
+      info:{lectures:'---', duration:'---', validity:'6m', views:'Unlimited', mat:'Included', sys:SYS.CMAF}}
+  ],
+  combos: []
+},
+
+'CMA|Intermediate': {
+  singles: [
+    /* ---------- Ekatvam Academy ---------- */
+    {k:'e1',  inst:'EK', paper:'Paper 7B', fac:['CA Vishal Bhattad'], batch:'regular', pricing:{fixed:fx(7999)},
+      info:{lectures:'40', duration:'130', validity:'Unlimited upto 2yrs', views:'1.5', mat:'1. GST Regular Module\n2. GST Questionnaire\n3. Chart Book', sys:SYS.ALLDEV}},
+    {k:'e2',  inst:'EK', paper:'Paper 7A', fac:['CA Vijay Sarda'], batch:'regular',
+      pricing:{axis:{key:'views', opts:[['1.5', fx(8000)], ['2', fx(10000)]]}},
+      info:{lectures:'65', duration:'150-170', validity:'Unlimited', views:'1.5/2', mat:'Regular Module 1, QnA Book, Add. Book', sys:SYS.EK}},
+    {k:'e3',  inst:'EK', paper:'Paper 8', fac:['CA Pranay Gangan'], batch:'regular',
+      pricing:{axis:{key:'validity', opts:[['6m', fx(5000)], ['12m', fx(7000)]]}},
+      info:{lectures:'70', duration:'120', validity:'6m/12m', views:'Unlimited', mat:'Regular Book, MRP Book (Questionnaire)', sys:SYS.EK}},
+    {k:'e4',  inst:'EK', paper:'Paper 7B', fac:['CA Karan Satija'], batch:'regular',
+      pricing:{axis:{key:'validity', opts:[['6m', fx(4000)], ['12m', fx(6000)]]}},
+      info:{lectures:'60', duration:'120', validity:'6m/12m', views:'Unlimited', mat:'Concise Book, MRP Book (Questionnaire)', sys:SYS.EK}},
+    {k:'e5',  inst:'EK', paper:'Paper 5', fac:['CS Satish Baheti'], batch:'regular',
+      pricing:{axis:{key:'validity', opts:[['6m', fx(5000)], ['12m', fx(7000)]]}},
+      info:{lectures:'59', duration:'130', validity:'6m/12m', views:'Unlimited', mat:'Concept Book & Questionbank', sys:SYS.EK}},
+    {k:'e6',  inst:'EK', paper:'Paper 6', fac:['CA Sneha Budhia'], batch:'regular',
+      pricing:{axis:{key:'validity', opts:[['6m', fx(5000)], ['12m', fx(7000)]]}},
+      info:{lectures:'60-65', duration:'120-130', validity:'6m/12m', views:'Unlimited', mat:'Concept Book & Questionbank', sys:SYS.EK}},
+    {k:'e7',  inst:'EK', paper:'Paper 9A', fac:['CA Pranay Gangan'], batch:'regular',
+      pricing:{axis:{key:'validity', opts:[['6m', fx(2500)], ['12m', fx(3500)]]}},
+      info:{lectures:'50', duration:'85', validity:'6m/12m', views:'Unlimited', mat:'Concise Book, MRP Book (Questionnaire)', sys:SYS.EK}},
+    {k:'e8',  inst:'EK', paper:'Paper 9B', fac:['CA Simran Rajani'], batch:'regular',
+      pricing:{axis:{key:'validity', opts:[['6m', fx(2000)], ['12m', fx(3000)]]}},
+      info:{lectures:'20', duration:'40', validity:'6m/12m', views:'Unlimited', mat:'Concise Book, MRP Book (Questionnaire)', sys:SYS.EK}},
+    {k:'e10', inst:'EK', paper:'Paper 10', fac:['CA CMA Abhimanyyu Agarrwal'], batch:'regular',
+      pricing:{axis:{key:'validity', opts:[['Std', fx(3999)], ['6m', fx(6400)], ['12m', fx(7300)]]}},
+      info:{lectures:'66+39', duration:'110+66', validity:'Standard/6m/12m', views:'Unlimited', mat:'Hard Copy Notes', sys:SYS.EK}},
+    {k:'e11', inst:'EK', paper:'Paper 10', fac:['CA Sneha Budhia'], batch:'regular',
+      pricing:{axis:{key:'validity', opts:[['6m', fx(5000)], ['12m', fx(7000)]]}},
+      info:{lectures:'60', duration:'120', validity:'6m/12m', views:'Unlimited', mat:'Module 1 - Corporate Accounts\nModule 2 - Auditing', sys:SYS.EK}},
+    {k:'e12', inst:'EK', paper:'Paper 11', fac:['CA Utkarsh Mehta'], batch:'regular',
+      pricing:{axis:{key:'validity', opts:[['6m', fx(4000)], ['12m', fx(5000)]]}},
+      info:{lectures:'65', duration:'130', validity:'6m/12m', views:'Unlimited', mat:'Regular Book, MRP Book (Questionnaire)', sys:SYS.EK}},
+    {k:'e13', inst:'EK', paper:'Paper 6', fac:['CA CMA Abhimanyyu Agarrwal'], batch:'regular',
+      pricing:{axis:{key:'validity', opts:[['Std', fx(3999)], ['6m', fx(6400)], ['12m', fx(7300)]]}},
+      info:{lectures:'145', duration:'250', validity:'Standard/6m/12m', views:'Unlimited', mat:'Hard Copy Notes', sys:SYS.EK}},
+    {k:'e14', inst:'EK', paper:'Paper 12', fac:['CA Satish Jalan'], batch:'regular',
+      pricing:{axis:{key:'validity', opts:[['6m', fx(7999)], ['12m', fx(8999)]]}},
+      info:{lectures:'---', duration:'---', validity:'6m/12m', views:'Unlimited', mat:'Hard Copy Notes', sys:SYS.EK}},
+    {k:'e15', inst:'EK', paper:'Paper 8', fac:['CA CMA Ashutosh Lata'], batch:'regular',
+      pricing:{axis:{key:'validity', opts:[['6m', fx(6000)], ['12m', fx(7000)]]}},
+      info:{lectures:'85', duration:'170', validity:'6m/12m', views:'Unlimited', mat:'Hard Copy Notes', sys:SYS.EK}},
+    {k:'e16', inst:'EK', paper:'Paper 12', fac:['CA CMA Ashutosh Lata'], batch:'regular',
+      pricing:{axis:{key:'validity', opts:[['6m', fx(6000)], ['12m', fx(7000)]]}},
+      info:{lectures:'75', duration:'150', validity:'6m/12m', views:'Unlimited', mat:'Hard Copy Notes', sys:SYS.EK}},
+    {k:'e17', inst:'EK', paper:'Paper 8', fac:['CA Satish Jalan'], batch:'regular',
+      pricing:{axis:{key:'validity', opts:[['6m', fx(8999)], ['12m', fx(9999)]]}},
+      info:{lectures:'---', duration:'---', validity:'6m/12m', views:'Unlimited', mat:'Included', sys:SYS.EK}},
+    {k:'e18', inst:'EK', paper:'Paper 7B', fac:['CA Yashvant Mangal'], batch:'regular', pricing:{fixed:fx(4499)},
+      info:{lectures:'95', duration:'---', validity:'12m', views:'Unlimited', mat:'1 Volume of Concept Book, 1 Reboot Questionnaire & Express Chart Book', sys:SYS.EK}},
+    {k:'e25', inst:'EK', paper:'Paper 5', fac:['CS Satish Baheti'], batch:'fasttrack',
+      pricing:{axis:{key:'validity', opts:[['6m', fx(3500)], ['12m', fx(5000)]]}},
+      info:{lectures:'40', duration:'80', validity:'6m/12m', views:'Unlimited', mat:'Concept Book, Questionnaire', sys:SYS.EK}},
+    {k:'e26', inst:'EK', paper:'Paper 6', fac:['CA Sneha Budhia'], batch:'fasttrack', pricing:{fixed:fx(3500)},
+      info:{lectures:'40', duration:'80', validity:'6m', views:'Unlimited', mat:'Concept Book, Questionnaire', sys:SYS.EK}},
+    {k:'e27', inst:'EK', paper:'Paper 10', fac:['CA Sneha Budhia'], batch:'fasttrack',
+      pricing:{axis:{key:'validity', opts:[['6m', fx(3500)], ['12m', fx(5000)]]}},
+      info:{lectures:'50', duration:'100', validity:'6m/12m', views:'Unlimited', mat:'Module 1 - Corporate Accounts\nModule 2 - Auditing', sys:SYS.EK}},
+
+    /* ---------- Vsmart Academy ---------- */
+    {k:'v39', inst:'VS', paper:'Paper 7B', fac:['CA Vishal Bhattad'], batch:'fasttrack', pricing:{fixed:fx(4499)},
+      info:{lectures:'40', duration:'---', validity:'Unlimited upto 2yrs', views:'1.5', mat:'1. GST Regular Module\n2. GST Questionnaire\n3. Chart Book', sys:SYS.ALLDEV}},
+    {k:'v40', inst:'VS', paper:'Paper 7A', fac:['CA Vijay Sarda'], batch:'fasttrack', pricing:{fixed:fx(4999)},
+      info:{lectures:'35', duration:'90-100', validity:'12m', views:'1.5', mat:'Hard Copy Note', sys:SYS.EK}},
+    {k:'v41a', inst:'VS', paper:'Paper 7B', fac:['CA Amol Jain'], batch:'fasttrack', pricing:{attempt:[fx(1499), fx(1999)]},
+      info:{lectures:'30', duration:'75', validity:'Till Exam', views:'1.5', mat:'Question Bank and Revision Chart Book', sys:SYS.ALLDEV}},
+    {k:'v42', inst:'VS', paper:'Paper 12', fac:['CA Ranjan Periwal'], batch:'regular', pricing:{fixed:fx(7300)},
+      info:{lectures:'54', duration:'108', validity:'12m', views:'2', mat:'1 Exhaustive Multicoloured Books', sys:SYS.ALLDEV}},
+    {k:'v43', inst:'VS', paper:'Paper 8', fac:['CA Ranjan Periwal'], batch:'regular', pricing:{fixed:fx(8649)},
+      info:{lectures:'96', duration:'195', validity:'12m', views:'2', mat:'2 Exhaustive Multicoloured Books', sys:SYS.ALLDEV}},
+    {k:'v44', inst:'VS', paper:'Paper 11', fac:['CA Ranjan Periwal'], batch:'regular', pricing:{fixed:fx(7300)},
+      info:{lectures:'66', duration:'130', validity:'12m', views:'2', mat:'1 Exhaustive Multicoloured Books', sys:SYS.ALLDEV}},
+
+    /* ---------- BB Virtuals ---------- */
+    {k:'b45', inst:'BB', paper:'Paper 7A', fac:['CA Bhanwar Borana'], batch:'regular', pricing:{fixed:fx(7999, 8999, 11)},
+      info:{lectures:'65', duration:'162-165', validity:'1y', views:'1.5', mat:'1 Compact Theory Book\n1 Compiler Q&A Book\n1 MCQ', sys:SYS.BB}},
+    {k:'b46', inst:'BB', paper:'Paper 7B', fac:['CA Amit Mahajan'], batch:'regular', pricing:{fixed:fx(4999, 6999, 29)},
+      info:{lectures:'35-40', duration:'115', validity:'1y', views:'1.5', mat:'1 Rapider (Study Material)\n1 Q&A Book\n1 Pocket Book\n(Concept Notes will be Handwritten in Class Itself for Best Understanding)', sys:SYS.BB}},
+    {k:'b47', inst:'BB', paper:'Paper 7A', fac:['CA Bhanwar Borana'], batch:'fasttrack', pricing:{attempt:[fx(2999, 5999, 50), fx(4999, 5999, 16)]},
+      info:{lectures:'---', duration:'100', validity:'9m', views:'1.5', mat:'1 Compact Theory Book\n1 Compiler Q&A Book\n1 MCQ', sys:SYS.BB}},
+    {k:'b49', inst:'BB', paper:'Paper 7B', fac:['CA Raj Kumar'], batch:'regular', pricing:{fixed:fx(6300)},
+      info:{lectures:'50', duration:'120', validity:'12m', views:'1.5', mat:'Hard Copy Books', sys:SYS.BBV}},
+    {k:'b50', inst:'BB', paper:'Paper 7B', fac:['CA Raj Kumar'], batch:'fasttrack', pricing:{fixed:fx(6300)},
+      info:{lectures:'37', duration:'100', validity:'12m', views:'1.5', mat:'Hard Copy Books', sys:SYS.BBV}},
+    {k:'b53', inst:'BB', paper:'Paper 12', fac:['CA Satish Jalan','CMA Rahil Singhal'], batch:'regular', pricing:{fixed:fx(6999)},
+      info:{lectures:'85', duration:'170', validity:'Till Exam', views:'Unlimited', mat:'English (Hard Copy)', sys:SYS.JAL}},
+    {k:'b54', inst:'BB', paper:'Paper 8', fac:['CA Satish Jalan','CMA Rahil Singhal'], batch:'regular', pricing:{fixed:fx(8999)},
+      info:{lectures:'85', duration:'170', validity:'Till Exam', views:'Unlimited', mat:'English (Hard Copy)', sys:SYS.JAL}},
+    {k:'b55', inst:'BB', paper:'Paper 5', fac:['CA Shivangi Agrawal'], batch:'regular', pricing:{fixed:fx(5949, 7499, 21)},
+      info:{lectures:'---', duration:'160', validity:'---', views:'Unlimited', mat:'Total 6 Books\n2 Detailed Books (Black & White)\n1 Chart Books (Coloured)\n2 Question Bank (Black & White)\n1 Test Series (Black & White)', sys:SYS.SHIV}}
+  ],
+  combos: [].concat(
+    /* ---------- Ekatvam Academy ---------- */
+    comboRows('ec9',  'EK', 'regular', [['e7','e8']],                 {axis:{key:'validity', opts:[['6m', fx(4000)], ['12m', fx(6500)]]}}),
+    comboRows('ec19', 'EK', 'regular', [['e11','e7','e8']],           {fixed:fx(8550)},  {fix:{validity:'6m'}}),
+    comboRows('ec20', 'EK', 'regular', [['e12','e7','e8']],           {fixed:fx(7650)},  {fix:{validity:'6m'}}),
+    comboRows('ec21', 'EK', 'regular', [['e5','e6','e3']],            {fixed:fx(13500)}, {fix:{validity:'6m'}}),
+    comboRows('ec22', 'EK', 'regular', [['e2','e5']],                 {fixed:fx(11700)}, {fix:{validity:'Standard', views:'Standard'}}),
+    comboRows('ec23', 'EK', 'regular', [['e2','e3']],                 {fixed:fx(11700)}, {fix:{validity:'Standard', views:'Standard'}}),
+    comboRows('ec24', 'EK', 'regular', [['e2','e6']],                 {fixed:fx(11700)}, {fix:{validity:'Standard', views:'Standard'}}),
+    comboRows('ec29', 'EK', 'regular', [['e1','e2']],                 {fixed:fx(13000)}, {fix:{views:'1.5'}}),
+    comboRows('ec30', 'EK', 'regular', [['e5','e6','e2','e4','e3','e7','e8','e11','e14']],
+      {axis:{key:'validity', opts:[['6m', fx(44458.20)], ['12m', fx(56788.20)]]}}, {group:'Both Groups'}),
+    comboRows('ec31', 'EK', 'regular', [['e7','e8','e11','e14']],
+      {axis:{key:'validity', opts:[['6m', fx(20158.20)], ['12m', fx(25288.20)]]}}, {group:'Group 2'}),
+    comboRows('ec32', 'EK', 'regular', [['e7','e8','e11','e12']],     {fixed:fx(12150)}, {fix:{validity:'6m'}, group:'Group 2'}),
+    comboRows('ec33', 'EK', 'regular', [['e5','e6','e2','e4','e3']],
+      {axis:{key:'validity', opts:[['6m', fx(24300)], ['12m', fx(31500)]]}}, {group:'Group 1'}),
+    comboRows('ec34', 'EK', 'regular', [['e11','e12']],               {fixed:fx(8100)},  {fix:{validity:'6m'}}),
+    comboRows('ec35', 'EK', 'regular', [['e2','e5','e4']],            {fixed:fx(15300)}, {fix:{validity:'6m'}}),
+    comboRows('ec36', 'EK', 'regular', [['e2','e4']],                 {fixed:fx(10000)}, {fix:{validity:'Standard', views:'Standard'}}),
+    comboRows('ec37', 'EK', 'regular', [['e7','e8','e11','e12','e14']],
+      {axis:{key:'validity', opts:[['6m', fx(17729.10)], ['12m', fx(23129.10)]]}}, {group:'Group 2'}),
+    comboRows('ec38', 'EK', 'regular', [['e2','e18']],                {fixed:fx(10350)}, {fix:{validity:'Standard', views:'Standard'}}),
+    /* ---------- Vsmart Academy ---------- */
+    comboRows('vc41', 'VS', 'fasttrack', [['v39','v40']],             {fixed:fx(12999)}),
+    /* ---------- BB Virtuals (two of them mix lectures of different institutes) ---------- */
+    comboRows('bc48',  'BB', 'regular',   [['b45','b46']],            {fixed:fx(11699, 12999, 10)}),
+    comboRows('bc51',  'BB', 'regular',   [['b45','b49']],            {fixed:fx(12825, 14250, 10)}),
+    comboRows('bc52',  'BB', 'regular',   [['b45','e1']],             {fixed:fx(13999, 15999, 13)}),
+    comboRows('bc52a', 'BB', 'fasttrack', [['b47','v39']],            {fixed:fx(5499, 5999, 8)})
+  )
+}
+};
+
+/* ============================================================
+   BUILDING THE CARDS OF A CURATED EXAM
+   Order (no filters): all Regular lectures first, then Fast-track, then Writing Practice.
+   Inside each of these: our own faculties on top, then the associate institutes in the order set
+   above — and inside every institute the single lectures first, then its combos.
+   ============================================================ */
+const SPC_GURUKUL_KEY = 'spcc-spc39-spc41-spc44-spc45';   // the one SPC combo that also has the Offline Face to Face programme
+const CATALOG_CACHE = {};
+function getCatalog(course, level){
+  const key = course + '|' + level;
+  if(!CATALOG_CACHE[key]) CATALOG_CACHE[key] = buildCatalog(course, level);
+  return CATALOG_CACHE[key];
+}
+function isCurated(course, level){ return !!CURATED[course + '|' + level]; }
+function curatedPaper(course, level, no){
+  return ((COURSES[course] || {})[level] || []).find(pp => pp.no === no) || null;
+}
+
+function makeCuratedSingle(course, level, def, ord){
+  const paper = curatedPaper(course, level, def.paper) || { no:def.paper, name:def.paper, group:'' };
+  const facs = def.fac.slice();
+  const examLabel = getShortExamLabel(course, level);
+  const p = {
+    id: slugify([course, level, def.k].join(' ')), key:def.k,
+    category:'single', course, level, examLabel, examFull:getExamLabelSafe(course, level),
+    batch:def.batch, group:paper.group || '', subjects:[paper.name], faculties:facs,
+    institute:def.inst, multi:facs.length > 1,
+    items:[{ paperNo:paper.no, paperName:paper.name, faculty:facs.join(' + '), institute:def.inst, key:def.k }],
+    paperNo:paper.no, def:def, pricing:def.pricing || null, ord:ord
+  };
+  p.title = examLabel + ' ' + paper.name + ' ' + BATCH_TYPES[def.batch].label + ' Lectures by ' + facs.join(' & ');
+  applyCardPrice(p);
+  return p;
+}
+
+function makeCuratedCombo(course, level, def, byKey, ord){
+  const parts = def.parts.map(k => byKey[k]).filter(Boolean);
+  if(parts.length < 2) return null;
+  const examLabel = getShortExamLabel(course, level);
+  const facs = [];
+  parts.forEach(pt => pt.faculties.forEach(f => { if(!facs.some(x => normName(x) === normName(f))) facs.push(f); }));
+  let pricing = def.pricing;
+  if(def.k === SPC_GURUKUL_KEY) pricing = Object.assign({}, pricing, { programmes:SPC_GURUKUL });
+  const p = {
+    id: slugify([course, level, def.k].join(' ')), key:def.k,
+    category:'combo', course, level, examLabel, examFull:getExamLabelSafe(course, level),
+    batch:def.batch, group:def.group || '', subjects:parts.map(pt => pt.subjects[0]), faculties:facs,
+    institute:def.inst, multi:false,
+    items:parts.map(pt => pt.items[0]),
+    paperNo:parts[0].paperNo, def:def, pricing:pricing, parts:def.parts.slice(), partProducts:parts, ord:ord
+  };
+  p.title = examLabel + ' ' + (def.group ? def.group + ' ' : '') + BATCH_TYPES[def.batch].label + ' Lectures_' + facs.map(facultyInitials).join('_');
+  applyCardPrice(p);
+  return p;
+}
+
+function buildCuratedCatalog(course, level){
+  const spec = CURATED[course + '|' + level];
+  const papers = COURSES[course][level] || [];
+  const list = [];
+  let ord = 0;
+
+  /* our own faculties: Regular lectures only, prices left blank */
+  const own = [];
+  papers.forEach((paper, pIdx) => paper.faculty.forEach(fac => {
+    const t = facultyTier(fac);
+    if(t.tier === 0) own.push({ paper, pIdx, fac, idx:t.idx });
+  }));
+  own.sort((a, b) => (a.idx - b.idx) || (a.pIdx - b.pIdx));
+  own.forEach(e => {
+    const p = makeSingleProduct(course, level, e.paper, e.fac, 'regular');
+    p.institute = 'AP'; p.items[0].institute = 'AP'; p.ord = ord++;
+    list.push(p);
+  });
+
+  const byKey = {};
+  spec.singles.forEach(d => { byKey[d.k] = makeCuratedSingle(course, level, d, ord++); list.push(byKey[d.k]); });
+  (spec.combos || []).forEach(d => {
+    const c = makeCuratedCombo(course, level, d, byKey, ord++);
+    if(c) list.push(c);
+  });
+
+  const batchRank = { regular:0, fasttrack:1, writing:2 };
+  list.sort((a, b) =>
+    (batchRank[a.batch] - batchRank[b.batch]) ||
+    (instituteRank(course, a.institute) - instituteRank(course, b.institute)) ||
+    ((a.category === 'combo' ? 1 : 0) - (b.category === 'combo' ? 1 : 0)) ||
+    (a.ord - b.ord)
+  );
+  list.forEach((p, i) => { p.rank = i; });
+  return list;
+}
+
+/* ============================================================
+   PRICES — every product has a "pricing" description:
+     {fixed:V}                      one price
+     {attempt:[V1, V2]}             V1 = upcoming attempt, V2 = every later attempt
+     {axis:{key, opts:[[value, V]]}}  the buyer also picks a validity or a number of views
+     {feature:{Silver:V, ...}}      Swapnil Patni Classes features (+ optional programmes for Offline Face to Face)
+   V = {price, mrp, disc}. We show exactly the figures typed in the product sheet.
+   ============================================================ */
+function pricingVariants(p){
+  const pr = p.pricing;
+  if(!pr) return [];
+  const out = [];
+  if(pr.fixed) out.push(Object.assign({}, pr.fixed));
+  if(pr.attempt) pr.attempt.forEach((v, i) => out.push(Object.assign({ slot:i }, v)));
+  if(pr.axis) pr.axis.opts.forEach(o => out.push(Object.assign({ axisVal:o[0] }, o[1])));
+  if(pr.feature) Object.keys(pr.feature).forEach(f => out.push(Object.assign({ feature:f }, pr.feature[f])));
+  if(pr.programmes) Object.keys(pr.programmes).forEach(n => out.push(Object.assign({ programme:n }, pr.programmes[n])));
+  return out;
+}
+
+/* the variants that are still possible: with no selection (card) or after the visitor's choices so far */
+function variantsFor(p, sel, forCard){
+  let vs = pricingVariants(p);
+  const pr = p.pricing || {};
+  if(forCard){
+    if(pr.feature) return vs.filter(v => v.feature === 'Silver');     // cards show the Silver price
+    return vs.filter(v => !v.programme);
+  }
+  sel = sel || {};
+  const offline = !!(pr.programmes && sel.mode === OFFLINE_MODE);
+  vs = vs.filter(v => offline ? !!v.programme : !v.programme);
+  if(offline){
+    if(sel.programme) vs = vs.filter(v => v.programme === sel.programme);
+    return vs;
+  }
+  if(pr.attempt && sel.attemptIdx !== undefined && sel.attemptIdx !== null && sel.attemptIdx >= 0){
+    vs = vs.filter(v => v.slot === (sel.attemptIdx === 0 ? 0 : 1));
+  }
+  if(pr.axis && sel.axisVal) vs = vs.filter(v => v.axisVal === sel.axisVal);
+  if(pr.feature && sel.feature) vs = vs.filter(v => v.feature === sel.feature);
+  return vs;
+}
+
+/* lowest–highest price, and the discount shown only when EVERY possible price is really discounted */
+function priceSummary(vs){
+  if(!vs || !vs.length) return { lo:null, hi:null, mrp:null, discLo:0, discHi:0, ranged:false, discRanged:false };
+  const prices = vs.map(v => v.price);
+  const lo = Math.min.apply(null, prices), hi = Math.max.apply(null, prices);
+  const withDisc = vs.filter(v => v.mrp && v.disc > 0 && v.price < v.mrp);
+  let mrp = null, discLo = 0, discHi = 0;
+  if(withDisc.length === vs.length){
+    const mrps = withDisc.map(v => v.mrp);
+    mrp = mrps.every(x => x === mrps[0]) ? mrps[0] : null;
+    const ds = withDisc.map(v => v.disc);
+    discLo = Math.min.apply(null, ds); discHi = Math.max.apply(null, ds);
+  }
+  return { lo:lo, hi:hi, mrp:mrp, discLo:discLo, discHi:discHi, ranged:lo !== hi, discRanged:discLo !== discHi };
+}
+
+function applyCardPrice(p){
+  const s = priceSummary(variantsFor(p, null, true));
+  p.cardPrice = s;
+  p.mrp = s.mrp; p.discount = s.discLo; p.price = s.lo;
+}
+
+/* the one-line texts used by the card and the product page */
+function rupeeText(n){ return formatRupees(n); }
+function priceRangeText(s){
+  if(s.lo === null || s.lo === undefined) return '---';
+  return s.ranged ? (formatRupees(s.lo) + ' - ' + formatRupees(s.hi)) : formatRupees(s.lo);
+}
+function discountText(s){
+  if(!(s.discLo > 0)) return '';
+  return s.discRanged ? (s.discLo + '% - ' + s.discHi + '% off') : (s.discLo + '% off');
+}
+
+/* Which choices decide the price (and so must be made before "Add to Cart")? */
+function pricingAxes(p, sel){
+  const pr = p.pricing || {};
+  const out = [];
+  const offline = !!(pr.programmes && sel && sel.mode === OFFLINE_MODE);
+  if(pr.feature && !offline) out.push('feature');
+  if(pr.axis && !offline) out.push('axis');
+  if(offline) out.push('programme');
+  return out;
+}
+
+/* ============================================================
+   RULES THAT DEPEND ON WHO TEACHES + WHICH BATCH
+   ============================================================ */
+const FACULTY_WITH_BOOK_CHOICE = "Prof. Abanindra Sahu";
+function getProductRules(product, sel){
+  sel = sel || {};
+  const facs = product.faculties || [];
+  const allFirst = facs.length > 0 && facs.every(f => facultyTier(f).tier === 0);
+  const hasBookFaculty = facs.some(f => normName(f) === normName(FACULTY_WITH_BOOK_CHOICE));
+  let books = BOOK_PREFERENCES.slice();
+  if(allFirst) books = hasBookFaculty ? ["Hard Copy","Without Books"] : ["Without Books"];
+  let modes = allFirst ? [OFFLINE_MODE] : MODES.slice();
+  if(product.batch === 'fasttrack') modes = FASTTRACK_MODES.slice();          // fast-track: Online Google Drive Recorded only
+  const pr = product.pricing || {};
+  if(pr.feature){
+    if(!pr.programmes) modes = modes.filter(m => m !== OFFLINE_MODE);         // Offline Face to Face only for the SPC Gurukul combo
+    const f = sel.feature || 'Silver';
+    books = (sel.mode === OFFLINE_MODE) ? ['E-Book','Hard Copy'] : (f === 'Silver' ? ['E-Book'] : ['E-Book','Hard Copy']);
+  }
+  return { books:books, modes:modes };
+}
+
+/* Platinum (Regular, Swapnil Patni Classes): the same lectures' Fast-track product comes free */
+function platinumFreeProducts(p){
+  const pr = p.pricing || {};
+  if(!pr.feature || p.batch !== 'regular') return [];
+  const cat = getCatalog(p.course, p.level);
+  const keys = p.category === 'combo' ? (p.parts || []) : [p.key];
+  const out = [];
+  keys.forEach(k => {
+    const part = cat.find(x => x.key === k);
+    const ft = part && part.def && part.def.freeFT ? cat.find(x => x.key === part.def.freeFT) : null;
+    if(ft) out.push(ft);
+  });
+  return out;
+}
+
+/* ============================================================
+   PRODUCT INFO ROWS (units are always written out in full)
+   ============================================================ */
+function plural(n, one, many){ return n + ' ' + (Number(n) === 1 ? one : many); }
+function fmtLectures(v){
+  v = String(v === undefined || v === null ? '' : v).trim();
+  if(!v || v === '-' || v === '---') return '---';
+  return plural(v, 'Lecture', 'Lectures');
+}
+function fmtDuration(v){
+  v = String(v === undefined || v === null ? '' : v).trim();
+  if(!v || v === '-' || v === '---') return '---';
+  const m = v.match(/^(\d+(?:\.\d+)?)\s*m$/i);
+  if(m) return plural(m[1], 'month', 'months');
+  return v + ' Hours';
+}
+function validityToken(tok){
+  tok = String(tok).trim();
+  let m = tok.match(/^(\d+(?:\.\d+)?)\s*m(?:onths?)?$/i);
+  if(m) return { text:plural(m[1], 'month', 'months'), timed:true };
+  m = tok.match(/^(\d+(?:\.\d+)?)\s*(?:y|yr|yrs|year|years)$/i);
+  if(m) return { text:plural(m[1], 'year', 'years'), timed:true };
+  if(/^std$/i.test(tok)) return { text:'Standard', timed:false };
+  m = tok.match(/^unlimited\s*upto\s*(\d+)\s*(?:y|yr|yrs|years?)$/i);
+  if(m) return { text:'Unlimited upto ' + plural(m[1], 'year', 'years'), timed:false };
+  if(/^till+\s*exam$/i.test(tok)) return { text:'Till Exam', timed:false };
+  return { text:tok, timed:false };
+}
+function fmtValidity(v){
+  v = String(v === undefined || v === null ? '' : v).trim();
+  if(!v || v === '-' || v === '---') return '---';
+  const toks = v.split('/').map(validityToken);
+  if(toks.every(t => t.timed)) return toks.map(t => t.text).join(' / ') + ' from the date of activation';
+  return toks.map(t => t.timed ? (t.text + ' from the date of activation') : t.text).join(' / ');
+}
+function fmtViews(v){
+  v = String(v === undefined || v === null ? '' : v).trim();
+  if(!v || v === '-' || v === '---') return '---';
+  const toks = v.split('/').map(t => t.trim());
+  if(toks.every(t => /^\d+(\.\d+)?$/.test(t))) return toks.join(' / ') + (toks.length === 1 && Number(toks[0]) === 1 ? ' view' : ' views');
+  return toks.map(t => /^unlimited$/i.test(t) ? 'Unlimited views' : (/^\d+(\.\d+)?$/.test(t) ? plural(t, 'view', 'views') : t)).join(' / ');
+}
+function axisLabel(axisKey, val){
+  if(axisKey === 'validity') return validityToken(val).text;
+  if(axisKey === 'views') return fmtViews(val);
+  return String(val);
+}
+
+/* the info of ONE lecture (a single product, or one lecture inside a combo) — sel/comboDef adjust the things the buyer picks */
+function curatedInfoFor(part, sel, comboDef){
+  const d = (part.def && part.def.info) || {};
+  sel = sel || {};
+  const pr = part.pricing || {};
+  const fix = (comboDef && comboDef.fix) || {};
+  let validity = d.validity, views = d.views;
+
+  /* things the buyer chooses on a single product */
+  if(!comboDef && pr.axis && sel.axisVal){
+    if(pr.axis.key === 'validity') validity = sel.axisVal;
+    if(pr.axis.key === 'views') views = sel.axisVal;
+  }
+  /* things fixed by / chosen on a combo apply to the lectures inside it that have a choice */
+  if(comboDef){
+    const myAxis = pr.axis ? pr.axis.key : null;
+    const comboAxis = comboDef.pricing && comboDef.pricing.axis ? comboDef.pricing.axis.key : null;
+    if(myAxis === 'validity' || /\//.test(String(d.validity || ''))){
+      if(comboAxis === 'validity' && sel.axisVal) validity = sel.axisVal;
+      else if(fix.validity) validity = fix.validity;
+    }
+    if(myAxis === 'views' || /\//.test(String(d.views || ''))){
+      if(fix.views) views = fix.views;
+    }
+  }
+  let viewsText;
+  if(views === 'FEATURE') viewsText = FEATURE_VIEWS[sel.feature || 'Silver'] + ' views';
+  else viewsText = fmtViews(views);
+  const str = x => (x === undefined || x === null || String(x).trim() === '') ? '---' : String(x);
+  return {
+    language: '---',
+    lectures: fmtLectures(d.lectures),
+    duration: fmtDuration(d.duration),
+    validity: fmtValidity(validity),
+    view: viewsText,
+    studyMaterial: str(d.mat),
+    systemRequirement: str(d.sys)
+  };
+}
+
+/* the "products inside" of a card: the card itself for a single, the lectures it is made of for a combo */
+function getProductParts(p){
+  return (p.category === 'combo' && p.partProducts) ? p.partProducts : [p];
+}
+
+/* ============================================================
+   WHAT THE ADMIN SEES: which institute a purchased lecture belongs to
+   ============================================================ */
+let _facInst = null;
+function instituteOfFaculty(course, level, name){
+  if(!_facInst){
+    _facInst = {};
+    Object.keys(CURATED).forEach(key => (CURATED[key].singles || []).forEach(d => {
+      const k = key + '|' + normName(d.fac.join(' + '));
+      if(!_facInst[k]) _facInst[k] = d.inst;
+      d.fac.forEach(f => { const k2 = key + '|' + normName(f); if(!_facInst[k2]) _facInst[k2] = d.inst; });
+    }));
+  }
+  return _facInst[course + '|' + level + '|' + normName(name)] || '';
+}
+function instituteOfLine(it){
+  let code = it.institute || '';
+  if(!code && it.productId && it.course && it.level && isCurated(it.course, it.level)){
+    const p = getCatalog(it.course, it.level).find(x => x.id === it.productId);
+    if(p) code = p.institute;
+  }
+  if(!code) code = instituteOfFaculty(it.course, it.level, it.faculty || '');
+  if(!code && facultyTier(String(it.faculty || '').split(' + ')[0]).tier === 0) code = 'AP';
+  return code ? (INSTITUTES[code] || code) : 'Not tagged';
+}
+/* the order the "Associate Institutes" list follows (CMA lists use the CMA order, everything else the CA order) */
+function instituteNameOrder(course){
+  return (INSTITUTE_ORDER[course] || INSTITUTE_ORDER.CA).map(c => INSTITUTES[c]);
+}
+
+/* the extra words saved with an order line (features, validity / views, programme) */
+function lectureExtras(it){
+  const bits = [];
+  if(it.features) bits.push('with the ' + it.features + ' feature (' + (FEATURE_VIEWS[it.features] || '') + ')');
+  if(it.programme) bits.push('in the programme ' + it.programme);
+  if(it.axisChoice && it.axisKey) bits.push((it.axisKey === 'validity' ? 'validity ' : '') + axisLabel(it.axisKey, it.axisChoice));
+  if(it.freeWith) bits.push('(free with the Platinum feature)');
+  return bits.length ? (', ' + bits.join(', ')) : '';
 }
 
 /* ============================================================
@@ -426,9 +1144,9 @@ function buildCombos(course, level){
     p.title = examLabel + ' ' + (row.group ? row.group + ' ' : '') + BATCH_TYPES[batch].label + ' Lectures_' +
       facs.map(facultyInitials).join('_');
     const mrp = Number(row.mrp) > 0 ? Number(row.mrp) : null;
-    p.mrp = mrp;
-    p.discount = mrp ? (Number(row.discount) || 0) : null;
-    p.price = mrp ? computeDiscountedPrice(mrp, p.discount) : null;
+    const cprice = Number(row.price) > 0 ? Number(row.price) : (mrp ? computeDiscountedPrice(mrp, Number(row.discount) || 0) : null);
+    p.pricing = (cprice > 0) ? { fixed:{ price:cprice, mrp:mrp, disc:Number(row.discount) || 0 } } : null;
+    applyCardPrice(p);
     out.push(p);
   });
   return out;
@@ -451,18 +1169,14 @@ function buildCombos(course, level){
 const PRICE_TABLE = [
 ];
 
-/* The 9s rule: the MRP (e.g. 9999) is treated as the round figure above it (10000),
-   the discount is taken off that (10% -> 9000), the result is rounded DOWN to the nearest
-   50 and written as a 9-ending figure (-> 8999). */
+/* Plain arithmetic (no "9" endings any more): price = MRP minus the discount, rounded to a whole rupee.
+   A price row may also carry the final  price:  typed directly — then that exact figure is used. */
 function computeDiscountedPrice(mrp, discountPct){
   mrp = Number(mrp);
   const d = Number(discountPct) || 0;
   if(!(mrp > 0)) return null;
   if(d <= 0) return mrp;
-  const whole = mrp + 1;
-  const discountedWhole = whole * (100 - d) / 100;
-  const rounded = Math.floor(discountedWhole / 50) * 50;
-  return Math.max(rounded - 1, 0);
+  return Math.round(mrp * (100 - d) / 100);
 }
 
 function findBestRow(table, ctx){
@@ -495,12 +1209,15 @@ function getPriceInfo(product){
   const row = findBestRow(PRICE_TABLE, ctx);
   if(!row || !(Number(row.mrp) > 0)) return { mrp:null, discount:null, price:null };
   const discount = Number(row.discount) || 0;
-  return { mrp:Number(row.mrp), discount, price:computeDiscountedPrice(row.mrp, discount) };
+  return { mrp:Number(row.mrp), discount, price:(Number(row.price) > 0 ? Number(row.price) : computeDiscountedPrice(row.mrp, discount)) };
 }
 
+/* 1,23,456 style (Indian grouping); paise only when the amount really has them (e.g. 44,458.20) */
 function formatRupees(n){
   if(n === null || n === undefined || isNaN(n)) return '---';
-  return '₹' + Number(n).toLocaleString('en-IN');
+  n = Number(n);
+  const whole = Math.abs(n - Math.round(n)) < 0.005;
+  return '₹' + (whole ? Math.round(n).toLocaleString('en-IN') : n.toLocaleString('en-IN', { minimumFractionDigits:2, maximumFractionDigits:2 }));
 }
 
 /* ============================================================
@@ -565,11 +1282,11 @@ function getFacultyInfo(name){
   return null;
 }
 
-/* Faculty photos: put a file called  images/faculty/<name>.png  in the GitHub repo, where <name>
+/* Faculty photos: put a file called  images/faculty/<name>.webp  in the GitHub repo, where <name>
    is the faculty name in small letters with hyphens, e.g. "CA Aakash Kandoi" -> ca-aakash-kandoi.png
    (a .jpg also works). Until a photo exists, the photo area on the card simply stays blank. */
 function facultyPhotoPath(name, ext){
-  return 'images/faculty/' + slugify(name) + '.' + (ext || 'png');
+  return 'images/faculty/' + slugify(name) + '.' + (ext || 'webp');
 }
 
 /* ============================================================
@@ -666,5 +1383,5 @@ function getTSPriceInfo(product, option){
   });
   if(!best || !(Number(best.mrp) > 0)) return { mrp:null, discount:null, price:null };
   const discount = Number(best.discount) || 0;
-  return { mrp:Number(best.mrp), discount, price:computeDiscountedPrice(best.mrp, discount) };
+  return { mrp:Number(best.mrp), discount, price:(Number(best.price) > 0 ? Number(best.price) : computeDiscountedPrice(best.mrp, discount)) };
 }
