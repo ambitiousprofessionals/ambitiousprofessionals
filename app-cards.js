@@ -46,7 +46,7 @@ function faceImg(name, cls){
 function fitPosterText(root){
   const SINGLE = [10, 8.6, 7.4, 6.4, 5.6, 4.8, 4.2, 3.6];
   const COMBO  = [6.6, 5.8, 5, 4.4, 3.8, 3.4, 3];
-  const BADGE  = [4.6, 4.2, 3.8, 3.4, 3.1, 2.8, 2.5];     // the exam name at the top-left must stay on ONE row
+  const BADGE  = [6.2, 5.8, 5.4, 5, 4.6, 4.2, 3.8, 3.4, 3.1, 2.8, 2.5];     // the exam name at the top-left must stay on ONE row
   root.querySelectorAll('.pc-subject, .pc-csubject, .pc-badge').forEach(el => {
     if(el.dataset.fit === '1') return;
     if(!el.offsetWidth) return;                           // not on screen yet
@@ -173,6 +173,11 @@ function counsellingPosterHTML(item){
 /* ============================================================
    PRODUCT PAGE PIECES (shared by the product page and the cart "Product Details" view)
    ============================================================ */
+/* Language shown in Product Info: our own faculties teach in Odia-English Mix, every other faculty in Hindi-English Mix */
+function productLanguage(p){
+  const facs = p.faculties || [];
+  return (facs.length > 0 && facs.every(f => facultyTier(f).tier === 0)) ? 'Odia-English Mix' : 'Hindi-English Mix';
+}
 function multiline(s){ return esc(s).replace(/\n/g, '<br>'); }
 function infoTableHTML(rows){
   return '<table class="pv-table"><tbody>' +
@@ -196,7 +201,8 @@ function productInfoTableHTML(p, sel){
     }).join('');
   }
   const info = getProductInfo(p);
-  return infoTableHTML(PRODUCT_INFO_ROWS.map(r => [r.label, info[r.key] || '---']));
+  const lang = productLanguage(p);
+  return infoTableHTML(PRODUCT_INFO_ROWS.map(r => [r.label, r.key === 'language' ? lang : (info[r.key] || '---')]));
 }
 
 function facultyInfoHTML(p){
