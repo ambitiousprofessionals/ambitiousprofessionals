@@ -5,8 +5,10 @@
 
 /* ---------- small helpers ---------- */
 function cpMoney(n){
-  return (n === null || n === undefined || isNaN(n)) ? '---' : ('₹' + Number(n).toLocaleString('en-IN') + '/-');
+  return (n === null || n === undefined || isNaN(n)) ? '---' : (formatRupees(n) + '/-');
 }
+/* old orders were saved with the book choice "Soft Copy" — it is now called "E-Book" */
+function cpBookLabel(b){ return /^soft\s*copy$/i.test(String(b || '').trim()) ? 'E-Book' : (b || ''); }
 
 function cpKind(it){
   const k = it.kind || it._type || 'classPaper';
@@ -50,17 +52,15 @@ const cpCatCache = {};
 function cpLectureProduct(it){
   const c = it.course, l = it.level;
   if(typeof COURSES !== 'undefined' && COURSES[c] && COURSES[c][l]){
-    const key = c + '|' + l;
-    if(!cpCatCache[key]) cpCatCache[key] = buildCatalog(c, l);
-    let p = it.productId ? cpCatCache[key].find(x => x.id === it.productId) : null;
+    let p = it.productId ? getCatalog(c, l).find(x => x.id === it.productId) : null;
     if(p) return p;
     const paper = COURSES[c][l].find(pp => pp.no === it.paperNo);
     if(paper){
-      const batch = /fast/i.test(it.typeOfClass || '') ? 'fasttrack' : 'regular';
+      const batch = /writing/i.test(it.typeOfClass || '') ? 'writing' : (/fast/i.test(it.typeOfClass || '') ? 'fasttrack' : 'regular');
       return makeSingleProduct(c, l, paper, it.faculty, batch);
     }
   }
-  const batch = /fast/i.test(it.typeOfClass || '') ? 'fasttrack' : 'regular';
+  const batch = /writing/i.test(it.typeOfClass || '') ? 'writing' : (/fast/i.test(it.typeOfClass || '') ? 'fasttrack' : 'regular');
   return {
     id:'x', category:'single', course:c, level:l, examLabel:getExamLabel(c, l), examFull:getExamLabel(c, l), batch, group:'',
     subjects:[it.paperName || ''], faculties:[it.faculty || ''], items:[{ paperNo:it.paperNo, paperName:it.paperName, faculty:it.faculty }],
@@ -110,8 +110,8 @@ function cpDescribe(g){
     const title = cpLectureProduct(it).title;
     const noBooks = /without|not applicable/i.test(it.bookPreference || '');
     return title + ' for the attempt ' + (it.attempt || '') +
-      (noBooks ? ' without books' : (' with ' + (it.bookPreference || '') + ' books')) +
-      ' in the mode ' + (it.modeOfClass || '');
+      (noBooks ? ' without books' : (' with ' + cpBookLabel(it.bookPreference) + ' books')) +
+      ' in the mode ' + (it.modeOfClass || '') + lectureExtras(it);
   }
   if(g.kind === 'ts'){
     const p = cpTSProduct(it);
@@ -188,10 +188,11 @@ function cpStaticField(label, value){
 function cpPriceHTML(it){
   const price = (typeof it.price === 'number') ? it.price : null;
   const mrp = (typeof it.mrp === 'number') ? it.mrp : null;
+  const hasDisc = !!(mrp && price !== null && it.discount > 0 && price < mrp);
   return '<div class="pv-price"><div class="pv-price-row">' +
-      '<s class="pv-mrp' + (mrp ? '' : ' pc-na') + '">' + esc(formatRupees(mrp)) + '</s>' +
-      '<b class="pv-final">' + esc(formatRupees(price)) + '</b>' +
-      '<span class="pc-off">' + esc(it.discount ? (it.discount + '% off') : '---% off') + '</span>' +
+      (hasDisc ? '<s class="pv-mrp">' + esc(formatRupees(mrp)) + '</s>' : '') +
+      '<b class="pv-final">' + esc(price === 0 ? 'Free' : formatRupees(price)) + '</b>' +
+      (hasDisc ? '<span class="pc-off">' + esc(it.discount + '% off') + '</span>' : '') +
     '</div>' +
     (it.coupon ? '<div class="pv-saved">Coupon ' + esc(it.coupon) + ' applied: −' + esc(formatRupees(it.couponOff || 0)) + '</div>' : '') +
   '</div>';
@@ -210,15 +211,19 @@ function cpDetailHTML(g){
         '<div class="pv-info">' +
           '<h1 class="pv-title">' + esc(p.title) + '</h1>' +
           '<div class="pv-selects">' +
+            (it.features ? cpStaticField('Features', esc(it.features)) : '') +
             cpStaticField('For the Attempt', esc(it.attempt)) +
-            cpStaticField('Book Preference', esc(it.bookPreference)) +
+            cpStaticField('Book Preference', esc(cpBookLabel(it.bookPreference))) +
             cpStaticField('Mode of Class', esc(it.modeOfClass)) +
+            (it.axisChoice ? cpStaticField(it.axisKey === 'views' ? 'Views' : 'Validity', esc(axisLabel(it.axisKey, it.axisChoice))) : '') +
+            (it.programme ? cpStaticField('Programme', esc(it.programme)) : '') +
+            (it.freeWith ? cpStaticField('Note', 'Free with your Platinum feature') : '') +
             includes +
           '</div>' +
           cpPriceHTML(it) +
         '</div>' +
       '</div>' +
-      productTabsHTML(p) +
+      productTabsHTML(p, { feature:it.features, axisVal:it.axisChoice, mode:it.modeOfClass, programme:it.programme }) +
     '</div>';
   }
   if(g.kind === 'ts'){
@@ -303,7 +308,9 @@ function renderCartPage(){
       '<div class="cp-thumb">' + cpPoster(g) + '</div>' +
       '<div class="cp-name">' + esc(cpDescribe(g)) + '</div>' +
       '<div class="cp-mid"><button type="button" class="btn btn-outline cp-detail-btn">Product Details</button></div>' +
-      '<button type="button" class="cp-del" aria-label="Remove from cart" title="Remove">' + CP_TRASH + '</button>' +
+      (g.items[0].bundleParent
+        ? '<span class="cp-lock" title="Free with your Platinum feature — it is removed together with the lecture it came with" aria-label="Free with Platinum">🔒</span>'
+        : '<button type="button" class="cp-del" aria-label="Remove from cart" title="Remove">' + CP_TRASH + '</button>') +
     '</div>'
   ).join('') + '</div>';
   fitPosterText(inner);
@@ -313,10 +320,15 @@ function renderCartPage(){
     row.querySelector('.cp-detail-btn').addEventListener('click', ()=>{
       cpShowDetail(layer, g, 'Product Details', ()=>{ renderCartPage(); });
     });
-    row.querySelector('.cp-del').addEventListener('click', ()=>{
+    const delBtn = row.querySelector('.cp-del');
+    if(!delBtn) return;                       // a free bundled product has no remove button
+    delBtn.addEventListener('click', ()=>{
       row.classList.add('is-removing');
       setTimeout(()=>{
-        g.idxs.slice().sort((a, b) => b - a).forEach(ix => cartItems.splice(ix, 1));
+        const idxs = g.idxs.slice();
+        const pid = g.items[0].groupId;
+        cartItems.forEach((x, ix) => { if(pid && x.bundleParent === pid) idxs.push(ix); });     // its free Fast-track goes with it
+        idxs.sort((a, b) => b - a).forEach(ix => cartItems.splice(ix, 1));
         saveCartToFirestore().then(()=>{ updateCartBadge(); renderCartPage(); });
       }, 260);
     });
