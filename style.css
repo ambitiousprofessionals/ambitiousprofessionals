@@ -1164,10 +1164,11 @@ input[readonly]{background:#f1efe9;color:#666;}
   position:absolute;right:4cqw;top:5cqw;width:38cqw;height:66cqw;border-radius:6cqw;
   background:linear-gradient(160deg,var(--red-bright) 0%,var(--red) 55%,var(--red-dark) 100%);
 }
-.pc-face-main{position:absolute;right:0;bottom:0;width:46cqw;height:57.5cqw;object-fit:contain;object-position:center bottom;}   /* every faculty photo is cut head-to-belly at the same size (4:5) */
-/* a lecture poster keeps its text column clear of the photo, so no letter ever touches the person */
-.pc-single:not(.pc-ts) .pc-left{width:35.5cqw;}
-.pc-single:not(.pc-ts) .pc-rect{right:3cqw;top:24cqw;width:40cqw;height:50cqw;}
+.pc-face-main{position:absolute;right:-2cqw;bottom:0;width:52cqw;height:65cqw;object-fit:contain;object-position:center bottom;}   /* every faculty photo is cut head-to-belly at the same size (4:5); it may stand a little outside the red rectangle */
+/* a lecture poster keeps its text column (34cqw wide) clear of the photo, so no letter ever touches the person;
+   only the exam-name pill at the very top may be wider (nothing of the photo is up there) */
+.pc-single:not(.pc-ts) .pc-left{width:42cqw;}
+.pc-single:not(.pc-ts) .pc-left > :not(.pc-badge){max-width:34cqw;}
 .pc-left{position:absolute;left:5cqw;top:5cqw;width:43cqw;height:68cqw;display:flex;flex-direction:column;}
 .pc-badge{
   display:block;align-self:flex-start;max-width:100%;overflow:hidden;white-space:nowrap;background:var(--black);color:#fff;font-weight:800;font-size:4.6cqw;line-height:1.1;
@@ -1175,7 +1176,7 @@ input[readonly]{background:#f1efe9;color:#666;}
 }
 .pc-tagline{flex:0 0 auto;margin-top:1.8cqw;font-size:2.7cqw;font-weight:800;letter-spacing:.08em;color:var(--gray);text-transform:uppercase;}
 .pc-group{flex:0 0 auto;margin-top:.4cqw;font-size:3cqw;font-weight:800;letter-spacing:.06em;color:var(--red);text-transform:uppercase;}
-.pc-subject{flex:0 1 auto;min-height:0;margin-top:3.2cqw;font-weight:800;font-size:8cqw;line-height:1.04;letter-spacing:-.015em;text-transform:uppercase;color:var(--black);overflow:hidden;overflow-wrap:normal;word-break:normal;}
+.pc-subject{flex:0 1 auto;min-height:0;margin-top:3.2cqw;font-weight:800;font-size:8cqw;line-height:1.04;letter-spacing:-.015em;text-transform:uppercase;color:var(--black);padding-right:1.2cqw;overflow:hidden;overflow-wrap:normal;word-break:normal;}
 .pc-facname{flex:0 0 auto;margin-top:2.2cqw;font-size:3.7cqw;font-weight:600;color:var(--charcoal);line-height:1.25;}
 .pc-lectag{
   position:absolute;left:0;bottom:6cqw;background:var(--red);color:#fff;font-weight:800;font-size:3cqw;letter-spacing:.05em;line-height:1.2;
@@ -1202,7 +1203,7 @@ input[readonly]{background:#f1efe9;color:#666;}
 .pc-tiles-many{flex-wrap:wrap;row-gap:1.6cqw;}
 .pc-tiles-many .pc-tile{flex:0 0 17.4cqw;height:14cqw;}
 .pc-cinner-many .pc-csubject{height:11cqw;margin-top:2cqw;}
-.pc-csubject{width:100%;height:14cqw;margin-top:3cqw;font-weight:800;font-size:5.4cqw;line-height:1.12;text-align:center;text-transform:uppercase;color:var(--black);overflow:hidden;}
+.pc-csubject{width:100%;height:14cqw;margin-top:3cqw;padding:0 .8cqw;box-sizing:border-box;font-weight:800;font-size:5.4cqw;line-height:1.12;text-align:center;text-transform:uppercase;color:var(--black);overflow:hidden;}
 .pc-clectag{
   margin-top:auto;margin-bottom:3.2cqw;align-self:stretch;background:var(--red);color:#fff;text-align:center;font-weight:800;
   font-size:3cqw;letter-spacing:.06em;padding:1.6cqw 0;border-radius:1.2cqw;text-transform:uppercase;
