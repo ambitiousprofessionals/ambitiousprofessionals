@@ -48,16 +48,21 @@ const filterCloseBtn   = document.getElementById('filterCloseBtn');
    CARD HTML  (poster on top, dark title + price strip below)
    ============================================================ */
 function stripHTML(p){
-  const off = p.discount ? (p.discount + '% off') : '---% off';
-  const price = (p.price === null || p.price === undefined) ? '---' : (formatRupees(p.price) + '/-');
+  /* shows: [MRP crossed] [price or Lowest - Highest] [% off pill] — the crossed MRP and the green pill appear
+     ONLY when there is a real discount; otherwise just the price */
+  const s = p.cardPrice || { lo:p.price, hi:p.price, mrp:p.mrp, discLo:p.discount || 0, discHi:p.discount || 0, ranged:false, discRanged:false };
+  const hasPrice = s.lo !== null && s.lo !== undefined;
+  const off = hasPrice ? discountText(s) : '---% off';
+  const mrpShown = hasPrice ? !!s.mrp : true;
+  const price = hasPrice ? (priceRangeText(s) + '/-') : '---';
   return '<div class="pc-strip">' +
     '<h3 class="pc-title">' + esc(p.title) + '</h3>' +
     '<div class="pc-sep"></div>' +
-    '<div class="pc-row">' +
+    '<div class="pc-row' + (s.ranged ? ' pc-row-range' : '') + '">' +
       '<span class="pc-coin" aria-hidden="true">₹</span>' +
-      '<s class="pc-mrp' + (p.mrp ? '' : ' pc-na') + '">' + esc(formatRupees(p.mrp)) + '</s>' +
-      '<b class="pc-final">' + esc(price) + '</b>' +
-      '<span class="pc-off">' + esc(off) + '</span>' +
+      (mrpShown ? '<s class="pc-mrp' + (s.mrp ? '' : ' pc-na') + '">' + esc(formatRupees(s.mrp)) + '</s>' : '') +
+      '<b class="pc-final' + (s.ranged ? ' pc-final-range' : '') + '">' + esc(price) + '</b>' +
+      (off ? '<span class="pc-off">' + esc(off) + '</span>' : '') +
     '</div>' +
   '</div>';
 }
@@ -96,8 +101,9 @@ function renderFilterPane(){
   '</div>';
 
   html += '<div class="cat-filter-sec"><h4>Sub Category</h4>' +
-    chkHTML('batches', 'regular', BATCH_TYPES.regular.label, filters.batches.has('regular'), getCardTone(currentCourse, currentLevel, 'regular')[1]) +
-    chkHTML('batches', 'fasttrack', BATCH_TYPES.fasttrack.label, filters.batches.has('fasttrack'), getCardTone(currentCourse, currentLevel, 'fasttrack')[1]) +
+    ['regular', 'fasttrack', 'writing'].filter(b => catalog.some(x => x.batch === b)).map(b =>
+      chkHTML('batches', b, BATCH_TYPES[b].label, filters.batches.has(b), getCardTone(currentCourse, currentLevel, b)[1])
+    ).join('') +
   '</div>';
 
   html += '<div class="cat-filter-sec"><h4>Faculties</h4>' +
@@ -314,22 +320,61 @@ function relatedProducts(p){
   return out;
 }
 
+/* <option value=label> lists where the shown text differs from the stored value */
+function optionsKV(pairs, placeholder, selectedValue){
+  return (placeholder ? '<option value="" ' + (selectedValue ? '' : 'selected ') + 'disabled>' + esc(placeholder) + '</option>' : '') +
+    pairs.map(pv => '<option value="' + esc(pv[0]) + '"' + (selectedValue === pv[0] ? ' selected' : '') + '>' + esc(pv[1]) + '</option>').join('');
+}
+function fieldHTML(id, label, inner, extraClass, hidden){
+  return '<div class="pv-field' + (extraClass ? ' ' + extraClass : '') + (hidden ? ' hidden' : '') + '" id="' + id + 'Field"><label for="' + id + '">' + esc(label) + '</label>' + inner + '</div>';
+}
+
+/* what the visitor has chosen so far */
+function readSel(){
+  const val = id => { const el = document.getElementById(id); return el ? el.value : ''; };
+  const at = document.getElementById('pvAttempt');
+  const idx = at ? at.selectedIndex - 1 : -1;
+  return {
+    feature: val('pvFeature') || undefined,
+    attempt: val('pvAttempt'),
+    attemptIdx: idx >= 0 ? idx : undefined,
+    book: val('pvBook'),
+    mode: val('pvMode'),
+    axisVal: val('pvAxis') || undefined,
+    programme: val('pvProgramme') || undefined
+  };
+}
+function isOfflineSel(p, sel){ return !!(p.pricing && p.pricing.programmes && sel.mode === OFFLINE_MODE); }
+
 function renderProduct(p){
   const attempts = getAttemptsFor(p.course, p.level);
   const related = relatedProducts(p);
-  const rules = getProductRules(p);
-  const bookHTML = '<select id="pvBook">' + optionsHTML(rules.books, 'Select preference') + '</select>';
+  const pr = p.pricing || {};
+  const startSel = pr.feature ? { feature:'Silver' } : {};
+  const rules = getProductRules(p, startSel);
+  const axisLabelText = pr.axis ? (pr.axis.key === 'validity' ? 'Validity' : 'Views') : '';
+
+  let fields = '';
+  if(pr.feature){        // the first drop-down: it decides the price (Silver is pre-selected)
+    fields += fieldHTML('pvFeature', 'Features', '<select id="pvFeature">' + optionsKV(FEATURE_NAMES.map(f => [f, f]), '', 'Silver') + '</select>');
+  }
+  fields += fieldHTML('pvAttempt', 'For the Attempt', '<select id="pvAttempt">' + optionsHTML(attempts, 'Select attempt') + '</select>');
+  fields += fieldHTML('pvBook', 'Book Preference', '<select id="pvBook">' + optionsHTML(rules.books, 'Select preference') + '</select>');
+  fields += fieldHTML('pvMode', 'Mode of Class', '<select id="pvMode">' + optionsHTML(rules.modes, 'Select mode') + '</select>');
+  if(pr.axis){
+    fields += fieldHTML('pvAxis', axisLabelText, '<select id="pvAxis">' + optionsKV(pr.axis.opts.map(o => [o[0], axisLabel(pr.axis.key, o[0])]), 'Select ' + axisLabelText.toLowerCase()) + '</select>');
+  }
+  if(pr.programmes){
+    fields += fieldHTML('pvProgramme', 'Programme', '<select id="pvProgramme">' + optionsKV(Object.keys(pr.programmes).map(n => [n, n]), 'Select programme') + '</select>', '', true);
+  }
+
   productView.innerHTML =
     '<button type="button" class="pv-back" id="pvBack">' + ICON_BACK + ' Back to all lectures</button>' +
     '<div class="pv-top">' +
       '<div class="pv-visual">' + posterHTML(p) + '</div>' +
       '<div class="pv-info">' +
         '<h1 class="pv-title">' + esc(p.title) + '</h1>' +
-        '<div class="pv-selects">' +
-          '<div class="pv-field"><label for="pvAttempt">For the Attempt</label><select id="pvAttempt">' + optionsHTML(attempts, 'Select attempt') + '</select></div>' +
-          '<div class="pv-field"><label for="pvBook">Book Preference</label>' + bookHTML + '</div>' +
-          '<div class="pv-field"><label for="pvMode">Mode of Class</label><select id="pvMode">' + optionsHTML(rules.modes, 'Select mode') + '</select></div>' +
-        '</div>' +
+        '<div class="pv-selects">' + fields + '</div>' +
         '<div class="pv-coupon">' +
           '<button type="button" class="pv-coupon-link" id="pvCouponToggle">Apply Coupon Code (if any)</button>' +
           '<div class="pv-coupon-box hidden" id="pvCouponBox">' +
@@ -343,7 +388,7 @@ function renderProduct(p){
       '</div>' +
     '</div>' +
 
-    productTabsHTML(p) +
+    productTabsHTML(p, startSel) +
 
     (related.length ? (
       '<div class="pv-related">' +
@@ -362,20 +407,76 @@ function renderProduct(p){
   wireProductPage(p);
 }
 
+/* the price the visitor's choices lead to: one figure, or Lowest - Highest while some choice is still open */
+function currentPriceSummary(){
+  const p = currentProduct;
+  return priceSummary(variantsFor(p, readSel(), false));
+}
+
 function updatePriceBlock(){
   const p = currentProduct;
   const box = document.getElementById('pvPrice');
   if(!p || !box) return;
-  const shown = couponState ? couponState.finalPrice : p.price;
+  const s = currentPriceSummary();
+  if(s.lo === null || s.lo === undefined){
+    box.innerHTML = '<div class="pv-price-row"><b class="pv-final">---</b></div>';
+    return;
+  }
+  const exact = !s.ranged;
+  const shown = (couponState && exact) ? couponState.finalPrice : null;
+  const off = discountText(s);
   let html = '<div class="pv-price-row">' +
-    '<s class="pv-mrp' + (p.mrp ? '' : ' pc-na') + '">' + esc(formatRupees(p.mrp)) + '</s>' +
-    '<b class="pv-final">' + esc(formatRupees(shown)) + '</b>' +
-    '<span class="pc-off">' + esc(p.discount ? (p.discount + '% off') : '---% off') + '</span>' +
+    (s.mrp ? '<s class="pv-mrp">' + esc(formatRupees(s.mrp)) + '</s>' : '') +
+    '<b class="pv-final' + (s.ranged ? ' pv-final-range' : '') + '">' + esc(shown !== null ? formatRupees(shown) : priceRangeText(s)) + '</b>' +
+    (off ? '<span class="pc-off">' + esc(off) + '</span>' : '') +
   '</div>';
-  if(couponState){
+  if(couponState && exact){
     html += '<div class="pv-saved">Coupon ' + esc(couponState.code) + ' applied: −' + esc(formatRupees(couponState.off)) + '</div>';
   }
   box.innerHTML = html;
+}
+
+/* the Product Info tab follows the choices (features, validity / views, offline programme) */
+function updateInfoPanel(){
+  const p = currentProduct;
+  const panel = productView.querySelector('.pv-panel[data-panel="info"]');
+  if(!p || !panel) return;
+  panel.innerHTML = productInfoTableHTML(p, readSel());
+}
+
+/* keeps the drop-downs in step with each other whenever one of them changes */
+function syncProduct(changedId){
+  const p = currentProduct;
+  if(!p) return;
+  const sel = readSel();
+  const offline = isOfflineSel(p, sel);
+
+  /* books depend on the features / offline choice */
+  const bookEl = document.getElementById('pvBook');
+  const rules = getProductRules(p, sel);
+  const keep = bookEl.value;
+  bookEl.innerHTML = optionsHTML(rules.books, 'Select preference');
+  if(rules.books.indexOf(keep) > -1) bookEl.value = keep;
+  else if(rules.books.length === 1) bookEl.selectedIndex = 1;
+
+  /* Offline Face to Face: the Programme appears and the Features drop-down steps aside */
+  const progField = document.getElementById('pvProgrammeField');
+  if(progField) progField.classList.toggle('hidden', !offline);
+  const featField = document.getElementById('pvFeatureField');
+  if(featField) featField.classList.toggle('hidden', offline);
+  const axisField = document.getElementById('pvAxisField');
+  if(axisField) axisField.classList.toggle('hidden', offline);
+
+  /* a coupon was worked out for an earlier price: take it off when the price changes */
+  if(couponState && changedId){
+    couponState = null;
+    const ci = document.getElementById('pvCouponInput'), ca = document.getElementById('pvCouponApply'), cm = document.getElementById('pvCouponMsg');
+    if(ci){ ci.value = ''; ci.disabled = false; }
+    if(ca) ca.textContent = 'Apply';
+    if(cm) cm.classList.add('hidden');
+  }
+  updatePriceBlock();
+  updateInfoPanel();
 }
 
 function refreshCTA(){
@@ -385,13 +486,79 @@ function refreshCTA(){
   if(btn.textContent !== want) btn.textContent = want;
 }
 
+/* the cart lines of one product (a combo has one line per lecture) — plus the free Fast-track lectures that come with Platinum */
+function buildCartLines(p, sel, unit, finalPrice){
+  const pr = p.pricing || {};
+  const offline = isOfflineSel(p, sel);
+  const attempts = getAttemptsFor(p.course, p.level);
+  const groupId = 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const lines = [];
+
+  p.items.forEach((it, i) => {
+    const line = {
+      kind:'classPaper', course:p.course, level:p.level,
+      paperNo:it.paperNo, paperName:it.paperName, faculty:it.faculty,
+      attempt:sel.attempt, typeOfClass:BATCH_TYPES[p.batch].label,
+      bookPreference:sel.book, modeOfClass:sel.mode,
+      productId:p.id, groupId:groupId
+    };
+    if(it.institute) line.institute = it.institute;
+    if(pr.feature && !offline && sel.feature) line.features = sel.feature;
+    if(pr.axis && !offline && sel.axisVal){ line.axisKey = pr.axis.key; line.axisChoice = sel.axisVal; }
+    if(offline && sel.programme) line.programme = sel.programme;
+    if(p.category === 'combo'){      // each lecture's own (stand-alone) price, so the admin can split the combo price fairly
+      if(p.partProducts && p.partProducts[i]){
+        const lo = p.partProducts[i].cardPrice ? p.partProducts[i].cardPrice.lo : null;
+        line.unitPrice = (typeof lo === 'number') ? lo : null;
+      } else {
+        const paperObj = (COURSES[p.course][p.level] || []).find(pp => pp.no === it.paperNo);
+        const single = paperObj ? makeSingleProduct(p.course, p.level, paperObj, it.faculty, p.batch) : null;
+        line.unitPrice = (single && typeof single.price === 'number') ? single.price : null;
+      }
+    }
+    if(i === 0){      // the price belongs to the whole product, so it is saved once (on its first line)
+      line.mrp = unit ? unit.mrp : null; line.discount = unit ? unit.disc : null;
+      line.price = (finalPrice === undefined ? null : finalPrice);
+      line.coupon = couponState ? couponState.code : ''; line.couponOff = couponState ? couponState.off : 0;
+    }
+    lines.push(line);
+  });
+
+  /* Platinum on a Regular lecture: the same lectures' Fast-track (previous attempt) is added FREE, locked to this product */
+  if(pr.feature && !offline && sel.feature === 'Platinum'){
+    const aIdx = sel.attemptIdx || 0;
+    const ftAttempt = aIdx > 0 ? attempts[aIdx - 1] : attempts[0];
+    platinumFreeProducts(p).forEach((ft, k) => {
+      const gid = groupId + 'f' + k;
+      ft.items.forEach((it, i) => {
+        const line = {
+          kind:'classPaper', course:ft.course, level:ft.level,
+          paperNo:it.paperNo, paperName:it.paperName, faculty:it.faculty,
+          attempt:ftAttempt, typeOfClass:BATCH_TYPES.fasttrack.label,
+          bookPreference:sel.book, modeOfClass:FASTTRACK_MODES[0],
+          productId:ft.id, groupId:gid, bundleParent:groupId, freeWith:'Platinum'
+        };
+        if(it.institute) line.institute = it.institute;
+        if(i === 0){ line.mrp = null; line.discount = 0; line.price = 0; line.coupon = ''; line.couponOff = 0; }
+        lines.push(line);
+      });
+    });
+  }
+  return lines;
+}
+
 function wireProductPage(p){
   document.getElementById('pvBack').addEventListener('click', closeProduct);
-  updatePriceBlock();
-  refreshCTA();
-  const rulesNow = getProductRules(p);
+  const rulesNow = getProductRules(p, readSel());
   if(rulesNow.modes.length === 1) document.getElementById('pvMode').selectedIndex = 1;   // only one choice: pre-select it
   if(rulesNow.books.length === 1) document.getElementById('pvBook').selectedIndex = 1;
+  updatePriceBlock();
+  refreshCTA();
+
+  /* every drop-down keeps the others (and the price + the Product Info) up to date */
+  productView.querySelectorAll('.pv-selects select').forEach(sel => {
+    sel.addEventListener('change', ()=> syncProduct(sel.id));
+  });
 
   /* tabs */
   wireProductTabs(productView);
@@ -414,7 +581,14 @@ function wireProductPage(p){
       updatePriceBlock();
       return;
     }
-    const res = applyCouponToPrice(couponInput.value, p.price);
+    const s = currentPriceSummary();
+    if(s.lo === null || s.lo === undefined || s.ranged){
+      couponMsg.classList.remove('hidden');
+      couponMsg.classList.remove('ok'); couponMsg.classList.add('bad');
+      couponMsg.textContent = 'Please choose all the options first, so the exact price is known.';
+      return;
+    }
+    const res = applyCouponToPrice(couponInput.value, s.lo);
     couponMsg.classList.remove('hidden');
     couponMsg.classList.toggle('ok', !!res.ok);
     couponMsg.classList.toggle('bad', !res.ok);
@@ -436,38 +610,39 @@ function wireProductPage(p){
       openOverlay('signInOverlay');
       return;
     }
-    const attempt = document.getElementById('pvAttempt').value;
-    const book = document.getElementById('pvBook').value;
-    const mode = document.getElementById('pvMode').value;
-    if(!attempt || !book || !mode){
-      showToast('Please select the attempt, book preference and mode of class first.', 'error');
+    const sel = readSel();
+    const pr = p.pricing || {};
+    const offline = isOfflineSel(p, sel);
+    const missing = [];
+    if(!sel.attempt) missing.push('the attempt');
+    if(!sel.book) missing.push('book preference');
+    if(!sel.mode) missing.push('mode of class');
+    if(pr.axis && !offline && !sel.axisVal) missing.push(pr.axis.key === 'validity' ? 'validity' : 'views');
+    if(offline && !sel.programme) missing.push('the programme');
+    if(missing.length){
+      showToast('Please select ' + missing.join(', ') + ' first.', 'error');
       return;
     }
-    const groupId = 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-    const finalPrice = couponState ? couponState.finalPrice : p.price;
-    p.items.forEach((it, i) => {
-      const line = {
-        kind:'classPaper', course:p.course, level:p.level,
-        paperNo:it.paperNo, paperName:it.paperName, faculty:it.faculty,
-        attempt:attempt, typeOfClass:BATCH_TYPES[p.batch].label,
-        bookPreference:book, modeOfClass:mode,
-        productId:p.id, groupId:groupId
-      };
-      if(p.category === 'combo'){      // each lecture's own (stand-alone) price, so the admin can split the combo price fairly
-        const paperObj = (COURSES[p.course][p.level] || []).find(pp => pp.no === it.paperNo);
-        const single = paperObj ? makeSingleProduct(p.course, p.level, paperObj, it.faculty, p.batch) : null;
-        line.unitPrice = (single && typeof single.price === 'number') ? single.price : null;
-      }
-      if(i === 0){      // the price belongs to the whole product, so it is saved once (on its first line)
-        line.mrp = p.mrp; line.discount = p.discount; line.price = (finalPrice === undefined ? null : finalPrice);
-        line.coupon = couponState ? couponState.code : ''; line.couponOff = couponState ? couponState.off : 0;
-      }
-      cartItems.push(line);
-    });
+    const vs = variantsFor(p, sel, false);
+    const s = priceSummary(vs);
+    if(s.lo === null || s.lo === undefined){
+      showToast('The price of this lecture has not been announced yet.', 'error');
+      return;
+    }
+    if(s.ranged){
+      showToast('Please choose all the options so that the exact price is known.', 'error');
+      return;
+    }
+    const unit = vs[0];
+    const finalPrice = couponState ? couponState.finalPrice : s.lo;
+    const lines = buildCartLines(p, sel, unit, finalPrice);
+    lines.forEach(l => cartItems.push(l));
+    const gotFree = lines.some(l => l.freeWith);
     saveCartToFirestore().then(()=>{
       updateCartBadge();
       btn.dataset.flashing = '1';
       btn.textContent = 'Added to Cart ✓';
+      if(gotFree) showToast('Your free Fast-track lectures were added to the cart too.', 'success');
       setTimeout(()=>{ delete btn.dataset.flashing; refreshCTA(); }, 1800);
     });
   });
@@ -600,20 +775,22 @@ function initCoursesFromURL(){
   coursesHeading.textContent = getExamLabel(urlCourse, urlLevel);
   noSelectionMsg.classList.add('hidden');
 
-  catalog = buildCatalog(currentCourse, currentLevel);
+  catalog = getCatalog(currentCourse, currentLevel);
   subjectList = (COURSES[currentCourse][currentLevel] || []).map(pp => ({ name:pp.name, label:paperShort(pp.no) + ': ' + pp.name }));
   const seen = {};
   facultyList = [];
   catalog.forEach(pr => pr.faculties.forEach(f => { if(!seen[f]){ seen[f] = 1; facultyList.push(f); } }));
-  // same preference order as the cards: first list, second list, then everyone else
-  const originalIdx = {};
-  facultyList.forEach((f, i) => originalIdx[f] = i);
-  facultyList.sort((a, b)=>{
-    const ta = facultyTier(a), tb = facultyTier(b);
-    if(ta.tier !== tb.tier) return ta.tier - tb.tier;
-    if(ta.idx !== tb.idx) return ta.idx - tb.idx;
-    return originalIdx[a] - originalIdx[b];
-  });
+  // same order as the cards (our own faculties first, then the rest)
+  if(!isCurated(currentCourse, currentLevel)){
+    const originalIdx = {};
+    facultyList.forEach((f, i) => originalIdx[f] = i);
+    facultyList.sort((a, b)=>{
+      const ta = facultyTier(a), tb = facultyTier(b);
+      if(ta.tier !== tb.tier) return ta.tier - tb.tier;
+      if(ta.idx !== tb.idx) return ta.idx - tb.idx;
+      return originalIdx[a] - originalIdx[b];
+    });
+  }
 
   renderFilterPane();
   catalogView.classList.remove('hidden');
