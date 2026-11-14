@@ -22,8 +22,11 @@ function isLoggedIn(){
 document.addEventListener('error', (e)=>{
   const img = e.target;
   if(!(img instanceof HTMLImageElement) || !img.classList.contains('pc-face')) return;
-  const step = img.dataset.ext || 'png';
-  if(step === 'png'){
+  const step = img.dataset.ext || 'webp';
+  if(step === 'webp'){
+    img.dataset.ext = 'png';
+    img.src = facultyPhotoPath(img.dataset.fac, 'png');
+  } else if(step === 'png'){
     img.dataset.ext = 'jpg';
     img.src = facultyPhotoPath(img.dataset.fac, 'jpg');
   } else {
@@ -33,7 +36,7 @@ document.addEventListener('error', (e)=>{
 }, true);
 
 function faceImg(name, cls){
-  return '<img class="pc-face ' + cls + '" data-fac="' + esc(name) + '" data-ext="png" src="' + esc(facultyPhotoPath(name, 'png')) +
+  return '<img class="pc-face ' + cls + '" data-fac="' + esc(name) + '" data-ext="webp" src="' + esc(facultyPhotoPath(name, 'webp')) +
     '" alt="" loading="lazy" decoding="async">';
 }
 
@@ -72,6 +75,7 @@ function toneStyle(p){
 
 function lectureTagHTML(p){
   // both tags are written on two rows so they never stretch towards the faculty photo
+  if(p.batch === 'writing') return '<span class="pc-lectag">Writing<br>Practice</span>';
   return p.batch === 'fasttrack'
     ? '<span class="pc-lectag">Fast-track<br>Lectures</span>'
     : '<span class="pc-lectag">Regular<br>Lectures</span>';
@@ -97,17 +101,24 @@ function posterSingleHTML(p){
   '</div>';
 }
 
+/* Combos — and single lectures taught by SEVERAL faculties — use this layout.
+   Only one photo per faculty (a faculty teaching two subjects of a combo appears once).
+   A single lecture never says "combo": it shows its paper number instead. */
 function posterComboHTML(p){
-  const short = p.subjects.map(getSubjectShort).join(' + ');
-  const tiles = p.faculties.slice(0, 5).map(f => '<div class="pc-tile">' + faceImg(f, 'pc-face-tile') + '</div>').join('');
+  const isCombo = p.category === 'combo';
+  const short = isCombo ? p.subjects.map(getSubjectShort).join(' + ') : p.subjects[0];
+  const faces = p.faculties.slice(0, 8);
+  const many = faces.length > 5;
+  const tiles = faces.map(f => '<div class="pc-tile">' + faceImg(f, 'pc-face-tile') + '</div>').join('');
+  const pill = isCombo ? (p.group ? (p.group + ' COMBO') : 'COMBO') : paperLabel(p.paperNo);
   return '<div class="pc-poster pc-combo pc-tone" style="' + toneStyle(p) + '">' +
     '<div class="pc-cpanel">' +
       '<div class="pc-ctitle">' + esc(p.examFull) + '</div>' +
-      '<span class="pc-gpill">' + esc(p.group ? (p.group + ' COMBO') : 'COMBO') + '</span>' +
+      '<span class="pc-gpill">' + esc(pill) + '</span>' +
       (CARD_TAGLINE ? '<div class="pc-ctag">' + esc(CARD_TAGLINE) + '</div>' : '') +
     '</div>' +
-    '<div class="pc-cinner">' +
-      '<div class="pc-tiles pc-tiles-' + Math.min(p.faculties.length, 5) + '">' + tiles + '</div>' +
+    '<div class="pc-cinner' + (many ? ' pc-cinner-many' : '') + '">' +
+      '<div class="pc-tiles pc-tiles-' + Math.min(faces.length, 5) + (many ? ' pc-tiles-many' : '') + '">' + tiles + '</div>' +
       '<div class="pc-csubject">' + esc(short) + '</div>' +
       '<span class="pc-clectag">' + esc(BATCH_TYPES[p.batch].tag) + '</span>' +
     '</div>' +
@@ -115,7 +126,7 @@ function posterComboHTML(p){
 }
 
 function posterHTML(p){
-  return p.category === 'combo' ? posterComboHTML(p) : posterSingleHTML(p);
+  return (p.category === 'combo' || (p.faculties && p.faculties.length > 1)) ? posterComboHTML(p) : posterSingleHTML(p);
 }
 
 /* Test Series poster (a test-paper picture instead of a faculty photo) */
@@ -162,11 +173,30 @@ function counsellingPosterHTML(item){
 /* ============================================================
    PRODUCT PAGE PIECES (shared by the product page and the cart "Product Details" view)
    ============================================================ */
-function productInfoTableHTML(p){
-  const info = getProductInfo(p);
+function multiline(s){ return esc(s).replace(/\n/g, '<br>'); }
+function infoTableHTML(rows){
   return '<table class="pv-table"><tbody>' +
-    PRODUCT_INFO_ROWS.map(r => '<tr><th scope="row">' + esc(r.label) + '</th><td>' + esc(info[r.key] || '---') + '</td></tr>').join('') +
+    rows.map(r => '<tr><th scope="row">' + esc(r[0]) + '</th><td>' + multiline(r[1] === undefined || r[1] === '' ? '---' : r[1]) + '</td></tr>').join('') +
   '</tbody></table>';
+}
+
+/* sel = what the visitor has chosen so far (features, validity / views, mode…) — the rows follow the choice */
+function productInfoTableHTML(p, sel){
+  sel = sel || {};
+  if(p.pricing && p.pricing.programmes && sel.mode === OFFLINE_MODE) return infoTableHTML(OFFLINE_INFO_ROWS);
+  if(p.def){
+    const parts = getProductParts(p);
+    return parts.map(part => {
+      const info = curatedInfoFor(part, sel, p.category === 'combo' ? p.def : null);
+      const rows = PRODUCT_INFO_ROWS.map(r => [r.label, info[r.key]]);
+      const head = parts.length > 1
+        ? '<h4 class="pv-part-h">' + esc(paperLabel(part.paperNo) + ' — ' + part.subjects[0]) + '<span>' + esc(part.faculties.join(' & ')) + '</span></h4>'
+        : '';
+      return head + infoTableHTML(rows);
+    }).join('');
+  }
+  const info = getProductInfo(p);
+  return infoTableHTML(PRODUCT_INFO_ROWS.map(r => [r.label, info[r.key] || '---']));
 }
 
 function facultyInfoHTML(p){
@@ -193,14 +223,14 @@ function termsHTML(){
 }
 
 /* the three tabs (Product Info / Faculty Info / Terms & Conditions) */
-function productTabsHTML(p){
+function productTabsHTML(p, sel){
   return '<div class="pv-tabs-wrap">' +
     '<div class="pv-tabs" role="tablist">' +
       '<button type="button" role="tab" class="pv-tab active" data-tab="info" aria-selected="true">Product Info</button>' +
       '<button type="button" role="tab" class="pv-tab" data-tab="faculty" aria-selected="false">Faculty Info</button>' +
       '<button type="button" role="tab" class="pv-tab" data-tab="terms" aria-selected="false">Terms &amp; Conditions</button>' +
     '</div>' +
-    '<div class="pv-panel" data-panel="info">' + productInfoTableHTML(p) + '</div>' +
+    '<div class="pv-panel" data-panel="info">' + productInfoTableHTML(p, sel) + '</div>' +
     '<div class="pv-panel hidden" data-panel="faculty">' + facultyInfoHTML(p) + '</div>' +
     '<div class="pv-panel hidden" data-panel="terms">' + termsHTML() + '</div>' +
   '</div>';
