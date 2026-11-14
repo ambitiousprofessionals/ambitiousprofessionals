@@ -1045,7 +1045,7 @@ function curatedInfoFor(part, sel, comboDef){
   else viewsText = fmtViews(views);
   const str = x => (x === undefined || x === null || String(x).trim() === '') ? '---' : String(x);
   return {
-    language: '---',
+    language: 'Hindi-English Mix',
     lectures: fmtLectures(d.lectures),
     duration: fmtDuration(d.duration),
     validity: fmtValidity(validity),
