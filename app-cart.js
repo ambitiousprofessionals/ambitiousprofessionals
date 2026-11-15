@@ -309,7 +309,7 @@ function renderCartPage(){
       '<div class="cp-name">' + esc(cpDescribe(g)) + '</div>' +
       '<div class="cp-mid"><button type="button" class="btn btn-outline cp-detail-btn">Product Details</button></div>' +
       (g.items[0].bundleParent
-        ? '<span class="cp-lock" title="Free with your Platinum feature — it is removed together with the lecture it came with" aria-label="Free with Platinum">🔒</span>'
+        ? '<span class="cp-bundled" title="Free with your Platinum feature — it is removed together with the lecture it came with" aria-label="Free with Platinum">🔒</span>'
         : '<button type="button" class="cp-del" aria-label="Remove from cart" title="Remove">' + CP_TRASH + '</button>') +
     '</div>'
   ).join('') + '</div>';
