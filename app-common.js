@@ -148,17 +148,30 @@ function wireWordCount(textareaId, counterId, max){
    ============================================================ */
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzSkJLi9__1V-dC9Rp_e_uAGPBCDh1pwf47NhR9u8RhYql3EtMusnfq3K98E3UR8wO1UQ/exec';
 
+/* ---- E-MAILS ----
+   Sign-up and order e-mails are sent by OUR OWN function  /api/send-mail  (on Vercel, through Gmail).
+   Nothing goes to Google Apps Script / Google Sheet for these any more.
+   Counselling requests, student updates etc. send NO e-mail at all (the data is already saved in Firestore). */
+const MAIL_API = '/api/send-mail';
+const MAIL_FORM_TYPES = ['order', 'testSeries', 'studentSignup'];
+
 function sendToSheet(payload, retriesLeft){
-  // no-cors: we can't read the response, but the data still reaches the script.
-  if (retriesLeft === undefined) retriesLeft = 1;
-  return fetch(SCRIPT_URL, {
-    method: 'POST',
-    mode: 'no-cors',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(payload)
+  if(MAIL_FORM_TYPES.indexOf(payload.formType) === -1) return Promise.resolve();      // no e-mail needed
+  if(retriesLeft === undefined) retriesLeft = 1;
+  const user = auth.currentUser;
+  // the signed-in visitor proves who they are, so the e-mail can only go to their own address
+  return (user ? user.getIdToken() : Promise.resolve('')).then(token =>
+    fetch(MAIL_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Object.assign({}, payload, { idToken: token })),
+      keepalive: true
+    })
+  ).then(res => {
+    if(!res.ok) console.error('The e-mail could not be sent (' + res.status + ').');
   }).catch(err => {
-    console.error('Submission error:', err);
-    if (retriesLeft > 0) {
+    console.error('E-mail submission error:', err);
+    if(retriesLeft > 0){
       return new Promise(resolve => setTimeout(resolve, 1000)).then(() => sendToSheet(payload, retriesLeft - 1));
     }
     throw err;
@@ -958,12 +971,18 @@ function generateOtpCode(){
 }
 
 function sendOtpEmail(email, code){
-  fetch(SCRIPT_URL, {
+  const viaOldScript = () => fetch(SCRIPT_URL, {
     method: 'POST',
     mode: 'no-cors',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify({ formType: 'sendOtp', email: email, code: code })
   }).catch(err => console.error('OTP email error:', err));
+  // our own mail function first; the old script only as a safety net if that one is not set up yet
+  fetch(MAIL_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ formType: 'sendOtp', email: email, code: code })
+  }).then(res => { if(!res.ok) viaOldScript(); }).catch(viaOldScript);
 }
 
 function getOtpBoxesValue(containerId){
