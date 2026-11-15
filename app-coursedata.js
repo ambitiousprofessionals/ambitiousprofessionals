@@ -1096,8 +1096,9 @@ function lectureExtras(it){
   if(it.features) bits.push('with the ' + it.features + ' feature (' + (FEATURE_VIEWS[it.features] || '') + ')');
   if(it.programme) bits.push('in the programme ' + it.programme);
   if(it.axisChoice && it.axisKey) bits.push((it.axisKey === 'validity' ? 'validity ' : '') + axisLabel(it.axisKey, it.axisChoice));
-  if(it.freeWith) bits.push('(free with the Platinum feature)');
-  return bits.length ? (', ' + bits.join(', ')) : '';
+  let out = bits.length ? (', ' + bits.join(', ')) : '';
+  if(it.freeWith) out += ' (free with the Platinum feature)';
+  return out;
 }
 
 /* ============================================================
