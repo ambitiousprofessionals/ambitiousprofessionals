@@ -1770,6 +1770,60 @@ function prefillCompleteProfile(user){
 
 let initialAuthCheckDone = false;
 
+/* ============================================================
+   "TRACK YOUR ORDER" LINK FROM THE ORDER E-MAIL
+   https://ambitiousprofessionals.in/?track=ORDERID
+   Opens the Track Order window of that order straight away (after sign-in, if needed).
+   ============================================================ */
+const trackLinkOrderId = (function(){
+  try { return (new URLSearchParams(window.location.search).get('track') || '').trim(); } catch(e){ return ''; }
+})();
+let trackLinkHandled = false;
+let trackLinkAskedSignIn = false;
+
+function clearTrackParamFromUrl(){
+  try {
+    const u = new URL(window.location.href);
+    u.searchParams.delete('track');
+    window.history.replaceState({}, '', u.pathname + (u.search || '') + u.hash);
+  } catch(e){}
+}
+
+function handleTrackDeepLink(user){
+  if(!trackLinkOrderId || trackLinkHandled) return;
+  if(!user){
+    // not signed in: ask once — the order opens by itself right after sign-in
+    if(!trackLinkAskedSignIn){
+      trackLinkAskedSignIn = true;
+      setTimeout(()=>{
+        showToast('Please sign in to track your order.', 'success');
+        openOverlay('signInOverlay');
+      }, 500);
+    }
+    return;
+  }
+  trackLinkHandled = true;
+  clearTrackParamFromUrl();
+  const id = trackLinkOrderId;
+  db.collection('users').doc(user.uid).get().then(doc=>{
+    const history = (doc.data() || {}).orderHistory || [];
+    const entry = history.find(e => String(e.orderId) === String(id));
+    if(entry){ openTrackOrder(entry); return null; }
+    // not in the saved history: look the order up directly (lecture orders first, then test series)
+    return db.collection('orders').where('orderId', '==', id).where('uid', '==', user.uid).limit(1).get().then(snap=>{
+      if(!snap.empty) return { orderId:id, items:[{ _type:'classPaper' }] };
+      return db.collection('testSeriesOrders').where('orderId', '==', id).where('uid', '==', user.uid).limit(1).get().then(snap2=>{
+        return snap2.empty ? null : { orderId:id, items:[{ _type:'testSeries' }] };
+      });
+    }).then(found=>{
+      if(found) openTrackOrder(found);
+      else showToast('This order was not found in the account you are signed in with.', 'error');
+    });
+  }).catch(()=>{
+    showToast('Could not open your order right now. Please try again from My Orders.', 'error');
+  });
+}
+
 auth.onAuthStateChanged((user)=>{
   if(!user){
     document.getElementById('signInBtn').classList.remove('hidden');
@@ -1781,6 +1835,7 @@ auth.onAuthStateChanged((user)=>{
     updateCartBadge();
     fillHomeCounsellingProfile(null);
     initialAuthCheckDone = true;
+    handleTrackDeepLink(null);
     return;
   }
   db.collection('users').doc(user.uid).get().then((doc)=>{
@@ -1795,6 +1850,7 @@ auth.onAuthStateChanged((user)=>{
       document.getElementById('authArea').classList.remove('auth-checking');
     } else {
       refreshProfileUI(user);
+      handleTrackDeepLink(user);
     }
     initialAuthCheckDone = true;
   });
