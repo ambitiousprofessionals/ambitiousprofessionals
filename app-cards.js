@@ -52,7 +52,7 @@ const FACE_EDGE_DEFAULT = (function(){
   for(let r = 0; r < 65; r++){ let m = 999; keys.forEach(k => { if(FACE_EDGE[k][r] < m) m = FACE_EDGE[k][r]; }); out.push(m); }
   return out;
 })();
-const FACE_GEO = { x0:41.6, y0:24.6, gap:2.6, textLeft:5, rectLeft:47 };   // photo box, safe gap to the person, text start, red rectangle
+const FACE_GEO = { x0:41.6, y0:24.6, gap:2.6, textLeft:5, rectLeft:51 };   // photo box, safe gap to the person, text start, red rectangle
 function faceEdgeMin(prof, top, bottom){
   let m = 99;
   for(let y = Math.floor(top - FACE_GEO.y0); y <= Math.ceil(bottom - FACE_GEO.y0); y++){
@@ -64,11 +64,12 @@ function faceEdgeMin(prof, top, bottom){
 }
 
 function fitPosterText(root){
-  const SINGLE = [15, 14, 12.8, 11.8, 10.8, 9.8, 8.8, 7.9, 7.1, 6.4, 5.7, 5.1, 4.5, 4];   // compact font: the subject name takes the largest size that fits
+  const SINGLE = [16, 15.2, 14.4, 13.6, 12.9, 12.2, 11.6, 11, 10.4, 9.8, 9.2, 8.7, 8.2, 7.7, 7.2, 6.7, 6.3, 5.9, 5.5, 5.1, 4.7, 4.4, 4.1, 3.8];   // compact font: the subject name takes the largest size that fits
   const NAME2  = [10, 9, 8.1, 7.3, 6.6, 6, 5.4, 4.9, 4.4, 4];            // subject of a card with several faculties
   const COMBO  = [6.6, 5.8, 5, 4.4, 3.8, 3.4, 3];
   const BADGE  = [6.2, 5.8, 5.4, 5, 4.6, 4.2, 3.8, 3.4, 3.1, 2.8, 2.5];     // the exam name at the top-left must stay on ONE row
-  const fits = el => el.scrollWidth <= el.clientWidth + 1 && el.scrollHeight <= el.clientHeight + 1;
+  /* nothing may be cut: the width must hold, and the height too (the tiny extra the letters' own boxes need is allowed) */
+  const fits = el => el.scrollWidth <= el.clientWidth + 1 && el.scrollHeight <= el.clientHeight + Math.max(2, parseFloat(getComputedStyle(el).fontSize) * 0.12);
 
   /* 1) exam names first (width only) — so they are never squeezed by a subject that has not been sized yet */
   root.querySelectorAll('.pc-badge').forEach(el => {
@@ -91,7 +92,7 @@ function fitPosterText(root){
     if(el.classList.contains('pc-subject') && face){
       /* lecture card with one faculty: the widest, biggest text that still keeps clear of the person */
       const prof = FACE_EDGE[slugify(face.dataset.fac || '')] || FACE_EDGE_DEFAULT;
-      const widths = [34, 36, 38, 40, 42, 44];
+      const widths = [34, 36, 38, 40, 42, 44, 46, 48];
       const u = poster.clientWidth / 100;
       let done = false;
       for(let i = 0; i < SINGLE.length && !done; i++){
