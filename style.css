@@ -1171,6 +1171,7 @@ input[readonly]{background:#f1efe9;color:#666;}
    only the exam-name pill at the very top may be wider (nothing of the photo is up there) */
 .pc-single:not(.pc-ts) .pc-left{width:42cqw;}
 .pc-single:not(.pc-ts) .pc-left > :not(.pc-badge){max-width:34cqw;}
+.pc-left > .pc-badge{flex:0 0 auto;}
 .pc-left{position:absolute;left:5cqw;top:5cqw;width:43cqw;height:68cqw;display:flex;flex-direction:column;}
 .pc-badge{
   display:block;align-self:flex-start;max-width:100%;overflow:hidden;white-space:nowrap;background:var(--black);color:#fff;font-weight:800;font-size:4.6cqw;line-height:1.1;
