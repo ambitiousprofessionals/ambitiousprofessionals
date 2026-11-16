@@ -1,0 +1,10 @@
+# Never put secrets in this repository. These files must stay on your own computer only.
+node_modules/
+.env
+.env.*
+*.pem
+serviceAccountKey.json
+*serviceAccount*.json
+*-firebase-adminsdk-*.json
+config.js
+.vercel
