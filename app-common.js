@@ -146,13 +146,29 @@ function wireWordCount(textareaId, counterId, max){
 /* ============================================================
    BACKEND SUBMISSION (Google Apps Script)
    ============================================================ */
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzSkJLi9__1V-dC9Rp_e_uAGPBCDh1pwf47NhR9u8RhYql3EtMusnfq3K98E3UR8wO1UQ/exec';
 
 /* ---- E-MAILS ----
    Sign-up and order e-mails are sent by OUR OWN function  /api/send-mail  (on Vercel, through Gmail).
    Nothing goes to Google Apps Script / Google Sheet for these any more.
    Counselling requests, student updates etc. send NO e-mail at all (the data is already saved in Firestore). */
 const MAIL_API = '/api/send-mail';
+const ACCOUNT_API = '/api/account';
+
+/* talks to our mail function and always hands back an object like {ok:true/false, status:200, ...} */
+function mailApi(payload){
+  return fetch(MAIL_API, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) })
+    .then(res => res.json().catch(() => ({})).then(j => Object.assign({ ok:false }, j, { status: res.status })))
+    .catch(() => ({ ok:false, status:0 }));
+}
+
+/* is this mobile number already registered to ANOTHER account? (asked on the server — other students' data is never readable from the browser) */
+function phoneIsTaken(phone){
+  const user = auth.currentUser;
+  if(!user) return Promise.resolve(false);
+  return user.getIdToken().then(token =>
+    fetch(ACCOUNT_API, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ action:'phoneTaken', phone: phone, idToken: token }) })
+  ).then(res => res.json()).then(j => !!(j && j.ok && j.taken)).catch(() => false);
+}
 const MAIL_FORM_TYPES = ['order', 'testSeries', 'studentSignup'];
 
 function sendToSheet(payload, retriesLeft){
@@ -966,24 +982,7 @@ document.getElementById('googleSetPasswordForm').addEventListener('submit', (e)=
    ============================================================ */
 let suEmailVerified = false;
 
-function generateOtpCode(){
-  return String(Math.floor(1000 + Math.random() * 9000));
-}
-
-function sendOtpEmail(email, code){
-  const viaOldScript = () => fetch(SCRIPT_URL, {
-    method: 'POST',
-    mode: 'no-cors',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({ formType: 'sendOtp', email: email, code: code })
-  }).catch(err => console.error('OTP email error:', err));
-  // our own mail function first; the old script only as a safety net if that one is not set up yet
-  fetch(MAIL_API, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ formType: 'sendOtp', email: email, code: code })
-  }).then(res => { if(!res.ok) viaOldScript(); }).catch(viaOldScript);
-}
+/* The verification code is made, mailed, stored and checked on the SERVER (/api/send-mail). The browser never sees it. */
 
 function getOtpBoxesValue(containerId){
   return [...document.querySelectorAll('#' + containerId + ' .otp-box')].map(b => b.value).join('');
@@ -1015,14 +1014,19 @@ wireOtpBoxes('fpOtpBoxes');
 function requestOtp(emailInputId, sendBtnId, otpSectionId, otpBoxesId){
   const email = document.getElementById(emailInputId).value.trim();
   if(!email || !email.includes('@')){ showToast('Enter a valid email first.', 'error'); return; }
-  const code = generateOtpCode();
-  const expiresAt = Date.now() + 10 * 60 * 1000;
-  db.collection('otps').doc(email.toLowerCase()).set({ code: code, expiresAt: expiresAt, attempts: 0 }).then(()=>{
-    sendOtpEmail(email, code);
+  const btn = document.getElementById(sendBtnId);
+  btn.disabled = true;
+  btn.textContent = 'Sending...';
+  mailApi({ formType:'sendOtp', email: email.toLowerCase() }).then(j => {
+    if(!j.ok){
+      btn.disabled = false;
+      btn.textContent = 'Verify Email';
+      showToast(j.status === 429 ? 'Too many requests. Please wait a few minutes and try again.' : 'We could not send the code right now. Please try again in a moment.', 'error');
+      return;
+    }
     clearOtpBoxes(otpBoxesId);
     document.getElementById(otpSectionId).classList.remove('hidden');
     document.getElementById(emailInputId).readOnly = true;
-    const btn = document.getElementById(sendBtnId);
     btn.textContent = 'Sent';
     btn.disabled = true;
     document.querySelector('#' + otpBoxesId + ' .otp-box').focus();
@@ -1033,35 +1037,21 @@ function verifyOtp(emailInputId, otpBoxesId, msgId, onSuccess){
   const email = document.getElementById(emailInputId).value.trim().toLowerCase();
   const entered = getOtpBoxesValue(otpBoxesId);
   const msg = document.getElementById(msgId);
+  const say = (text, ok) => { msg.style.color = ok ? '#2E7D32' : 'var(--red)'; msg.textContent = text; msg.style.display = 'block'; };
 
-  if(entered.length < 4){
-    msg.style.color = 'var(--red)'; msg.textContent = 'Enter all 4 digits.'; msg.style.display = 'block';
-    return;
-  }
+  if(entered.length < 4){ say('Enter all 4 digits.', false); return; }
 
-  db.collection('otps').doc(email).get().then((doc)=>{
-    if(!doc.exists){
-      msg.style.color = 'var(--red)'; msg.textContent = 'Code not found. Please resend.'; msg.style.display = 'block';
-      return;
-    }
-    const d = doc.data();
-    if(Date.now() > d.expiresAt){
-      msg.style.color = 'var(--red)'; msg.textContent = 'Code expired. Please resend.'; msg.style.display = 'block';
-      return;
-    }
-    if(d.attempts >= 5){
-      msg.style.color = 'var(--red)'; msg.textContent = 'Too many attempts. Please resend a new code.'; msg.style.display = 'block';
-      return;
-    }
-    if(entered === d.code){
-      msg.style.color = '#2E7D32'; msg.textContent = 'Email verified ✓'; msg.style.display = 'block';
+  mailApi({ formType:'verifyOtp', email: email, code: entered }).then(j => {
+    if(j.ok){
+      say('Email verified ✓', true);
       document.querySelectorAll('#' + otpBoxesId + ' .otp-box').forEach(b => b.disabled = true);
-      db.collection('otps').doc(email).delete();
       onSuccess();
-    } else {
-      db.collection('otps').doc(email).update({ attempts: firebase.firestore.FieldValue.increment(1) });
-      msg.style.color = 'var(--red)'; msg.textContent = 'Incorrect code. Try again.'; msg.style.display = 'block';
-    }
+    } else if(j.reason === 'notfound'){ say('Code not found. Please resend.', false); }
+    else if(j.reason === 'expired'){ say('Code expired. Please resend.', false); }
+    else if(j.reason === 'toomany'){ say('Too many attempts. Please resend a new code.', false); }
+    else if(j.reason === 'wrong'){ say('Incorrect code. Try again.', false); }
+    else if(j.status === 429){ say('Too many attempts. Please wait a few minutes.', false); }
+    else { say('Could not check the code right now. Please try again.', false); }
   });
 }
 
@@ -1286,17 +1276,18 @@ document.getElementById('emailSignInForm').addEventListener('submit', (e)=>{
   if(identifier.includes('@')){
     doSignIn(identifier);
   } else {
-    // Look up the email tied to this phone number
-    db.collection('users').where('phone', '==', identifier).limit(1).get().then((snap)=>{
-      if(snap.empty){
-        showError('signInError', 'No account found with this mobile number.');
-        return;
-      }
-      const userDoc = snap.docs[0].data();
-      doSignIn(userDoc.email);
-    }).catch((err)=>{
-      showError('signInError', 'Something went wrong. Please try again.');
-    });
+    // mobile number + password: the server checks them and hands back a one-time sign-in token
+    fetch(ACCOUNT_API, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ action:'loginByPhone', phone: identifier, password: password }) })
+      .then(res => res.json())
+      .then((j)=>{
+        if(j && j.ok && j.token){
+          return auth.signInWithCustomToken(j.token).then(()=>{ closeOverlay('signInOverlay'); });
+        }
+        showError('signInError', (j && j.error) || 'Incorrect mobile number or password.');
+      })
+      .catch(()=>{
+        showError('signInError', 'Something went wrong. Please try again.');
+      });
   }
 });
 
@@ -1306,16 +1297,26 @@ document.getElementById('emailSignInForm').addEventListener('submit', (e)=>{
 document.getElementById('forgotPasswordForm').addEventListener('submit', (e)=>{
   e.preventDefault();
   const email = document.getElementById('fpEmail').value.trim();
-  auth.sendPasswordResetEmail(email).then(()=>{
-    const msg = document.getElementById('forgotPasswordMsg');
+  const msg = document.getElementById('forgotPasswordMsg');
+  const sentOk = ()=>{
     msg.style.color = 'var(--red)';
-    msg.textContent = 'Reset link sent — check your inbox (and spam folder).';
+    msg.textContent = 'If this email is registered with us, a password reset link has been sent — check your inbox (and spam folder).';
     msg.style.display = 'block';
-  }).catch((err)=>{
-    const msg = document.getElementById('forgotPasswordMsg');
-    msg.style.color = 'var(--gray)';
-    msg.textContent = err.message;
-    msg.style.display = 'block';
+  };
+  mailApi({ formType:'passwordReset', email: email }).then((j)=>{
+    if(j.ok){ sentOk(); return; }
+    if(j.status === 429){
+      msg.style.color = 'var(--gray)';
+      msg.textContent = 'Too many requests. Please wait a few minutes and try again.';
+      msg.style.display = 'block';
+      return;
+    }
+    // our mail function is not available: use Firebase's own reset e-mail as a safety net
+    auth.sendPasswordResetEmail(email).then(sentOk).catch((err)=>{
+      msg.style.color = 'var(--gray)';
+      msg.textContent = err.message;
+      msg.style.display = 'block';
+    });
   });
 });
 
@@ -1331,8 +1332,8 @@ document.getElementById('cpPhoneNumber').addEventListener('input', ()=>{
   if(num.length < 6) return;
   cpPhoneCheckTimer = setTimeout(()=>{
     const fullPhone = document.getElementById('cpPhoneCode').value + ' ' + num;
-    db.collection('users').where('phone', '==', fullPhone).limit(1).get().then((snap)=>{
-      if(!snap.empty){
+    phoneIsTaken(fullPhone).then((taken)=>{
+      if(taken){
         errEl.textContent = 'This mobile number is already registered to another account.';
         errEl.style.display = 'block';
       }
@@ -1365,8 +1366,8 @@ document.getElementById('completeProfileForm').addEventListener('submit', (e)=>{
   }
 
   // Check phone uniqueness before creating the profile
-  db.collection('users').where('phone', '==', phone).limit(1).get().then((snap)=>{
-    if(!snap.empty){
+  phoneIsTaken(phone).then((taken)=>{
+    if(taken){
       showError('completeProfileError', 'This mobile number is already registered to another account.');
       return;
     }
@@ -1616,6 +1617,14 @@ document.getElementById('deleteAccountForm').addEventListener('submit', (e)=>{
 
     return db.collection('users').doc(user.uid).delete()
       .then(()=> db.collection('emailIndex').doc((email || '').toLowerCase()).delete())
+      .then(()=> user.getIdToken().then(token =>
+        // the "sorry to see you go" e-mail — only to the student's own address; sent while the sign-in is still valid
+        fetch(MAIL_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ formType: 'accountDeleted', idToken: token, email: user.email, name: d.name || '', studentId: studentId || '' })
+        }).catch(()=>{})
+      ).catch(()=>{}))
       .then(()=> user.delete());
   }).then(()=>{
     closeOverlay('deleteAccountOverlay');
