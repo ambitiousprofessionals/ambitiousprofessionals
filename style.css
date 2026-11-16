@@ -972,11 +972,13 @@ footer .cols div a:hover{color:var(--red);}
 input:disabled{background:#f1efe9;color:#aaa;cursor:not-allowed;}
 select:disabled{background:#f1efe9;color:#aaa;cursor:not-allowed;}
 input[readonly]{background:#f1efe9;color:#666;}
-.otp-boxes{display:flex;gap:10px;}
-.otp-box{
-  width:56px;height:64px;text-align:center;font-size:34px;font-family:var(--head);font-weight:700;
+.otp-boxes{display:flex;justify-content:center;gap:10px;}
+/* square boxes, each digit as big as the square allows (the long selector beats the general text-box style of the forms) */
+.otp-boxes .otp-box, .field .otp-boxes input.otp-box[type=text]{
+  flex:0 0 72px;width:72px;height:72px;min-width:0;padding:0;box-sizing:border-box;text-align:center;font-size:50px;line-height:1;font-family:var(--head);font-weight:700;
   border:1.5px solid var(--line);border-radius:var(--radius);background:var(--white);color:var(--black);
 }
+@media (max-width:420px){ .otp-boxes{gap:8px;} .otp-boxes .otp-box, .field .otp-boxes input.otp-box[type=text]{flex:0 0 60px;width:60px;height:60px;font-size:42px;} }
 .otp-box:focus{border-color:var(--red);outline:none;}
 .pw-hint{font-family:var(--serif);font-style:italic;font-size:13px;color:var(--gray);margin-bottom:6px;}
 
