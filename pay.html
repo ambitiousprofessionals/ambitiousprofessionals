@@ -21,14 +21,33 @@
   <p class="hint">On a laptop or desktop? UPI apps only work on phones — please scan the QR code from the email instead, using your phone's camera or UPI app.</p>
 </div>
 <script>
+  // SECURITY: this page only ever opens a payment to OUR OWN UPI ID. A link that asks to pay anybody else is refused,
+  // so nobody can misuse our website address to send customers' money to someone else.
+  var OUR_UPI_ID = 'abanindrasahu@ybl';
   var params = new URLSearchParams(window.location.search);
-  var upi = params.get('upi');
-  if (upi) {
+  var upi = params.get('upi') || '';
+
+  function isOurPaymentLink(link) {
+    var m = /^upi:\/\/pay\?(.*)$/i.exec(link);
+    if (!m) return false;
+    var q = new URLSearchParams(m[1]);
+    var payee = (q.get('pa') || '').toLowerCase();
+    var currency = (q.get('cu') || 'INR').toUpperCase();
+    var amount = q.get('am');
+    return payee === OUR_UPI_ID && currency === 'INR' && (amount === null || /^\d{1,9}(\.\d{1,2})?$/.test(amount));
+  }
+
+  if (upi && isOurPaymentLink(upi)) {
     document.getElementById('payBtn').href = upi;
     // Attempt an automatic hand-off — this works on phones where a UPI app is
     // registered to handle the upi:// scheme. Nothing happens on desktop, which
     // is expected since there's no UPI app there.
     window.location.href = upi;
+  } else if (upi) {
+    document.querySelector('h1').textContent = 'This payment link is not valid';
+    document.getElementById('payBtn').style.display = 'none';
+    var hint = document.querySelector('.hint');
+    if (hint) hint.textContent = 'For your safety, this page only opens payments to Ambitious Professionals. Please use the QR code or the Pay button from your own order e-mail, or contact us on +91 98531 70049.';
   }
 </script>
 </body>
