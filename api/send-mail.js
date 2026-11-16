@@ -6,17 +6,22 @@
 //                               -> admin notification  +  e-mail to the student with the Order ID, every product
 //                                  and its price, the total order value, the UPI QR code with a "Pay now" button
 //                                  and a "Track your order" link
-//   3. the 4-digit verification code (OTP) that sign-up needs
+//   3. the 4-digit verification code (OTP) that sign-up needs  (made, stored and checked HERE on the server — never in the browser)
+//   4. the password-reset e-mail (forgot password)
+//   5. the "sorry to see you go" e-mail when a student deletes the account
 //
 // SETUP (once, in Vercel):  Project -> Settings -> Environment Variables, add
 //      GMAIL_ADDRESS       = ambitiousprofessionals12@gmail.com
 //      GMAIL_APP_PASSWORD  = the 16-letter Gmail "App Password"      (then Redeploy)
+//      FIREBASE_SERVICE_ACCOUNT = the whole contents of the Firebase service-account key (.json) file
 // Check it any time by opening  https://ambitiousprofessionals.in/api/send-mail  in a browser:
-// it says  "mailConfigured": true  when the two settings are in place.
+// it says  "mailConfigured": true  and  "adminConfigured": true  when the settings are in place.
 
 var nodemailer = require('nodemailer');
+var crypto = require('crypto');
+var adminLib = require('./_admin');
 
-var VERSION = 'v2026-11-15-VercelMail';
+var VERSION = 'v2026-11-16-VercelMail2';
 var SITE_URL = 'https://ambitiousprofessionals.in';
 var ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'ambitiousprofessionals12@gmail.com';
 var UPI_ID = 'abanindrasahu@ybl';
@@ -28,12 +33,14 @@ var SIGN_OFF_TEXT =
   'Warm regards,\n' +
   'Team Ambitious Professionals\n' +
   'Gandhi Nagar, 1st Line Extn, Brahmapur, Odisha\n' +
-  'ambitiousprofessionals12@gmail.com | +91 98531 70049';
+  'ambitiousprofessionals12@gmail.com\n' +
+  '+91 98531 70049';
 var SIGN_OFF_HTML =
   '<p style="margin:24px 0 0;">Warm regards,<br>' +
   '<b>Team Ambitious Professionals</b><br>' +
   'Gandhi Nagar, 1st Line Extn, Brahmapur, Odisha<br>' +
-  'ambitiousprofessionals12@gmail.com | +91 98531 70049</p>';
+  'ambitiousprofessionals12@gmail.com<br>' +
+  '+91 98531 70049</p>';
 
 /* ---------------------------------------------------------------- helpers */
 function escHtml(s) {
@@ -260,12 +267,60 @@ function buildOrderStudentMail(kindLabel, d, qrPng) {
 }
 
 function buildOtpMail(email, code) {
-  return {
-    to: email,
-    subject: 'Your Ambitious Professionals verification code',
-    text: 'Hi,\n\nYour verification code is: ' + code + '\n\nThis code is valid for 10 minutes. If you did not request this, you can safely ignore this email.\n\n' +
-      'Warm regards,\nTeam Ambitious Professionals'
-  };
+  var digits = String(code).split('').map(function (c) {
+    return '<span style="display:inline-block;width:52px;height:52px;line-height:52px;margin:0 4px;border:2px solid #e6e0d4;border-radius:8px;background:#ffffff;font-size:30px;font-weight:bold;text-align:center;">' + escHtml(c) + '</span>';
+  }).join('');
+  var html = emailShell('Verify your e-mail address', 'Ambitious Professionals — account verification',
+    '<p style="margin-top:0;">Hello,</p>' +
+    '<p>Thank you for signing up with <b>Ambitious Professionals</b>. Please enter the verification code below on the website to confirm that this e-mail address belongs to you:</p>' +
+    '<div style="text-align:center;background:#FBF9F5;border:1px solid #e6e0d4;border-radius:8px;padding:20px;margin:18px 0;">' +
+      '<div style="font-size:12px;color:#786F63;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Your verification code</div>' +
+      '<div>' + digits + '</div>' +
+      '<div style="font-size:13px;color:#786F63;margin-top:12px;">This code is valid for <b>10 minutes</b>.</div>' +
+    '</div>' +
+    '<p style="font-size:13px;color:#786F63;"><b>For your security, never share this code with anyone.</b> Our team will never ask you for it. If you did not request it, you can safely ignore this e-mail — no account will be created.</p>' +
+    SIGN_OFF_HTML);
+  var text = 'Hello,\n\nThank you for signing up with Ambitious Professionals. Your verification code is: ' + code + '\n\n' +
+    'This code is valid for 10 minutes. For your security, never share it with anyone — our team will never ask you for it.\n' +
+    'If you did not request this, you can safely ignore this e-mail; no account will be created.\n\n' + SIGN_OFF_TEXT;
+  return { to: email, subject: 'Your Ambitious Professionals verification code: ' + code, text: text, html: html };
+}
+
+function buildPasswordResetMail(email, link) {
+  var html = emailShell('Reset your password', 'Ambitious Professionals — account security',
+    '<p style="margin-top:0;">Hello,</p>' +
+    '<p>We received a request to reset the password of your <b>Ambitious Professionals</b> account (' + escHtml(email) + '). Click the button below to choose a new password:</p>' +
+    '<p style="text-align:center;margin:22px 0;"><a href="' + escHtml(link) + '" style="display:inline-block;padding:13px 30px;background:' + BRAND_RED + ';color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;">Reset my password</a></p>' +
+    '<p style="font-size:13px;color:#786F63;">If the button does not work, copy and paste this link into your browser:<br><span style="word-break:break-all;">' + escHtml(link) + '</span></p>' +
+    '<p style="font-size:13px;color:#786F63;"><b>If you did not ask for this, please ignore this e-mail</b> — your password will stay exactly as it is. For your security, never share this link with anyone.</p>' +
+    SIGN_OFF_HTML);
+  var text = 'Hello,\n\nWe received a request to reset the password of your Ambitious Professionals account (' + email + ').\n\n' +
+    'Choose a new password here:\n' + link + '\n\n' +
+    'If you did not ask for this, please ignore this e-mail — your password will stay exactly as it is. Never share this link with anyone.\n\n' + SIGN_OFF_TEXT;
+  return { to: email, subject: 'Reset your Ambitious Professionals password', text: text, html: html };
+}
+
+function buildAccountDeletedMail(d) {
+  var name = firstNameOf(d.name);
+  var when = '';
+  try { when = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'long', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }) + ' (IST)'; } catch (e) { when = ''; }
+  var idLine = d.studentId ? ('Student ID ' + d.studentId) : 'Your account';
+  var html = emailShell('We are sorry to see you go', 'Your account has been deleted',
+    '<p style="margin-top:0;">Dear ' + escHtml(name) + ',</p>' +
+    '<p>As you requested, your Ambitious Professionals account (<b>' + escHtml(idLine) + '</b>) and the personal details linked to it have been permanently deleted from our website' + (when ? ' on <b>' + escHtml(when) + '</b>' : '') + '.</p>' +
+    '<p>It has been a pleasure to have you with us, and we are truly sorry to see you go. If there was anything we could have done better, we would genuinely like to hear it — just reply to this e-mail.</p>' +
+    '<p>You will always be welcome back. Whenever you are ready, you can create a new account on <a href="' + SITE_URL + '" style="color:' + BRAND_RED + ';">ambitiousprofessionals.in</a> and continue your journey with us.</p>' +
+    '<div style="background:#FBF9F5;border:1px solid #e6e0d4;border-left:4px solid ' + BRAND_RED + ';border-radius:6px;padding:14px 16px;margin:18px 0;font-size:13.5px;">' +
+      '<b>Was this not you?</b> If you did not delete your account, please contact us immediately at ambitiousprofessionals12@gmail.com or +91 98531 70049, and we will help you right away.' +
+    '</div>' +
+    '<p>Wishing you the very best for your studies and your career.</p>' + SIGN_OFF_HTML);
+  var text = 'Dear ' + name + ',\n\n' +
+    'As you requested, your Ambitious Professionals account (' + idLine + ') and the personal details linked to it have been permanently deleted from our website' + (when ? ' on ' + when : '') + '.\n\n' +
+    'It has been a pleasure to have you with us, and we are truly sorry to see you go. If there was anything we could have done better, we would genuinely like to hear it — just reply to this e-mail.\n\n' +
+    'You will always be welcome back. Whenever you are ready, you can create a new account on ' + SITE_URL + ' and continue your journey with us.\n\n' +
+    'Was this not you? If you did not delete your account, please contact us immediately at ambitiousprofessionals12@gmail.com or +91 98531 70049.\n\n' +
+    'Wishing you the very best for your studies and your career.\n\n' + SIGN_OFF_TEXT;
+  return { to: d.email, subject: 'We are sorry to see you go — your account has been deleted', text: text, html: html };
 }
 
 /* ---------------------------------------------------------------- plumbing */
@@ -314,24 +369,24 @@ async function verifyIdToken(idToken) {
 
 async function makeQrPng(total, orderId) {
   try {
-    var uri = upiLinks(orderId, total).upiUri;
-    var r = await fetchWithTimeout('https://api.qrserver.com/v1/create-qr-code/?size=320x320&margin=12&data=' + encodeURIComponent(uri), {}, 6000);
-    if (!r.ok) return null;
-    return Buffer.from(await r.arrayBuffer());
-  } catch (e) { return null; }
+    var QR = require('qrcode');
+    return await QR.toBuffer(upiLinks(orderId, total).upiUri, { width: 320, margin: 2, errorCorrectionLevel: 'M' });
+  } catch (e) { console.error('send-mail: QR code could not be drawn — ' + (e && e.message)); return null; }
 }
 
 /* small memory-based brake against anyone using the code-mail for spam (per warm server instance) */
-var otpLog = {};
-function otpAllowed(email, ip) {
-  var now = Date.now(), win = 10 * 60 * 1000, ok = true;
-  [['e:' + email, 5], ['i:' + ip, 25]].forEach(function (k) {
-    var arr = (otpLog[k[0]] || []).filter(function (t) { return now - t < win; });
-    if (arr.length >= k[1]) ok = false; else arr.push(now);
-    otpLog[k[0]] = arr;
-  });
-  return ok;
+var limitLog = {};
+function allowed(key, max) {
+  var now = Date.now(), win = 10 * 60 * 1000;
+  var arr = (limitLog[key] || []).filter(function (t) { return now - t < win; });
+  if (arr.length >= max) { limitLog[key] = arr; return false; }
+  arr.push(now); limitLog[key] = arr;
+  return true;
 }
+function clientIp(req) {
+  return String((req.headers && (req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || '')) || '').split(',')[0].trim() || 'unknown';
+}
+function sha(x) { return crypto.createHash('sha256').update(x).digest('hex'); }
 
 var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -339,7 +394,7 @@ async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
 
   if (req.method === 'GET') {
-    return res.status(200).json({ ok: true, service: 'Ambitious Professionals mail', version: VERSION, mailConfigured: isConfigured() });
+    return res.status(200).json({ ok: true, service: 'Ambitious Professionals mail', version: VERSION, mailConfigured: isConfigured(), adminConfigured: adminLib.isConfigured() });
   }
   if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'POST only' });
 
@@ -348,7 +403,7 @@ async function handler(req, res) {
   if (!body || typeof body !== 'object') return res.status(400).json({ ok: false, error: 'Bad request' });
 
   var type = body.formType;
-  if (['order', 'testSeries', 'studentSignup', 'sendOtp'].indexOf(type) === -1) {
+  if (['order', 'testSeries', 'studentSignup', 'sendOtp', 'verifyOtp', 'passwordReset', 'accountDeleted'].indexOf(type) === -1) {
     return res.status(200).json({ ok: true, ignored: true });         // nothing to send for anything else
   }
   if (!isConfigured()) {
@@ -357,14 +412,61 @@ async function handler(req, res) {
   }
 
   try {
-    /* ---- verification code ---- */
+    var ip = clientIp(req);
+
+    /* ---- verification code: made, stored (only as a scrambled "hash") and checked on the server ---- */
     if (type === 'sendOtp') {
       var email = clip(body.email, 200).trim().toLowerCase();
-      var code = clip(body.code, 8);
-      if (!EMAIL_RE.test(email) || !/^\d{4,8}$/.test(code)) return res.status(400).json({ ok: false, error: 'Bad request' });
-      var ip = String((req.headers && (req.headers['x-forwarded-for'] || '')) || '').split(',')[0].trim() || 'unknown';
-      if (!otpAllowed(email, ip)) return res.status(429).json({ ok: false, error: 'Too many requests' });
+      if (!EMAIL_RE.test(email)) return res.status(400).json({ ok: false, error: 'Bad request' });
+      if (!allowed('otp-e:' + email, 5) || !allowed('otp-i:' + ip, 25)) return res.status(429).json({ ok: false, error: 'Too many requests' });
+      var A = adminLib.get();
+      if (!A) { console.error('send-mail: ' + adminLib.lastError()); return res.status(500).json({ ok: false, error: 'ADMIN_NOT_CONFIGURED' }); }
+      var code = String(crypto.randomInt(1000, 10000));
+      var salt = crypto.randomBytes(8).toString('hex');
+      await A.firestore().collection('otps').doc(sha(email)).set({
+        salt: salt, hash: sha(salt + ':' + email + ':' + code), expiresAt: Date.now() + 10 * 60 * 1000, attempts: 0
+      });
       await sendOne(buildOtpMail(email, code));
+      return res.status(200).json({ ok: true });
+    }
+
+    if (type === 'verifyOtp') {
+      var vEmail = clip(body.email, 200).trim().toLowerCase();
+      var vCode = clip(body.code, 8).trim();
+      if (!EMAIL_RE.test(vEmail) || !/^\d{4}$/.test(vCode)) return res.status(400).json({ ok: false, error: 'Bad request' });
+      if (!allowed('otpv-i:' + ip, 60)) return res.status(429).json({ ok: false, error: 'Too many requests' });
+      var A2 = adminLib.get();
+      if (!A2) return res.status(500).json({ ok: false, error: 'ADMIN_NOT_CONFIGURED' });
+      var ref = A2.firestore().collection('otps').doc(sha(vEmail));
+      var snap = await ref.get();
+      if (!snap.exists) return res.status(200).json({ ok: false, reason: 'notfound' });
+      var o = snap.data();
+      if (Date.now() > o.expiresAt) return res.status(200).json({ ok: false, reason: 'expired' });
+      if ((o.attempts || 0) >= 5) return res.status(200).json({ ok: false, reason: 'toomany' });
+      var given = Buffer.from(sha(o.salt + ':' + vEmail + ':' + vCode), 'hex');
+      var real = Buffer.from(o.hash, 'hex');
+      if (given.length === real.length && crypto.timingSafeEqual(given, real)) {
+        await ref.delete();
+        return res.status(200).json({ ok: true });
+      }
+      await ref.update({ attempts: (o.attempts || 0) + 1 });
+      return res.status(200).json({ ok: false, reason: 'wrong' });
+    }
+
+    /* ---- forgot password: a professional reset e-mail (the same answer whether or not the address is registered) ---- */
+    if (type === 'passwordReset') {
+      var rEmail = clip(body.email, 200).trim().toLowerCase();
+      if (!EMAIL_RE.test(rEmail)) return res.status(400).json({ ok: false, error: 'Bad request' });
+      if (!allowed('pw-e:' + rEmail, 3) || !allowed('pw-i:' + ip, 15)) return res.status(429).json({ ok: false, error: 'Too many requests' });
+      var A3 = adminLib.get();
+      if (!A3) { console.error('send-mail: ' + adminLib.lastError()); return res.status(500).json({ ok: false, error: 'ADMIN_NOT_CONFIGURED' }); }
+      try { await A3.auth().getUserByEmail(rEmail); }
+      catch (e) {
+        if (e && e.code === 'auth/user-not-found') return res.status(200).json({ ok: true });     // say nothing about who is registered
+        throw e;
+      }
+      var link = await A3.auth().generatePasswordResetLink(rEmail);
+      await sendOne(buildPasswordResetMail(rEmail, link));
       return res.status(200).json({ ok: true });
     }
 
@@ -385,7 +487,9 @@ async function handler(req, res) {
     };
 
     var mails = [];
-    if (type === 'studentSignup') {
+    if (type === 'accountDeleted') {
+      mails.push(buildAccountDeletedMail(d));
+    } else if (type === 'studentSignup') {
       mails.push(buildSignupAdminMail(d), buildWelcomeMail(d));
     } else {
       if (!d.orderId) return res.status(400).json({ ok: false, error: 'Bad request' });
@@ -407,5 +511,5 @@ async function handler(req, res) {
 }
 
 module.exports = handler;
-module.exports._test = { buildOrderStudentMail: buildOrderStudentMail, buildOrderAdminMail: buildOrderAdminMail, buildWelcomeMail: buildWelcomeMail,
+module.exports._test = { buildOtpMail2: buildOtpMail, buildPasswordResetMail: buildPasswordResetMail, buildAccountDeletedMail: buildAccountDeletedMail, buildOrderStudentMail: buildOrderStudentMail, buildOrderAdminMail: buildOrderAdminMail, buildWelcomeMail: buildWelcomeMail,
   buildSignupAdminMail: buildSignupAdminMail, buildOtpMail: buildOtpMail, setTransport: function (t) { transport = t; } };
