@@ -150,7 +150,8 @@ function wireWordCount(textareaId, counterId, max){
 /* ---- E-MAILS ----
    Sign-up and order e-mails are sent by OUR OWN function  /api/send-mail  (on Vercel, through Gmail).
    Nothing goes to Google Apps Script / Google Sheet for these any more.
-   Counselling requests, student updates etc. send NO e-mail at all (the data is already saved in Firestore). */
+   Free counselling requests now also send their own e-mails (to the student and to the admin).
+   Student updates etc. send NO e-mail at all (the data is already saved in Firestore). */
 const MAIL_API = '/api/send-mail';
 const ACCOUNT_API = '/api/account';
 
@@ -169,7 +170,7 @@ function phoneIsTaken(phone){
     fetch(ACCOUNT_API, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ action:'phoneTaken', phone: phone, idToken: token }) })
   ).then(res => res.json()).then(j => !!(j && j.ok && j.taken)).catch(() => false);
 }
-const MAIL_FORM_TYPES = ['order', 'testSeries', 'studentSignup'];
+const MAIL_FORM_TYPES = ['order', 'testSeries', 'studentSignup', 'counselling'];
 
 function sendToSheet(payload, retriesLeft){
   if(MAIL_FORM_TYPES.indexOf(payload.formType) === -1) return Promise.resolve();      // no e-mail needed
@@ -252,11 +253,10 @@ if(homeCounsellingForm){
     e.preventDefault();
     const exam = document.getElementById('hcExam').value.trim();
     const extra = document.getElementById('hcExtra').value.trim();
-    addCounsellingToCart(exam, extra);
-    if(auth.currentUser && currentUserProfile){
+    startCounsellingBooking(exam, extra, ()=>{
       document.getElementById('hcExam').value = '';
       document.getElementById('hcExtra').value = '';
-    }
+    });
   });
 }
 
@@ -266,9 +266,114 @@ document.getElementById('counsellingDetailsForm').addEventListener('submit', (e)
   e.preventDefault();
   const examOrCourse = pendingCounsellingType === 'mba' ? 'MBA' : document.getElementById('cdExam').value.trim();
   const whatWantToKnow = document.getElementById('cdExtra').value.trim();
-  closeOverlay('counsellingDetailsOverlay');
-  addCounsellingToCart(examOrCourse, whatWantToKnow);
+  startCounsellingBooking(examOrCourse, whatWantToKnow, ()=>{ closeOverlay('counsellingDetailsOverlay'); });
 });
+
+/* ============================================================
+   FREE COUNSELLING — book directly (no cart, no order).
+   "Book Free Counselling" -> "Are you sure?  Yes / No" -> request saved + e-mails sent.
+   ============================================================ */
+let pendingCounselling = null;
+
+function ensureCounsellingConfirmOverlay(){
+  if(document.getElementById('counsellingConfirmOverlay')) return;
+  const ov = document.createElement('div');
+  ov.className = 'overlay hidden-overlay';
+  ov.id = 'counsellingConfirmOverlay';
+  ov.innerHTML =
+    '<div class="modal ask-modal">' +
+      '<h3>Book free counselling?</h3>' +
+      '<div class="sub" id="counsellingConfirmText"></div>' +
+      '<div id="counsellingConfirmError" style="color:var(--red);font-size:12.5px;margin-bottom:10px;display:none;"></div>' +
+      '<div class="ask-btns">' +
+        '<button type="button" class="btn btn-outline" id="counsellingConfirmNo">No</button>' +
+        '<button type="button" class="btn btn-primary" id="counsellingConfirmYes">Yes</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(ov);
+  ov.addEventListener('click', (e)=>{ if(e.target === ov) closeOverlay('counsellingConfirmOverlay'); });
+  document.getElementById('counsellingConfirmNo').addEventListener('click', ()=>{
+    pendingCounselling = null;
+    closeOverlay('counsellingConfirmOverlay');
+  });
+  document.getElementById('counsellingConfirmYes').addEventListener('click', submitCounsellingBooking);
+}
+
+function startCounsellingBooking(examOrCourse, whatWantToKnow, onSuccess){
+  if(!(auth.currentUser && currentUserProfile)){
+    closeOverlay('counsellingDetailsOverlay');
+    showToast('Please sign in or sign up first to book your free counselling.', 'error');
+    openOverlay(auth.currentUser ? 'signInOverlay' : 'signUpOverlay');
+    return;
+  }
+  ensureCounsellingConfirmOverlay();
+  pendingCounselling = { examOrCourse: examOrCourse, whatWantToKnow: whatWantToKnow, onSuccess: onSuccess };
+  document.getElementById('counsellingConfirmText').textContent =
+    'Are you sure you want to book a free counselling session' + (examOrCourse ? (' for ' + examOrCourse) : '') + '?';
+  document.getElementById('counsellingConfirmError').style.display = 'none';
+  const yes = document.getElementById('counsellingConfirmYes');
+  yes.disabled = false;
+  yes.textContent = 'Yes';
+  openOverlay('counsellingConfirmOverlay');
+}
+
+function submitCounsellingBooking(){
+  const req = pendingCounselling;
+  const user = auth.currentUser;
+  const prof = currentUserProfile;
+  if(!req || !user || !prof) return;
+  const yes = document.getElementById('counsellingConfirmYes');
+  yes.disabled = true;
+  yes.textContent = 'Booking…';
+  const item = { kind:'counselling', examOrCourse: req.examOrCourse, whatWantToKnow: req.whatWantToKnow };
+
+  db.collection('counsellingRequests').add({
+    uid: user.uid,
+    studentId: prof.studentId,
+    name: prof.name,
+    email: prof.email,
+    examOrCourse: item.examOrCourse,
+    whatWantToKnow: item.whatWantToKnow,
+    confirmationSent: false,
+    scheduledAt: null,
+    scheduleEmailSentAt: null,
+    deliveryStatus: 'pending',
+    deliveredAt: null,
+    cancelledAt: null,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).then((docRef)=>{
+    // the request is safely saved — now the e-mails (to the student and to the admin)
+    sendToSheet({
+      formType: 'counselling',
+      studentId: prof.studentId,
+      name: prof.name,
+      email: prof.email,
+      phone: prof.phone || '',
+      examOrCourse: item.examOrCourse,
+      whatWantToKnow: item.whatWantToKnow
+    }).catch(()=>{});
+    return db.collection('users').doc(user.uid).update({
+      orderHistory: firebase.firestore.FieldValue.arrayUnion({
+        date: new Date().toISOString(),
+        docId: docRef.id,
+        docCollection: 'counsellingRequests',
+        items: [Object.assign({}, item, { _type: 'counselling' })]
+      })
+    }).catch(()=>{});
+  }).then(()=>{
+    pendingCounselling = null;
+    closeOverlay('counsellingConfirmOverlay');
+    if(typeof req.onSuccess === 'function') req.onSuccess();
+    document.getElementById('bookedSuccessEmail').textContent = prof.email;
+    openOverlay('bookedSuccessOverlay');
+  }).catch(()=>{
+    yes.disabled = false;
+    yes.textContent = 'Yes';
+    const er = document.getElementById('counsellingConfirmError');
+    er.textContent = 'We could not book your counselling right now. Please try again in a moment.';
+    er.style.display = 'block';
+  });
+}
 
 wireWordCount('cdExtra','cdWordCount',200);
 
@@ -888,44 +993,88 @@ function setRuleState(elId, passed){
   el.querySelector('.pw-icon').textContent = passed ? '✓' : '✕';
 }
 
-document.getElementById('suPassword').addEventListener('input', ()=>{
-  const pw = document.getElementById('suPassword').value;
-  const lengthOk = pw.length >= 8;
-  const hasUpper = /[A-Z]/.test(pw);
-  const hasLower = /[a-z]/.test(pw);
-  const hasNumber = /[0-9]/.test(pw);
-  const hasSymbol = /[^A-Za-z0-9]/.test(pw);
-
-  setRuleState('pwRuleLength', lengthOk);
-  setRuleState('pwRuleUpper', hasUpper);
-  setRuleState('pwRuleLower', hasLower);
-  setRuleState('pwRuleNumber', hasNumber);
-  setRuleState('pwRuleSymbol', hasSymbol);
-
-  const allValid = lengthOk && hasUpper && hasLower && hasNumber && hasSymbol;
-  const confirmField = document.getElementById('suPasswordConfirm');
-  confirmField.disabled = !allValid;
-  if(!allValid) confirmField.value = '';
-  updateCreateAccountBtnState();
-});
-document.getElementById('suPasswordConfirm').addEventListener('input', updateCreateAccountBtnState);
+/* The password boxes are no longer part of the sign-up box. After the e-mail code is verified,
+   a separate "Set a Password" pop-up opens (the same one Google sign-up uses). */
+(function hideSignUpPasswordFields(){
+  ['suPassword','suPasswordConfirm'].forEach(id=>{
+    const f = document.getElementById(id).closest('.field');
+    if(f) f.style.display = 'none';
+  });
+  document.getElementById('suCreateAccountBtn').textContent = 'Continue';
+})();
 
 function updateCreateAccountBtnState(){
-  const pw = document.getElementById('suPassword').value;
-  const confirm = document.getElementById('suPasswordConfirm').value;
-  const passwordOk = isStrongPassword(pw) && pw === confirm && confirm.length > 0;
-  document.getElementById('suCreateAccountBtn').disabled = !(suEmailVerified && passwordOk);
+  document.getElementById('suCreateAccountBtn').disabled = !suEmailVerified;
+}
+
+/* hide / show a pop-up WITHOUT clearing what the visitor already typed */
+function hideOverlayQuiet(id){ document.getElementById(id).classList.add('hidden-overlay'); }
+function showOverlayQuiet(id){ document.getElementById(id).classList.remove('hidden-overlay'); }
+
+function goToPasswordStep(){
+  hideOverlayQuiet('signUpOverlay');
+  openPasswordPopup('email');
 }
 
 /* ============================================================
    GOOGLE SIGN-UP: SET PASSWORD STEP
    ============================================================ */
+/* ============================================================
+   SET PASSWORD POP-UP  (used after e-mail verification AND after Google sign-up)
+   ============================================================ */
+let pwPopupMode = 'google';      // 'email' = e-mail sign-up,  'google' = Google sign-up
+
+(function preparePasswordPopup(){
+  const confirmField = document.getElementById('gpPasswordConfirm').closest('.field');
+  const note = document.createElement('div');
+  note.id = 'gpMatchMsg';
+  note.style.cssText = 'font-size:12.5px;margin-top:6px;display:none;';
+  confirmField.appendChild(note);
+
+  const modal = document.querySelector('#googleSetPasswordOverlay .modal');
+  const back = document.createElement('div');
+  back.id = 'gpBackWrap';
+  back.style.cssText = 'text-align:center;margin-top:14px;font-size:13px;display:none;';
+  back.innerHTML = '<a href="#" id="gpBackLink" style="color:var(--gray);text-decoration:underline;">&larr; Back</a>';
+  modal.appendChild(back);
+  document.getElementById('gpBackLink').addEventListener('click', (e)=>{
+    e.preventDefault();
+    hideOverlayQuiet('googleSetPasswordOverlay');
+    showOverlayQuiet('signUpOverlay');
+  });
+})();
+
 function resetGoogleSetPasswordForm(){
   document.getElementById('googleSetPasswordForm').reset();
   ['gpRuleLength','gpRuleUpper','gpRuleLower','gpRuleNumber','gpRuleSymbol'].forEach(id=> setRuleState(id, false));
+  ['gpPassword','gpPasswordConfirm'].forEach(id=>{
+    const inp = document.getElementById(id);
+    inp.type = 'password';
+    const tg = inp.nextElementSibling;
+    if(tg && tg.classList) tg.classList.remove('showing');
+  });
   document.getElementById('gpPasswordConfirm').disabled = true;
   document.getElementById('gpContinueBtn').disabled = true;
+  document.getElementById('gpMatchMsg').style.display = 'none';
   hideError('googleSetPasswordError');
+}
+
+function openPasswordPopup(mode){
+  pwPopupMode = mode;
+  resetGoogleSetPasswordForm();
+  const ov = document.getElementById('googleSetPasswordOverlay');
+  const title = ov.querySelector('h3'), sub = ov.querySelector('.sub'), btn = document.getElementById('gpContinueBtn');
+  if(mode === 'email'){
+    title.textContent = 'Create Your Password';
+    sub.textContent = 'Your email is verified ✓ — now give a strong password for your account.';
+    btn.textContent = 'Create Account';
+  } else {
+    title.textContent = 'Set a Password';
+    sub.textContent = "You're signing up with Google — set a password too, so you can also sign in with your email later.";
+    btn.textContent = 'Continue';
+  }
+  document.getElementById('gpBackWrap').style.display = (mode === 'email') ? 'block' : 'none';
+  openOverlay('googleSetPasswordOverlay');
 }
 
 document.getElementById('gpPassword').addEventListener('input', ()=>{
@@ -950,20 +1099,75 @@ document.getElementById('gpPassword').addEventListener('input', ()=>{
 });
 document.getElementById('gpPasswordConfirm').addEventListener('input', updateGpContinueBtnState);
 
+const PW_MISMATCH_TEXT = 'The confirmation password is not the same as the password you typed.';
+
 function updateGpContinueBtnState(){
   const pw = document.getElementById('gpPassword').value;
   const confirm = document.getElementById('gpPasswordConfirm').value;
-  const ok = isStrongPassword(pw) && pw === confirm && confirm.length > 0;
-  document.getElementById('gpContinueBtn').disabled = !ok;
+  const strong = isStrongPassword(pw);
+  const same = pw === confirm;
+  const msg = document.getElementById('gpMatchMsg');
+  if(strong && confirm.length > 0){
+    // while the visitor is still typing and what they typed so far is correct, stay quiet
+    const stillTyping = !same && confirm.length < pw.length && pw.startsWith(confirm);
+    if(stillTyping){
+      msg.style.display = 'none';
+    } else {
+      msg.textContent = same ? 'Passwords match ✓' : PW_MISMATCH_TEXT;
+      msg.style.color = same ? '#2E7D32' : 'var(--red)';
+      msg.style.display = 'block';
+    }
+  } else {
+    msg.style.display = 'none';
+  }
+  document.getElementById('gpContinueBtn').disabled = !(strong && confirm.length > 0 && same);
+}
+
+/* e-mail sign-up: the account is created here, after the password is chosen */
+function createEmailAccountFromPopup(password){
+  const email = document.getElementById('suEmail').value.trim();
+  const btn = document.getElementById('gpContinueBtn');
+  btn.disabled = true;
+  auth.createUserWithEmailAndPassword(email, password).then((cred)=>{
+    const user = cred.user;
+    db.collection('emailIndex').doc(email.toLowerCase()).set({ registered: true });
+    closeOverlay('googleSetPasswordOverlay');
+    closeOverlay('signUpOverlay');           // clears the sign-up box for next time
+    prefillCompleteProfile(user);
+    openOverlay('completeProfileOverlay');
+  }).catch((err)=>{
+    btn.disabled = false;
+    if(err.code === 'auth/email-already-in-use'){
+      showError('googleSetPasswordError', 'An account with this email is already registered.');
+    } else {
+      showError('googleSetPasswordError', err.message);
+    }
+  });
 }
 
 document.getElementById('googleSetPasswordForm').addEventListener('submit', (e)=>{
   e.preventDefault();
+  hideError('googleSetPasswordError');
+  const password = document.getElementById('gpPassword').value;
+  const confirm = document.getElementById('gpPasswordConfirm').value;
+
+  if(!isStrongPassword(password)){
+    showError('googleSetPasswordError', 'Password must be at least 8 characters and include upper case, lower case, a number, and a symbol.');
+    return;
+  }
+  if(password !== confirm){
+    showError('googleSetPasswordError', PW_MISMATCH_TEXT);
+    return;
+  }
+
+  if(pwPopupMode === 'email'){
+    createEmailAccountFromPopup(password);
+    return;
+  }
+
   const user = auth.currentUser;
   if(!user) return;
-  const password = document.getElementById('gpPassword').value;
   const credential = firebase.auth.EmailAuthProvider.credential(user.email, password);
-
   user.linkWithCredential(credential).then(()=>{
     closeOverlay('googleSetPasswordOverlay');
     prefillCompleteProfile(user);
@@ -1100,9 +1304,12 @@ document.getElementById('suChangeEmailLink').addEventListener('click', (e)=>{
 document.getElementById('suVerifyOtpBtn').addEventListener('click', ()=>{
   verifyOtp('suEmail', 'suOtpBoxes', 'suOtpMsg', ()=>{
     suEmailVerified = true;
-    document.getElementById('suPassword').disabled = false;
-    document.getElementById('suPassword').placeholder = 'Enter password';
     updateCreateAccountBtnState();
+    // a moment to read "Email verified ✓", then the password pop-up opens by itself
+    setTimeout(()=>{
+      const open = !document.getElementById('signUpOverlay').classList.contains('hidden-overlay');
+      if(suEmailVerified && open) goToPasswordStep();
+    }, 700);
   });
 });
 
@@ -1159,6 +1366,27 @@ function generateStudentId(){
   });
 }
 
+/* The Student ID is now handed out by the SERVER, and it is tied to the e-mail address for life:
+   if the same e-mail signs up again after deleting its account, it gets the same Student ID back. */
+function claimStudentId(){
+  const user = auth.currentUser;
+  if(!user) return Promise.reject(new Error('Please sign in again.'));
+  return user.getIdToken().then(token =>
+    fetch(ACCOUNT_API, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ action:'claimStudentId', idToken: token }) })
+  ).then(res => res.json()).then((j)=>{
+    if(j && j.ok && j.studentId) return j.studentId;
+    throw new Error('We could not allot your Student ID right now. Please try again in a moment.');
+  });
+}
+/* before an account is deleted, the server notes which Student ID belongs to this e-mail */
+function rememberStudentIdOnServer(user){
+  return user.getIdToken().then(token =>
+    fetch(ACCOUNT_API, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ action:'rememberStudentId', idToken: token }) })
+  ).then(res => res.json()).then((j)=>{
+    if(!j || !j.ok) throw new Error('We could not complete the deletion right now. Please try again in a moment.');
+  });
+}
+
 /* ============================================================
    AUTH MODAL SWITCHING
    ============================================================ */
@@ -1203,8 +1431,7 @@ function handleGoogleAuth(intent){
       closeOverlay('signInOverlay');
       if(!hasProfile){
         db.collection('emailIndex').doc((user.email || '').toLowerCase()).set({ registered: true });
-        resetGoogleSetPasswordForm();
-        openOverlay('googleSetPasswordOverlay');
+        openPasswordPopup('google');
       } else {
         refreshProfileUI(user);
       }
@@ -1224,71 +1451,94 @@ document.getElementById('googleSignInBtn').addEventListener('click', ()=> handle
 document.getElementById('emailSignUpForm').addEventListener('submit', (e)=>{
   e.preventDefault();
   hideError('signUpError');
-  const email = document.getElementById('suEmail').value.trim();
-  const password = document.getElementById('suPassword').value;
-  const confirm = document.getElementById('suPasswordConfirm').value;
-
   if(!suEmailVerified){
     showError('signUpError', 'Please verify your email with the code first.');
     return;
   }
-  if(!isStrongPassword(password)){
-    showError('signUpError', 'Password must be at least 8 characters and include upper case, lower case, a number, and a symbol.');
-    return;
-  }
-  if(password !== confirm){
-    showError('signUpError', 'Passwords do not match.');
-    return;
-  }
-
-  auth.createUserWithEmailAndPassword(email, password).then((cred)=>{
-    const user = cred.user;
-    db.collection('emailIndex').doc(email.toLowerCase()).set({ registered: true });
-    closeOverlay('signUpOverlay');
-    prefillCompleteProfile(user);
-    openOverlay('completeProfileOverlay');
-  }).catch((err)=>{
-    if(err.code === 'auth/email-already-in-use'){
-      showError('signUpError', 'An account with this email is already registered.');
-    } else {
-      showError('signUpError', err.message);
-    }
-  });
+  goToPasswordStep();
 });
 
 /* ============================================================
    EMAIL OR MOBILE SIGN IN
    ============================================================ */
+let siMode = 'email';   // 'email' | 'mobile'
+
+function setSignInMode(mode){
+  siMode = mode;
+  const emailOn = (mode === 'email');
+  document.getElementById('siEmailRow').style.display = emailOn ? 'block' : 'none';
+  document.getElementById('siMobileRow').style.display = emailOn ? 'none' : 'flex';
+  document.getElementById('siIdentifier').required = emailOn;
+  document.getElementById('siPhoneNumber').required = !emailOn;
+  [['siTabEmail', emailOn], ['siTabMobile', !emailOn]].forEach(([id, on])=>{
+    const b = document.getElementById(id);
+    b.style.background = on ? 'var(--red)' : '#fff';
+    b.style.color = on ? '#fff' : 'var(--black)';
+    b.style.borderColor = on ? 'var(--red)' : 'var(--line)';
+  });
+  hideError('signInError');
+}
+
+(function buildSignInChooser(){
+  const field = document.getElementById('siIdentifier').closest('.field');
+  const tabCss = 'flex:1;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit;';
+  field.innerHTML =
+    '<label>Sign in with</label>' +
+    '<div style="display:flex;gap:8px;margin-bottom:10px;">' +
+      '<button type="button" id="siTabEmail" style="' + tabCss + '">Email</button>' +
+      '<button type="button" id="siTabMobile" style="' + tabCss + '">Mobile Number</button>' +
+    '</div>' +
+    '<div id="siEmailRow"><input type="text" id="siIdentifier" placeholder="Enter your email" autocomplete="username"></div>' +
+    '<div id="siMobileRow" class="phone-row" style="display:none;">' +
+      '<select id="siPhoneCode">' + document.getElementById('cpPhoneCode').innerHTML + '</select>' +
+      '<input type="text" id="siPhoneNumber" inputmode="numeric" maxlength="10" placeholder="Mobile number" autocomplete="tel-national" style="flex:1;">' +
+    '</div>';
+  document.getElementById('siPhoneCode').value = '+91';
+  document.getElementById('siTabEmail').addEventListener('click', ()=> setSignInMode('email'));
+  document.getElementById('siTabMobile').addEventListener('click', ()=> setSignInMode('mobile'));
+  document.getElementById('siPhoneNumber').addEventListener('input', (e)=>{
+    e.target.value = e.target.value.replace(/\D/g,'').slice(0,10);
+  });
+  setSignInMode('email');
+})();
+
 document.getElementById('emailSignInForm').addEventListener('submit', (e)=>{
   e.preventDefault();
   hideError('signInError');
-  const identifier = document.getElementById('siIdentifier').value.trim();
   const password = document.getElementById('siPassword').value;
 
-  function doSignIn(email){
+  if(siMode === 'email'){
+    const email = document.getElementById('siIdentifier').value.trim();
+    if(!email.includes('@')){
+      showError('signInError', 'Please enter a valid email address.');
+      return;
+    }
     auth.signInWithEmailAndPassword(email, password).then(()=>{
       closeOverlay('signInOverlay');
-    }).catch((err)=>{
-      showError('signInError', 'Incorrect email/mobile number or password.');
+    }).catch(()=>{
+      showError('signInError', 'Incorrect email or password.');
     });
+    return;
   }
 
-  if(identifier.includes('@')){
-    doSignIn(identifier);
-  } else {
-    // mobile number + password: the server checks them and hands back a one-time sign-in token
-    fetch(ACCOUNT_API, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ action:'loginByPhone', phone: identifier, password: password }) })
-      .then(res => res.json())
-      .then((j)=>{
-        if(j && j.ok && j.token){
-          return auth.signInWithCustomToken(j.token).then(()=>{ closeOverlay('signInOverlay'); });
-        }
-        showError('signInError', (j && j.error) || 'Incorrect mobile number or password.');
-      })
-      .catch(()=>{
-        showError('signInError', 'Something went wrong. Please try again.');
-      });
+  // mobile number + password: the country code and the number are joined exactly the way they were saved at sign-up
+  const digits = document.getElementById('siPhoneNumber').value.replace(/\D/g,'');
+  if(digits.length < 6){
+    showError('signInError', 'Please enter a valid mobile number.');
+    return;
   }
+  const phone = document.getElementById('siPhoneCode').value + ' ' + digits;
+  fetch(ACCOUNT_API, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ action:'loginByPhone', phone: phone, password: password }) })
+    .then(res => res.json())
+    .then((j)=>{
+      if(j && j.ok && j.token){
+        return auth.signInWithCustomToken(j.token).then(()=>{ closeOverlay('signInOverlay'); });
+      }
+      showError('signInError', (j && j.error) || 'Incorrect mobile number or password.');
+    })
+    .catch(()=>{
+      showError('signInError', 'Something went wrong. Please try again.');
+    });
 });
 
 /* ============================================================
@@ -1371,7 +1621,7 @@ document.getElementById('completeProfileForm').addEventListener('submit', (e)=>{
       showError('completeProfileError', 'This mobile number is already registered to another account.');
       return;
     }
-    return generateStudentId().then((studentId)=>{
+    return claimStudentId().then((studentId)=>{
       return db.collection('users').doc(user.uid).set({
         studentId: studentId,
         name: name,
@@ -1541,6 +1791,118 @@ document.getElementById('changeEmailForm').addEventListener('submit', (e)=>{
   });
 });
 
+
+/* ============================================================
+   CHANGE PASSWORD (inside My Profile)
+   current password -> a secure reset link is e-mailed (same e-mail as "Forgot password")
+   ============================================================ */
+(function buildChangePassword(){
+  const proto = document.querySelector('.pw-toggle');
+  const eyeSvg = proto ? proto.innerHTML : '';
+  const ov = document.createElement('div');
+  ov.className = 'overlay hidden-overlay';
+  ov.id = 'changePasswordOverlay';
+  ov.innerHTML =
+    '<div class="modal" style="max-width:420px;">' +
+      '<button class="modal-close" id="cpwClose">&times;</button>' +
+      '<h3>Change Password</h3>' +
+      '<div class="sub">Enter your current password. We will then e-mail you a secure link to set a new password.</div>' +
+      '<form id="changePasswordForm">' +
+        '<div class="field"><label>Current Password</label>' +
+          '<span class="pw-wrap"><input type="password" id="cpwCurrent" required autocomplete="current-password">' +
+          '<button type="button" class="pw-toggle" aria-label="Show password" tabindex="-1">' + eyeSvg + '</button></span></div>' +
+        '<div id="changePasswordMsg" style="font-size:12.5px;margin-bottom:10px;display:none;"></div>' +
+        '<button type="submit" class="btn btn-primary" id="cpwBtn" style="width:100%;justify-content:center;">Send Password Reset Link</button>' +
+      '</form>' +
+      '<div style="text-align:center;margin-top:14px;font-size:13px;">' +
+        '<a href="#" id="cpwForgot" style="color:var(--gray);text-decoration:underline;">Forgot current password?</a>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(ov);
+
+  const tg = ov.querySelector('.pw-toggle');
+  tg.addEventListener('click', ()=>{
+    const input = tg.previousElementSibling;
+    const showing = input.type === 'text';
+    input.type = showing ? 'password' : 'text';
+    tg.classList.toggle('showing', !showing);
+    tg.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+  });
+
+  const msg = document.getElementById('changePasswordMsg');
+  const say = (text, ok)=>{ msg.style.color = ok ? '#2E7D32' : 'var(--red)'; msg.textContent = text; msg.style.display = 'block'; };
+  function resetForm(){
+    document.getElementById('changePasswordForm').reset();
+    const inp = document.getElementById('cpwCurrent');
+    inp.type = 'password'; tg.classList.remove('showing');
+    msg.style.display = 'none';
+    const b = document.getElementById('cpwBtn'); b.disabled = false; b.textContent = 'Send Password Reset Link';
+  }
+  const closeIt = ()=>{ closeOverlay('changePasswordOverlay'); resetForm(); };
+  document.getElementById('cpwClose').addEventListener('click', closeIt);
+  ov.addEventListener('click', (e)=>{ if(e.target === ov) closeIt(); });
+
+  // the link inside My Profile, just under "Change email"
+  const emailLink = document.getElementById('changeEmailLink');
+  emailLink.parentElement.insertAdjacentHTML('afterend',
+    '<div style="margin-top:4px;"><a href="#" id="changePasswordLink" style="font-size:12px;color:var(--red);text-decoration:underline;">Change password</a></div>');
+  document.getElementById('changePasswordLink').addEventListener('click', (e)=>{
+    e.preventDefault();
+    resetForm();
+    closeOverlay('myProfileOverlay');
+    openOverlay('changePasswordOverlay');
+  });
+
+  document.getElementById('cpwForgot').addEventListener('click', (e)=>{
+    e.preventDefault();
+    const user = auth.currentUser;
+    closeIt();
+    resetForgotPasswordOtpState();
+    document.getElementById('fpEmail').value = user ? (user.email || '') : '';
+    openOverlay('forgotPasswordOverlay');
+  });
+
+  document.getElementById('changePasswordForm').addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const user = auth.currentUser;
+    if(!user) return;
+    const btn = document.getElementById('cpwBtn');
+    btn.disabled = true;
+    btn.textContent = 'Checking…';
+    msg.style.display = 'none';
+    const credential = firebase.auth.EmailAuthProvider.credential(user.email, document.getElementById('cpwCurrent').value);
+    user.reauthenticateWithCredential(credential).then(()=>{
+      return mailApi({ formType:'passwordReset', email: user.email });
+    }).then((j)=>{
+      if(j.ok){
+        say('A secure password-reset link has been sent to ' + user.email + '. Open it to set your new password (please also check your spam folder).', true);
+        btn.textContent = 'Link Sent';
+        return;
+      }
+      if(j.status === 429){
+        say('Too many requests. Please wait a few minutes and try again.', false);
+        btn.disabled = false; btn.textContent = 'Send Password Reset Link';
+        return;
+      }
+      // our mail function is not available: use Firebase's own reset e-mail as a safety net
+      return auth.sendPasswordResetEmail(user.email).then(()=>{
+        say('A secure password-reset link has been sent to ' + user.email + '. Open it to set your new password (please also check your spam folder).', true);
+        btn.textContent = 'Link Sent';
+      });
+    }).catch((err)=>{
+      btn.disabled = false;
+      btn.textContent = 'Send Password Reset Link';
+      if(err && (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential')){
+        say('Incorrect current password.', false);
+      } else if(err && err.code === 'auth/too-many-requests'){
+        say('Too many attempts. Please wait a few minutes and try again.', false);
+      } else {
+        say((err && err.message) || 'Something went wrong. Please try again.', false);
+      }
+    });
+  });
+})();
+
 /* ============================================================
    PROFILE DROPDOWN TOGGLE
    ============================================================ */
@@ -1615,7 +1977,8 @@ document.getElementById('deleteAccountForm').addEventListener('submit', (e)=>{
       sendToSheet({ formType: 'deleteStudent', studentId: studentId });
     }
 
-    return db.collection('users').doc(user.uid).delete()
+    return rememberStudentIdOnServer(user)
+      .then(()=> db.collection('users').doc(user.uid).delete())
       .then(()=> db.collection('emailIndex').doc((email || '').toLowerCase()).delete())
       .then(()=> user.getIdToken().then(token =>
         // the "sorry to see you go" e-mail — only to the student's own address; sent while the sign-in is still valid
