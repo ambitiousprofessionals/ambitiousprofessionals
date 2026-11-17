@@ -136,6 +136,7 @@ function toneStyle(p){
 function lectureTagHTML(p){
   // both tags are written on two rows so they never stretch towards the faculty photo
   if(p.batch === 'writing') return '<span class="pc-lectag">Writing<br>Practice</span>';
+  if(p.batch === 'revision') return '<span class="pc-lectag">Revision<br>Lectures</span>';
   return p.batch === 'fasttrack'
     ? '<span class="pc-lectag">Fast-track<br>Lectures</span>'
     : '<span class="pc-lectag">Regular<br>Lectures</span>';
