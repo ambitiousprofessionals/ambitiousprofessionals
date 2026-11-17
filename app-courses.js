@@ -101,7 +101,7 @@ function renderFilterPane(){
   '</div>';
 
   html += '<div class="cat-filter-sec"><h4>Sub Category</h4>' +
-    ['regular', 'fasttrack', 'writing'].filter(b => catalog.some(x => x.batch === b)).map(b =>
+    ['regular', 'fasttrack', 'writing', 'revision'].filter(b => catalog.some(x => x.batch === b)).map(b =>
       chkHTML('batches', b, BATCH_TYPES[b].label, filters.batches.has(b), getCardTone(currentCourse, currentLevel, b)[1])
     ).join('') +
   '</div>';
