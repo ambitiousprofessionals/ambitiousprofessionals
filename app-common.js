@@ -1533,7 +1533,7 @@ function setSignInMode(mode){
   document.getElementById('siPhoneNumber').required = !emailOn;
   [['siTabEmail', emailOn], ['siTabMobile', !emailOn]].forEach(([id, on])=>{
     const b = document.getElementById(id);
-    b.style.background = on ? 'var(--red)' : '#fff';
+    b.style.background = on ? 'var(--red)' : 'var(--surface)';
     b.style.color = on ? '#fff' : 'var(--black)';
     b.style.borderColor = on ? 'var(--red)' : 'var(--line)';
   });
