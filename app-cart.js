@@ -56,11 +56,11 @@ function cpLectureProduct(it){
     if(p) return p;
     const paper = COURSES[c][l].find(pp => pp.no === it.paperNo);
     if(paper){
-      const batch = /writing/i.test(it.typeOfClass || '') ? 'writing' : (/fast/i.test(it.typeOfClass || '') ? 'fasttrack' : 'regular');
+      const batch = /writing/i.test(it.typeOfClass || '') ? 'writing' : (/revision/i.test(it.typeOfClass || '') ? 'revision' : (/fast/i.test(it.typeOfClass || '') ? 'fasttrack' : 'regular'));
       return makeSingleProduct(c, l, paper, it.faculty, batch);
     }
   }
-  const batch = /writing/i.test(it.typeOfClass || '') ? 'writing' : (/fast/i.test(it.typeOfClass || '') ? 'fasttrack' : 'regular');
+  const batch = /writing/i.test(it.typeOfClass || '') ? 'writing' : (/revision/i.test(it.typeOfClass || '') ? 'revision' : (/fast/i.test(it.typeOfClass || '') ? 'fasttrack' : 'regular'));
   return {
     id:'x', category:'single', course:c, level:l, examLabel:getExamLabel(c, l), examFull:getExamLabel(c, l), batch, group:'',
     subjects:[it.paperName || ''], faculties:[it.faculty || ''], items:[{ paperNo:it.paperNo, paperName:it.paperName, faculty:it.faculty }],
