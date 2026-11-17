@@ -201,8 +201,16 @@ CS: {
 const BATCH_TYPES = {
   regular:   { key:'regular',   label:'Regular',          tag:'Regular Lectures' },
   fasttrack: { key:'fasttrack', label:'Fast-track',       tag:'Fast-track Lectures' },
-  writing:   { key:'writing',   label:'Writing Practice', tag:'Writing Practice Lectures' }
+  writing:   { key:'writing',   label:'Writing Practice', tag:'Writing Practice Lectures' },
+  revision:  { key:'revision',  label:'Revision',         tag:'Revision Lectures' }
 };
+
+/* Our own faculties who teach ONLY Revision Lectures (no Regular Lectures at all) */
+const REVISION_ONLY_FACULTY = ["Prof. Aayush Dash"];
+function ownBatchFor(faculty){
+  const k = normName(faculty);
+  return REVISION_ONLY_FACULTY.some(f => normName(f) === k) ? 'revision' : 'regular';
+}
 
 /* ============================================================
    CARD COLOURS — the soft background behind the faculty photo
@@ -227,6 +235,7 @@ const CARD_TONES = {
 function getCardTone(course, level, batch){
   const t = CARD_TONES[course + '|' + level];
   if(batch === 'writing') return (t && t.writing) || ['#FFF3C4','#FBE08A'];     // Writing Practice cards: soft lemon
+  if(batch === 'revision') return (t && t.revision) || ['#DDF3EE','#B5E3D8'];    // Revision cards: soft aqua
   return (t && t[batch]) || ['#EAE8E4','#D2CFC8'];
 }
 
@@ -333,7 +342,7 @@ function buildCatalog(course, level){
   const others = entries.filter(e => e.tier === 2).sort(byOrder);
 
   const seq = [];
-  first.forEach(e  => seq.push({ e, batch:'regular' }));                                          // 1) our own faculties: REGULAR lectures only (never fast-track)
+  first.forEach(e  => seq.push({ e, batch:ownBatchFor(e.faculty) }));                             // 1) our own faculties: REGULAR lectures only (never fast-track); Prof. Aayush Dash: REVISION lectures only
   second.forEach(e => { seq.push({ e, batch:'regular' }); seq.push({ e, batch:'fasttrack' }); }); // 2) regular + fast-track, one by one
   others.forEach(e => { seq.push({ e, batch:'regular' }); seq.push({ e, batch:'fasttrack' }); }); // 3) everyone else
 
@@ -752,7 +761,7 @@ const CURATED = {
 
 /* ============================================================
    BUILDING THE CARDS OF A CURATED EXAM
-   Order (no filters): all Regular lectures first, then Fast-track, then Writing Practice.
+   Order (no filters): all Regular lectures first, then Fast-track, then Writing Practice, then Revision.
    Inside each of these: our own faculties on top, then the associate institutes in the order set
    above — and inside every institute the single lectures first, then its combos.
    ============================================================ */
@@ -820,7 +829,7 @@ function buildCuratedCatalog(course, level){
   }));
   own.sort((a, b) => (a.idx - b.idx) || (a.pIdx - b.pIdx));
   own.forEach(e => {
-    const p = makeSingleProduct(course, level, e.paper, e.fac, 'regular');
+    const p = makeSingleProduct(course, level, e.paper, e.fac, ownBatchFor(e.fac));
     p.institute = 'AP'; p.items[0].institute = 'AP'; p.ord = ord++;
     list.push(p);
   });
@@ -832,7 +841,7 @@ function buildCuratedCatalog(course, level){
     if(c) list.push(c);
   });
 
-  const batchRank = { regular:0, fasttrack:1, writing:2 };
+  const batchRank = { regular:0, fasttrack:1, writing:2, revision:3 };
   list.sort((a, b) =>
     (batchRank[a.batch] - batchRank[b.batch]) ||
     (instituteRank(course, a.institute) - instituteRank(course, b.institute)) ||
