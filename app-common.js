@@ -1,3 +1,64 @@
+/* ============================================================
+   LIGHT / DARK THEME
+   - By default the website uses the visitor's own device theme.
+   - The Sun / Moon button in the header switches it; the choice is remembered on that device.
+   (This block is first in the file on purpose, so the right colours are in place before the page appears.)
+   ============================================================ */
+(function setupTheme(){
+  const KEY = 'ap-theme';
+  const root = document.documentElement;
+  const mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+
+  function savedChoice(){
+    try { const v = localStorage.getItem(KEY); return (v === 'light' || v === 'dark') ? v : null; } catch(e){ return null; }
+  }
+  function currentTheme(){ return savedChoice() || ((mq && mq.matches) ? 'dark' : 'light'); }
+
+  let btn = null;
+  function paint(){
+    const t = currentTheme();
+    root.setAttribute('data-theme', t);
+    let meta = document.querySelector('meta[name="theme-color"]');
+    if(!meta){ meta = document.createElement('meta'); meta.name = 'theme-color'; document.head.appendChild(meta); }
+    meta.content = (t === 'dark') ? '#1D1917' : '#FFFFFF';
+    if(btn){
+      btn.setAttribute('data-mode', t);
+      btn.setAttribute('aria-label', t === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
+      btn.title = t === 'dark' ? 'Switch to light theme' : 'Switch to dark theme';
+    }
+  }
+  paint();
+
+  // follow the device while the visitor has not made a choice of their own
+  if(mq){
+    const onChange = ()=>{ if(!savedChoice()) paint(); };
+    if(mq.addEventListener) mq.addEventListener('change', onChange); else if(mq.addListener) mq.addListener(onChange);
+  }
+
+  const area = document.getElementById('authArea');
+  if(area){
+    btn = document.createElement('button');
+    btn.type = 'button';
+    btn.id = 'themeToggle';
+    btn.className = 'theme-toggle';
+    btn.innerHTML =
+      '<svg class="ic-moon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>' +
+      '<svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">' +
+        '<circle cx="12" cy="12" r="4.2" fill="currentColor"/>' +
+        '<path d="M12 2.5v2.3M12 19.2v2.3M2.5 12h2.3M19.2 12h2.3M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/>' +
+      '</svg>';
+    area.insertBefore(btn, area.firstChild);
+    btn.addEventListener('click', ()=>{
+      const next = currentTheme() === 'dark' ? 'light' : 'dark';
+      try { localStorage.setItem(KEY, next); } catch(e){}
+      root.classList.add('theme-fading');
+      paint();
+      setTimeout(()=> root.classList.remove('theme-fading'), 450);
+    });
+    paint();
+  }
+})();
+
 /**
  * Founder's teaching experience — counts full years since October 2018.
  * Ticks over automatically each 1st of October.
