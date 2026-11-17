@@ -323,6 +323,53 @@ function buildAccountDeletedMail(d) {
   return { to: d.email, subject: 'We are sorry to see you go — your account has been deleted', text: text, html: html };
 }
 
+
+/* ------------------------------------------------- FREE COUNSELLING mails */
+function counsellingRequestedOn() {
+  try { return new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'long', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }) + ' (IST)'; }
+  catch (e) { return new Date().toISOString(); }
+}
+
+function buildCounsellingStudentMail(d) {
+  var name = firstNameOf(d.name);
+  var rows = [['Student ID', d.studentId], ['Course / Exam', d.examOrCourse || '—'], ['Requested on', counsellingRequestedOn()], ['Status', 'Received — awaiting confirmation from our team']];
+  var html = emailShell('We have received your counselling request', 'Ambitious Professionals — Free Counselling',
+    '<p style="margin-top:0;">Dear ' + escHtml(name) + ',</p>' +
+    '<p>Thank you for choosing <b>Ambitious Professionals</b>. We have received your request for a <b>free counselling session</b>.</p>' +
+    factsTable(rows) +
+    (d.whatWantToKnow ? '<p style="margin:0 0 4px;color:#786F63;font-size:13px;">What you would like to know:</p><div style="background:#FBF9F5;border:1px solid #e6e0d4;border-radius:6px;padding:12px 14px;margin-bottom:16px;white-space:pre-wrap;">' + escHtml(d.whatWantToKnow) + '</div>' : '') +
+    '<div style="background:#FBF9F5;border:1px solid #e6e0d4;border-left:4px solid ' + BRAND_RED + ';border-radius:6px;padding:14px 16px;margin:18px 0;">' +
+      '<b>What happens next?</b><br>Our team will review your request. The <b>date and time</b> of your counselling session will be <b>e-mailed to you after confirmation from the team</b> — there is nothing else you need to do right now.' +
+    '</div>' +
+    '<p>If you have any questions in the meantime, simply reply to this e-mail or call us on +91 98531 70049.</p>' +
+    SIGN_OFF_HTML);
+  var text = 'Dear ' + name + ',\n\nThank you for choosing Ambitious Professionals. We have received your request for a free counselling session.\n\n' +
+    rows.map(function (r) { return r[0] + ': ' + r[1]; }).join('\n') + '\n\n' +
+    (d.whatWantToKnow ? 'What you would like to know:\n' + d.whatWantToKnow + '\n\n' : '') +
+    'What happens next? Our team will review your request. The date and time of your counselling session will be e-mailed to you after confirmation from the team — there is nothing else you need to do right now.\n\n' +
+    'If you have any questions in the meantime, simply reply to this e-mail or call us on +91 98531 70049.\n\n' + SIGN_OFF_TEXT;
+  return { to: d.email, subject: 'We have received your free counselling request — Ambitious Professionals', text: text, html: html };
+}
+
+function buildCounsellingAdminMail(d) {
+  var rows = [['Student ID', d.studentId], ['Name', d.name], ['E-mail', d.email], ['Mobile No.', d.phone || '—'], ['Course / Exam', d.examOrCourse || '—'], ['Requested on', counsellingRequestedOn()]];
+  var html = emailShell('New Free Counselling Request', 'A student has just requested a counselling session',
+    '<p style="margin-top:0;">Dear Admin,</p>' +
+    '<p>A student has requested a <b>free counselling session</b> on <b>ambitiousprofessionals.in</b>. The details are below.</p>' +
+    factsTable(rows) +
+    (d.whatWantToKnow ? '<p style="margin:0 0 4px;color:#786F63;font-size:13px;">What the student would like to know:</p><div style="background:#FBF9F5;border:1px solid #e6e0d4;border-radius:6px;padding:12px 14px;margin-bottom:16px;white-space:pre-wrap;">' + escHtml(d.whatWantToKnow) + '</div>' : '') +
+    '<p style="font-size:13px;color:#786F63;margin:0;">An acknowledgement e-mail has automatically been sent to the student, telling them that the date and time will follow after your confirmation.</p>' +
+    '<div style="background:#FBF9F5;border:1px solid #e6e0d4;border-left:4px solid ' + BRAND_RED + ';border-radius:6px;padding:14px 16px;margin:18px 0 6px;">' +
+      '<b>To confirm the session:</b><br>open your <b>Admin Dashboard</b> → <b>Counselling</b> tab, click <b>Send Confirmation</b>, choose the date and time, and the student will be e-mailed automatically.</div>' +
+    '<p style="font-size:12px;color:#9a9186;margin:18px 0 0;">Automated notification from your website (' + VERSION + ')</p>');
+  var text = 'Dear Admin,\n\nA student has requested a free counselling session on ambitiousprofessionals.in.\n\n' +
+    rows.map(function (r) { return r[0] + ': ' + r[1]; }).join('\n') + '\n\n' +
+    (d.whatWantToKnow ? 'What the student would like to know:\n' + d.whatWantToKnow + '\n\n' : '') +
+    'An acknowledgement e-mail has automatically been sent to the student.\n\n' +
+    'To confirm the session: open your Admin Dashboard > Counselling tab, click Send Confirmation, choose the date and time, and the student will be e-mailed automatically.';
+  return { to: ADMIN_EMAIL, subject: '🔔 New free counselling request — ' + d.name + ' (' + d.studentId + ')', text: text, html: html };
+}
+
 /* ---------------------------------------------------------------- plumbing */
 var transport = null;
 function getTransport() {
@@ -403,7 +450,7 @@ async function handler(req, res) {
   if (!body || typeof body !== 'object') return res.status(400).json({ ok: false, error: 'Bad request' });
 
   var type = body.formType;
-  if (['order', 'testSeries', 'studentSignup', 'sendOtp', 'verifyOtp', 'passwordReset', 'accountDeleted'].indexOf(type) === -1) {
+  if (['order', 'testSeries', 'studentSignup', 'counselling', 'sendOtp', 'verifyOtp', 'passwordReset', 'accountDeleted'].indexOf(type) === -1) {
     return res.status(200).json({ ok: true, ignored: true });         // nothing to send for anything else
   }
   if (!isConfigured()) {
@@ -483,7 +530,8 @@ async function handler(req, res) {
       }),
       fathersName: clip(body.fathersName, 120), dob: clip(body.dob, 40), houseNo: clip(body.houseNo, 120), street: clip(body.street, 160),
       landmark: clip(body.landmark, 160), post: clip(body.post, 120), cityTown: clip(body.cityTown, 120), pincode: clip(body.pincode, 12),
-      district: clip(body.district, 120), state: clip(body.state, 120), phone: clip(body.phone, 20)
+      district: clip(body.district, 120), state: clip(body.state, 120), phone: clip(body.phone, 20),
+      examOrCourse: clip(body.examOrCourse, 200), whatWantToKnow: clip(body.whatWantToKnow, 2000)
     };
 
     var mails = [];
@@ -491,6 +539,9 @@ async function handler(req, res) {
       mails.push(buildAccountDeletedMail(d));
     } else if (type === 'studentSignup') {
       mails.push(buildSignupAdminMail(d), buildWelcomeMail(d));
+    } else if (type === 'counselling') {
+      if (!allowed('cn-u:' + who.uid, 6)) return res.status(429).json({ ok: false, error: 'Too many requests' });
+      mails.push(buildCounsellingStudentMail(d), buildCounsellingAdminMail(d));
     } else {
       if (!d.orderId) return res.status(400).json({ ok: false, error: 'Bad request' });
       var label = type === 'testSeries' ? 'Test Series Order' : 'Lecture Order';
